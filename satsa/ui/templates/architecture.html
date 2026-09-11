@@ -42,7 +42,7 @@
 
     <div class="arch-layer arch-agents">
       <div class="arch-layer-label">SUPERVISORY AGENT FABRIC</div>
-      <div class="arch-layer-sub">26 agents · 9 retained MLOps + 17 SAT-SA supervisory</div>
+      <div class="arch-layer-sub">32 agents · 9 retained MLOps + 23 SAT-SA supervisory</div>
     </div>
 
     <div class="arch-arrow"></div>
@@ -96,8 +96,8 @@
 
 <section class="section">
   <div class="section-num">02 / Agent roster</div>
-  <h2>26 agents — 9 retained MLOps + 17 SAT-SA supervisory</h2>
-  <p class="section-sub">The roadmap defines 26 agents as a consequence of responsibility separation. The MLOps agents are retained unchanged; the SAT-SA agents are the new supervisory layer.</p>
+  <h2>32 agents — 9 retained MLOps + 23 SAT-SA supervisory</h2>
+  <p class="section-sub">The roadmap defines 32 agents as a consequence of responsibility separation. The MLOps agents are retained unchanged; the SAT-SA agents are the supervisory layer.</p>
 
   <div class="arch-grid">
     <div>
@@ -109,7 +109,7 @@
       </ul>
     </div>
     <div>
-      <h3 class="arch-fam">17 SAT-SA supervisory</h3>
+      <h3 class="arch-fam">23 SAT-SA supervisory</h3>
       <ul class="arch-agent-list">
         {% for a in satsa_agents %}
           <li><code>{{ a.agent_id }}</code><br>{{ a.name }} — {{ a.purpose }}</li>

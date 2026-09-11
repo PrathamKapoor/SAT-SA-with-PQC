@@ -14,7 +14,7 @@ decision vocabularies:
 
 The engine does not invent new vocabulary — it routes the
 existing per-domain decision through the same observe/reason/act/
-verify/learn loop. The 17 SAT-SA agents all emit findings with
+verify/learn loop. The 23 SAT-SA agents all emit findings with
 ``recommended_action`` set; the SAT-SA vocabulary maps those
 findings into one of the seven SAT-SA decisions. The MLOps
 vocabulary maps MLOps findings into the eight MLOps decisions.

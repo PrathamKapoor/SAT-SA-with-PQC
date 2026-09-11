@@ -201,11 +201,56 @@ def test_login_cookie_flow_authenticates_a_browser_client(
                      follow_redirects=False)
     assert r.status_code == 303
     assert satsa_security.COOKIE_NAME in r.cookies
-    # No Authorization header this time — only the cookie set by /login.
+    assert satsa_security.CSRF_COOKIE_NAME in r.cookies
+    # No Authorization header this time — only the cookies set by
+    # /login (credential + CSRF token), exactly what a real HTML form
+    # POST carries (a hidden csrf_token field, per finding_detail.html).
+    csrf_token = client.cookies.get(satsa_security.CSRF_COOKIE_NAME)
     r2 = client.post(f"/findings/{finding_setup}/review",
-                      data={"action": "dismiss", "reason": "via cookie"},
+                      data={"action": "dismiss", "reason": "via cookie",
+                            "csrf_token": csrf_token},
                       follow_redirects=False)
     assert r2.status_code == 303
+
+
+def test_review_post_via_cookie_without_csrf_token_is_rejected(
+        client, finding_setup, identities):
+    """The CSRF property itself: a cookie-authenticated POST that
+    omits the csrf_token (exactly what a cross-site forged form would
+    look like — it can ride the auto-attached credential cookie but
+    cannot know the HttpOnly CSRF cookie's value) must fail closed,
+    even though the credential cookie alone is genuinely valid."""
+    client.post("/login", data={"credential": identities["supervisor_token"]},
+                follow_redirects=False)
+    r = client.post(f"/findings/{finding_setup}/review",
+                    data={"action": "dismiss", "reason": "forged"},
+                    follow_redirects=False)
+    assert r.status_code == 403
+
+
+def test_review_post_via_cookie_with_wrong_csrf_token_is_rejected(
+        client, finding_setup, identities):
+    client.post("/login", data={"credential": identities["supervisor_token"]},
+                follow_redirects=False)
+    r = client.post(f"/findings/{finding_setup}/review",
+                    data={"action": "dismiss", "reason": "forged",
+                          "csrf_token": "not-the-real-token"},
+                    follow_redirects=False)
+    assert r.status_code == 403
+
+
+def test_review_post_via_bearer_header_needs_no_csrf_token(
+        client, finding_setup, identities):
+    """Header-authenticated requests (the CLI/API path) are
+    structurally immune to CSRF — a forged cross-site request cannot
+    set a custom Authorization header — so they must not require the
+    cookie-only csrf_token."""
+    r = client.post(
+        f"/findings/{finding_setup}/review",
+        headers={"Authorization": f"Bearer {identities['supervisor_token']}"},
+        data={"action": "dismiss", "reason": "via header"},
+        follow_redirects=False)
+    assert r.status_code == 303
 
 
 def test_login_with_bad_credential_shows_error_not_a_session(client):

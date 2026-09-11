@@ -183,21 +183,52 @@ def test_missing_escalation_via_linked_case():
                    for f in batch.findings)
 
 
-def test_missing_escalation_does_not_fire_when_escalations_file_missing():
-    """The engine refuses to claim 'critical alerts lack escalations'
-    when the escalations file was not submitted — the absence is a
-    data-completeness problem, not a conduct problem. The
-    negative_space.missing_file.escalations finding is the right
-    thing in this case."""
+def test_missing_escalation_fires_with_attenuated_confidence_when_escalations_file_missing():
+    """Fixed: the module's own docstring and the worker's inline
+    comment both say a critical alert with no escalation must still
+    be flagged when the escalations file itself was never submitted
+    ("every alert trivially has no escalation record" in that case)
+    — just with attenuated effect/confidence, alongside (not instead
+    of) the missing_file.escalations data-completeness finding. The
+    code previously gated on `completeness["escalations"]` being
+    True, which silently suppressed this signal in exactly the case
+    the comment said it should fire — the opposite of the documented
+    intent, and a real bug independent of any test fixture."""
     a = _alert(id="A1", severity="critical", closed=BASE + 100)
     ds = _ds(alerts=[a],
               submitted=("alerts", "cases", "investigation_steps",
                           "dispositions", "assets"))  # no escalations
     batch = _eval(NegativeSpaceWorker(), ds)
-    assert not any(f.rule_or_category == "negative_space.missing_escalation"
-                   for f in batch.findings)
+    esc_finding = next(
+        (f for f in batch.findings
+         if f.rule_or_category == "negative_space.missing_escalation"), None)
+    assert esc_finding is not None, (
+        "missing_escalation must still fire when the escalations file "
+        "is absent — it just does so with lower effect/confidence")
+    assert esc_finding.effect == pytest.approx(0.3), (
+        "attenuated effect (0.3) when the escalations category was "
+        "never submitted, vs. 0.6 when it was submitted but this "
+        "specific alert has no record")
+    assert esc_finding.confidence.evidence_completeness == pytest.approx(0.0)
+    # Coexists with the data-completeness finding — both are true and
+    # both matter to a reviewer.
     assert any(f.rule_or_category == "negative_space.missing_file.escalations"
                for f in batch.findings)
+
+
+def test_missing_escalation_effect_is_higher_when_file_is_present():
+    """Contrast case: when escalations *was* submitted and a specific
+    critical alert simply has no record in it, effect is the higher
+    0.6 — a stronger signal than the file-absent case above, since
+    here we know escalation genuinely didn't happen for this alert."""
+    a = _alert(id="A1", severity="critical", closed=BASE + 100)
+    ds = _ds(alerts=[a])  # escalations file submitted (default), just empty
+    batch = _eval(NegativeSpaceWorker(), ds)
+    esc_finding = next(
+        f for f in batch.findings
+        if f.rule_or_category == "negative_space.missing_escalation")
+    assert esc_finding.effect == pytest.approx(0.6)
+    assert esc_finding.confidence.evidence_completeness == pytest.approx(1.0)
 
 
 def test_high_severity_not_escalation_negative_space_signal():

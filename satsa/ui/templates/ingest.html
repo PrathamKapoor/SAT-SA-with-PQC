@@ -33,6 +33,7 @@
   <div class="section-num">01 / Scope</div>
   <h2>Entity and assessment period</h2>
   <form method="post" action="/ingest" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
     <label for="entity_name">Entity name (CSE identifier)</label>
     <input type="text" id="entity_name" name="entity_name" placeholder="ACME-BANK" required {{ 'disabled' if not can_ingest }}>
 
@@ -82,7 +83,7 @@
     through the real normalization pipeline (column-alias-tolerant — e.g.
     <code>AlertID</code>/<code>priority</code>/<code>host</code> resolve the
     same as <code>native_id</code>/<code>severity</code>/<code>asset_id</code>),
-    and immediately runs the full 14-worker analysis. You'll land on the new
+    and immediately runs the full 16-worker analysis. You'll land on the new
     entity's risk page with real, evidence-cited findings — not a template.
   </p>
 </section>

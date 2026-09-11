@@ -10,7 +10,7 @@ committed demo dataset and uses only the product's own UI.
 git clone <repo>
 cd TRUST-SAT
 pip install -e .
-python -m pytest tests/ -q    # 717 passed, 17 skipped, 0 failed
+python -m pytest tests/ -q    # release acceptance requires 0 failed
 ```
 
 ## Start the UI

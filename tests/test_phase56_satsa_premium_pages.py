@@ -58,31 +58,36 @@ def test_architecture_page_renders(client_with_demo):
         assert marker in body
 
 
-def test_architecture_page_lists_26_agents(client_with_demo):
+def test_architecture_page_lists_32_agents(client_with_demo):
     r = client_with_demo.get("/architecture")
     assert r.status_code == 200
     body = r.text
     assert "9 retained MLOps" in body
-    assert "17 SAT-SA supervisory" in body
-    # All 17 SAT-SA agents are present
+    assert "23 SAT-SA supervisory" in body
+    # All 23 SAT-SA agents are present
     for agent_id in [
-        "satsa.ingest", "satsa.normalize", "satsa.execution_gap",
-        "satsa.negative_space", "satsa.anomaly", "satsa.peer_benchmark",
+        "satsa.entity_asset_resolution", "satsa.ingest", "satsa.normalize",
+        "satsa.execution_gap", "satsa.negative_space",
+        "satsa.workflow_reconstruction", "satsa.anomaly",
+        "satsa.peer_benchmark",
         "satsa.coverage_gap", "satsa.drift",
         "satsa.cross_entity_insights", "satsa.case_similarity",
-        "satsa.evidence_completeness", "satsa.fusion",
+        "satsa.evidence_completeness", "satsa.correlation_fusion",
+        "satsa.fusion",
         "satsa.prioritization", "satsa.recommendation",
         "satsa.review_workflow", "satsa.trust_provenance",
+        "satsa.evidence_assembly", "satsa.meta_audit",
+        "satsa.report_generation",
         "satsa.validation",
     ]:
         assert agent_id in body
 
 
-def test_agents_page_renders_26_agents(client_with_demo):
+def test_agents_page_renders_32_agents(client_with_demo):
     r = client_with_demo.get("/agents")
     assert r.status_code == 200
-    assert "26 agents" in r.text
-    # All 9 MLOps and 17 SAT-SA ids are listed
+    assert "32 agents" in r.text
+    # All 9 MLOps and 23 SAT-SA ids are listed
     for agent_id in [
         "mlops.data", "mlops.performance", "mlops.security",
         "mlops.quantum", "mlops.redteam",

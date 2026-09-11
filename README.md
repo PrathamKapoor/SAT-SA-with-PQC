@@ -67,18 +67,23 @@ supervisory agent fabric → Detect/Correlate/Assess → risk findings →
 bounded recommendations → **human decision** → recorded action, all over
 the TRUST-SAT integrity foundation.
 
-## The 26-agent model
+## The 32-agent model
 
-26 agents is a consequence of responsibility separation, not a target:
+32 agents is a consequence of responsibility separation, not a target
+(grown from 26 in phase P25, then 31 to 32 in phase P26 — see
+`docs/AGENT_INVENTORY.md` for the full roster and why each addition
+was real, not decorative):
 
 - **9 retained MLOps agents** (`qsmlops/`): Data, Performance, Security,
   QuantumSecurity, RedTeam, Governance, IncidentResponse, Optimization,
   TrainingOptimization. Unchanged; they govern the ML platform itself.
-- **17 SAT-SA supervisory agents** (`satsa/`): Ingestion, Normalization,
-  ExecutionGap, NegativeSpace, Anomaly, PeerBenchmark, CoverageGap,
+- **23 SAT-SA supervisory agents** (`satsa/`): EntityAssetResolution,
+  Ingestion, Normalization, ExecutionGap, NegativeSpace,
+  WorkflowReconstruction, Anomaly, PeerBenchmark, CoverageGap,
   Drift, CrossEntityInsights, CaseSimilarity, EvidenceCompleteness,
-  Fusion, Prioritization, Recommendation, ReviewWorkflow, TrustProvenance,
-  Validation.
+  CorrelationSignalFusion, EntityRiskScoring (formerly "Fusion"),
+  Prioritization, Recommendation, ReviewWorkflow, TrustProvenance,
+  EvidenceAssembly, MetaAudit, ReportGeneration, Validation.
 
 Every agent implements the common contract `observe(context) →
 Observation` with severity, confidence, scope, subjects, evidence_refs,
@@ -227,6 +232,19 @@ Per-layer + composition, never one accuracy number:
 - **offline guarantee**, **scaling benchmark** (5/10/25/50 CSE),
   **peer robustness**, **trust stress** (every mutation rejected or
   classified).
+- **public-dataset benchmark framework** (`public_benchmarks/`): 12
+  controlled scenarios, each proven to trigger its declared detector
+  family through the real pipeline (known/permitted cross-detector
+  side effects are documented, not suppressed — see
+  `docs/PUBLIC_BENCHMARKS.md`). The adapters are schema-compatible
+  with CIC-IDS2017/Splunk BOTS but have **not** been run against the
+  actual downloaded dataset files in this environment — every
+  scenario here runs on hand-built, explicitly-labeled sample rows.
+  Read `docs/PUBLIC_BENCHMARKS.md` before citing this — it draws the
+  exact line between "validated ingestion/detection mechanics on
+  schema-compatible sample data" and "validated against real SOC
+  investigation behavior" (the latter remains explicitly not
+  claimed).
 
 ## UI
 
@@ -259,10 +277,10 @@ satsa/                 # SAT-SA supervisory analytics (the product)
   store/               # SQLite repositories, canonical dataset
   domain/              # entities, evidence, runs, workflow records
   contracts/           # worker + orchestration contracts
-  analysis/            # 14 workers, run service, risk, prioritize,
+  analysis/            # 16 workers, run service, risk, prioritize,
                        # recommend, review, trust, drift, insights,
                        # similarity, synth, validate, benchmark, report
-  supervisor/          # 26-agent registry + Observe→Reason→Act→Verify→Learn
+  supervisor/          # 32-agent registry + Observe→Reason→Act→Verify→Learn
   security.py          # identity/RBAC wiring for the UI + CLI
   ui/                  # FastAPI app, templates (incl. /login, /ingest), demo loader
   cli.py               # sat-sa entry point (incl. `doctor`)
@@ -270,10 +288,18 @@ qsmlops/               # reusable MLOps trust infrastructure (retained):
                        # crypto (ML-DSA/ML-KEM/SHA3), evidence ledger,
                        # passports, registry, identity/RBAC, 9 agents,
                        # supervisor, pipeline
-evaluation/            # workload-reduction / prioritization-lift experiment,
-                       # independent of the detectors it measures
-tests/                 # 930+ tests, incl. per-layer, e2e, offline, trust stress,
-                       # auth/RBAC, tamper matrix, fresh-database reality tests
+evaluation/            # workload-reduction/prioritization-lift experiment,
+                       # baselines (z-score/MAD/IQR/random/severity-only),
+                       # ablation study -- all independent of the detectors
+                       # they measure
+public_benchmarks/     # CIC-IDS2017/Splunk BOTS schema-compatible
+                       # adapter framework + 12 workflow scenarios
+                       # -- see docs/PUBLIC_BENCHMARKS.md for
+                       # exactly what this does and does not validate
+tests/                 # per-layer, e2e, offline, trust stress, auth/RBAC,
+                       # tamper matrix, fresh-database reality tests,
+                       # public-benchmark scenario proofs -- see `pytest
+                       # tests/ -q` for the current count (see Testing)
 scripts/               # demo dataset builder, scaling benchmark, SoftHSM2
                        # bootstrap, serve_ui.py (real UI launcher)
 docs/                  # phase docs, roadmap status, deployment, demo runbook,
@@ -320,7 +346,7 @@ logic.
 ## Testing
 
 ```bash
-python -m pytest tests/ -q        # full suite (930+, ~5-8 min)
+python -m pytest tests/ -q        # full suite (1000+, ~5-10 min)
 python -m compileall satsa qsmlops scripts tests
 ```
 

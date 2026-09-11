@@ -1,4 +1,6 @@
-"""Phase P11 — generalized supervisor engine + 17-agent registry.
+"""Phase P11 — generalized supervisor engine + SAT-SA agent registry
+(originally 17 agents; extended to 22 in phase P25 — see
+docs/AGENT_INVENTORY.md).
 
 The roadmap explicitly states:
 
@@ -12,9 +14,9 @@ This test verifies:
    DecisionContext.
 2. The MLOps and SAT-SA vocabularies are distinct, both loadable,
    and the engine refuses unknown vocabularies.
-3. The 17-agent SAT-SA registry is present, every agent has a
-   distinct id, and there are exactly 26 agents total (9 retained
-   MLOps + 17 SAT-SA).
+3. The 23-agent SAT-SA registry is present, every agent has a
+   distinct id, and there are exactly 32 agents total (9 retained
+   MLOps + 23 SAT-SA).
 4. A SAT-SA decision requires human authority (no autonomous
    ``ACCEPT`` / ``CLOSE_REVIEW``).
 5. The recommendation engine's bounded actions map to SAT-SA
@@ -32,15 +34,27 @@ from satsa.supervisor import (
 )
 
 
-def test_agent_registry_has_26_agents():
-    """9 retained MLOps + 17 SAT-SA = 26 agents."""
+def test_agent_registry_has_32_agents():
+    """9 retained MLOps + 23 SAT-SA = 32 agents.
+
+    Grew from the original 26 (9 + 17) in phase P25: entity_asset_
+    resolution, workflow_reconstruction, evidence_assembly, meta_audit
+    added as genuinely new distinct responsibilities, and
+    report_generation formally registered (real code — satsa/analysis/
+    report.py — that had never been added to the roster). Grew again
+    to 32 (9 + 23) in phase P26: correlation_fusion split out from
+    entity risk scoring as its own distinct cross-finding
+    corroboration step (satsa/analysis/correlation.py). Per this
+    project's own stated principle, the count grows honestly when
+    real, distinct capability is added; it is never held at a round
+    number by omission."""
     assert len(RETAINED_MLOPS_AGENTS) == 9
-    assert len(SATSA_AGENTS) == 17
-    assert len(AGENT_REGISTRY) == 26
+    assert len(SATSA_AGENTS) == 23
+    assert len(AGENT_REGISTRY) == 32
     families = {"mlops": 0, "satsa": 0}
     for a in AGENT_REGISTRY.values():
         families[a.family] += 1
-    assert families == {"mlops": 9, "satsa": 17}
+    assert families == {"mlops": 9, "satsa": 23}
 
 
 def test_agent_ids_unique():
@@ -82,6 +96,12 @@ def test_satsa_agents_correspond_to_roadmap_responsibilities():
         "satsa.prioritization", "satsa.recommendation",
         "satsa.review_workflow", "satsa.trust_provenance",
         "satsa.validation",
+        # phase P25 agent-expansion additions:
+        "satsa.entity_asset_resolution", "satsa.workflow_reconstruction",
+        "satsa.evidence_assembly", "satsa.meta_audit",
+        "satsa.report_generation",
+        # phase P26 addition:
+        "satsa.correlation_fusion",
     }
     actual = {a.agent_id for a in SATSA_AGENTS}
     assert actual == expected
@@ -164,9 +184,9 @@ def test_engine_rejects_unknown_vocabulary():
 
 def test_list_agents_filters_by_family():
     all_a = list_agents()
-    assert len(all_a) == 26
+    assert len(all_a) == 32
     satsa_a = list_agents(family="satsa")
-    assert len(satsa_a) == 17
+    assert len(satsa_a) == 23
     mlops_a = list_agents(family="mlops")
     assert len(mlops_a) == 9
     with pytest.raises(ValueError):

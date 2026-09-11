@@ -154,10 +154,15 @@ class NegativeSpaceWorker(AnalyticalWorker):
                      if a.mapped_severity == "critical"
                      and a.id not in esc_alert_ids
                      and not any(c in esc_case_ids for c in (a.case_refs or []))]
-            if unesc and completeness["escalations"]:
-                # Note: if escalations was *not* submitted, we still flag
-                # this — but with a stronger limitations note via the
-                # effect attenuation below.
+            if unesc:
+                # If escalations was *not* submitted, we still flag this
+                # — every critical alert trivially has "no escalation
+                # record" when the whole category is absent — but with
+                # attenuated effect/confidence below, since this is also
+                # separately covered by negative_space.missing_file.
+                # escalations (a pure data-completeness finding) and we
+                # cannot distinguish "no escalation happened" from "no
+                # escalation was ever recorded" without the file.
                 effect = (0.6 if completeness["escalations"] else 0.3)
                 findings.append(Finding(
                     observation_id="",

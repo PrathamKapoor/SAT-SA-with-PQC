@@ -15,7 +15,7 @@ Failed: 0
 - [executed_real] R4/R5.ML-DSA-65: ML-DSA-65 passport: sign+verify+tamper PASS
 - [executed_real] R4/R5.ML-DSA-87: ML-DSA-87 passport: sign+verify+tamper PASS
 - [executed_real] R7.roundtrip: passport serialize+reload+verify PASS
-- [executed_real] R6: ML-DSA-65 key persisted across KeyStore recreation (key_id=alice-ML-DSA-65-be10...)
-- [executed_real] R6.process: ML-DSA-65 passport verified in fresh process (key_id=alice-ML-DSA-65-4569...)
+- [executed_real] R6: ML-DSA-65 key persisted across KeyStore recreation (key_id=alice-ML-DSA-65-ca49...)
+- [executed_real] R6.process: ML-DSA-65 passport verified in fresh process (key_id=alice-ML-DSA-65-3d64...)
 - [executed_real] R1.capability: ML-DSA provider is dilithium_py.ml_dsa (FIPS 204 reference impl)
 - [executed_real] R1.sizes: All ML-DSA key/sig sizes match FIPS 204

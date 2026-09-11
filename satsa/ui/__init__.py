@@ -65,6 +65,7 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
     identity_service = satsa_security.build_identity_service(
         db, ledger_dir=identity_ledger_dir)
     app.state.identity_service = identity_service
+    app.state.login_rate_limiter = satsa_security.LoginRateLimiter()
 
     app.mount("/static", StaticFiles(directory=str(HERE / "static")),
               name="static")
@@ -188,6 +189,7 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
 
     @app.get("/findings/{finding_id}", response_class=HTMLResponse)
     def finding_detail(finding_id: str, request: Request):
+        from satsa.analysis.evidence_assembly import assemble_explanation
         f = _finding_row(finding_id)
         obs = _row("SELECT * FROM satsa_observations WHERE id=?",
                    (f["observation_id"],))
@@ -198,14 +200,15 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
                       (ref,))
             if sr:
                 evidence.append(dict(sr))
-        confidence = json.loads(f.get("confidence_json") or "{}")
         reviews = svc.review_history(finding_id)
-        from satsa.analysis.recommend import recommend
-        rec = recommend(f)
+        bundle = assemble_explanation(
+            f, evidence_records=evidence, observation=obs)
         return TEMPLATES.TemplateResponse(request, "finding_detail.html", {
             "sat_version": SATSA_VERSION, "finding": f, "observation": obs,
-            "evidence": evidence, "confidence": confidence,
-            "reviews": reviews, "recommendation": rec,
+            "evidence": evidence, "confidence": bundle.confidence,
+            "reviews": reviews, "recommendation": bundle.recommendation,
+            "explanation": bundle,
+            "csrf_token": request.cookies.get(satsa_security.CSRF_COOKIE_NAME, ""),
         })
 
     @app.post("/findings/{finding_id}/review")
@@ -220,6 +223,8 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
         principal = satsa_security.require(
             identity_service, request, DECISION_RECORD)
         form = await request.form()
+        if not satsa_security.verify_csrf(request, form.get("csrf_token", "")):
+            raise HTTPException(403, "missing or invalid CSRF token")
         action = form.get("action", "").strip()
         reason = form.get("reason", "").strip()
         if action not in ("confirm", "dismiss", "escalate",
@@ -239,6 +244,7 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
             action=action, reason=reason,
             finding_content_digest=live_digest,
             previous_revision_id=prev_id,
+            trust_key_dir=app.state.trust_key_dir,
         )
         # redirect back to the finding page
         from fastapi.responses import RedirectResponse
@@ -256,6 +262,15 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
     @app.post("/login")
     async def login_submit(request: Request):
         from fastapi.responses import RedirectResponse
+        # Rate-limit by client address before touching the identity
+        # service at all — mitigates credential brute-forcing (a
+        # forged/guessed token is otherwise a free, unlimited-attempt
+        # oracle). See satsa.security.LoginRateLimiter for scope.
+        client_key = request.client.host if request.client else "unknown"
+        if not app.state.login_rate_limiter.check(client_key):
+            return RedirectResponse(
+                url="/login?error=too+many+attempts%2C+try+again+shortly",
+                status_code=303)
         form = await request.form()
         token = (form.get("credential") or "").strip()
         try:
@@ -263,12 +278,18 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
         except Exception:
             return RedirectResponse(
                 url="/login?error=invalid+credential", status_code=303)
+        app.state.login_rate_limiter.reset(client_key)
         resp = RedirectResponse(url="/", status_code=303)
         # HttpOnly: not readable by page JS, mitigating token theft via
         # XSS. Not marked Secure since this is an air-gapped deployment
         # typically served over plain HTTP on localhost/LAN, not TLS.
         resp.set_cookie(
             satsa_security.COOKIE_NAME, token,
+            httponly=True, samesite="lax", path="/")
+        # A fresh CSRF token per login, in its own HttpOnly cookie —
+        # see satsa.security.verify_csrf for the double-submit design.
+        resp.set_cookie(
+            satsa_security.CSRF_COOKIE_NAME, satsa_security.generate_csrf_token(),
             httponly=True, samesite="lax", path="/")
         return resp
 
@@ -277,6 +298,7 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
         from fastapi.responses import RedirectResponse
         resp = RedirectResponse(url="/login", status_code=303)
         resp.delete_cookie(satsa_security.COOKIE_NAME, path="/")
+        resp.delete_cookie(satsa_security.CSRF_COOKIE_NAME, path="/")
         return resp
 
     @app.get("/benchmarks", response_class=HTMLResponse)
@@ -476,6 +498,7 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
                               "satsa.case_similarity",
                               "satsa.drift",
                               "satsa.evidence_completeness",
+                              "satsa.correlation_fusion",
                           }],
             "Assess": [a for a in SATSA_AGENTS
                         if a.agent_id in {
@@ -535,6 +558,7 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
         return TEMPLATES.TemplateResponse(request, "ingest.html", {
             "sat_version": SATSA_VERSION, "error": error,
             "can_ingest": can_ingest,
+            "csrf_token": request.cookies.get(satsa_security.CSRF_COOKIE_NAME, ""),
         })
 
     @app.post("/ingest")
@@ -548,6 +572,8 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
         satsa_security.require(identity_service, request, ANALYSIS_RUN)
 
         form = await request.form()
+        if not satsa_security.verify_csrf(request, str(form.get("csrf_token") or "")):
+            raise HTTPException(403, "missing or invalid CSRF token")
         entity_name = str(form.get("entity_name") or "").strip()
         sector = str(form.get("sector") or "").strip()
         environment = str(form.get("environment") or "").strip()

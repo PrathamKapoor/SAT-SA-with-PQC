@@ -68,6 +68,12 @@ from satsa.analysis.workers import (
     RecurringWithoutRemediationWorker,
     RepeatedInvestigationThresholds,
     RepeatedInvestigationWorker,
+    DEFAULT_WORKFLOW_RECONSTRUCTION_POLICY,
+    WorkflowReconstructionThresholds,
+    WorkflowReconstructionWorker,
+    DEFAULT_ENTITY_ASSET_RESOLUTION_POLICY,
+    EntityAssetResolutionThresholds,
+    EntityAssetResolutionWorker,
     attach_baseline,
     compute_peer_baseline,
 )
@@ -120,12 +126,15 @@ def _default_workers(fast_closure_thresholds: FastClosureThresholds,
                     cross_entity_thresholds: CrossEntityInsightsThresholds | None = None,
                     similarity_thresholds: CaseSimilarityThresholds | None = None,
                     completeness_thresholds: EvidenceCompletenessThresholds | None = None,
+                    workflow_reconstruction_thresholds: WorkflowReconstructionThresholds | None = None,
+                    entity_asset_resolution_thresholds: EntityAssetResolutionThresholds | None = None,
                     ) -> list[AnalyticalWorker]:
     """The default worker set — execution gaps + negative space +
     anomaly + peer benchmark + coverage gap + drift +
     cross-entity insights + case similarity + evidence
-    completeness. Each subsequent phase appends to this list,
-    never overwrites it — registry ordering stays deterministic."""
+    completeness + workflow reconstruction + entity/asset
+    resolution. Each subsequent phase appends to this list, never
+    overwrites it — registry ordering stays deterministic."""
     return [
         FastClosureWorker(thresholds=fast_closure_thresholds),
         AckWithoutInvestigationWorker(
@@ -154,6 +163,12 @@ def _default_workers(fast_closure_thresholds: FastClosureThresholds,
             thresholds=similarity_thresholds or DEFAULT_CASE_SIMILARITY_POLICY),
         EvidenceCompletenessWorker(
             thresholds=completeness_thresholds or DEFAULT_EVIDENCE_COMPLETENESS_POLICY),
+        WorkflowReconstructionWorker(
+            thresholds=workflow_reconstruction_thresholds
+            or DEFAULT_WORKFLOW_RECONSTRUCTION_POLICY),
+        EntityAssetResolutionWorker(
+            thresholds=entity_asset_resolution_thresholds
+            or DEFAULT_ENTITY_ASSET_RESOLUTION_POLICY),
     ]
 
 
@@ -185,6 +200,8 @@ class RunService:
             cross_entity_thresholds: Optional[CrossEntityInsightsThresholds] = None,
             similarity_thresholds: Optional[CaseSimilarityThresholds] = None,
             completeness_thresholds: Optional[EvidenceCompletenessThresholds] = None,
+            workflow_reconstruction_thresholds: Optional[WorkflowReconstructionThresholds] = None,
+            entity_asset_resolution_thresholds: Optional[EntityAssetResolutionThresholds] = None,
             baselines: Optional[list[BaselineRef]] = None,
             policy: Optional[PolicyRef] = None,
             trust_key_dir: Optional[Path] = None,
@@ -207,7 +224,8 @@ class RunService:
                 negative_space_thresholds, anomaly_thresholds, peer_thresholds,
                 coverage_gap_thresholds, drift_thresholds,
                 cross_entity_thresholds, similarity_thresholds,
-                completeness_thresholds)
+                completeness_thresholds, workflow_reconstruction_thresholds,
+                entity_asset_resolution_thresholds)
         workers = list(workers)
         if not workers:
             raise ValueError("RunService.run requires at least one worker")
@@ -388,6 +406,17 @@ class RunService:
           Absent when there are no other entities with
           completed/partial runs yet in the same assessment
           (the first entity processed honestly abstains).
+
+        * ``previous_period_assets``: the sorted list of asset
+          ``native_id`` values submitted in the same prior
+          assessment ``previous_period`` refers to (empty list if
+          the prior assessment submitted no assets; absent
+          entirely under the same conditions ``previous_period``
+          is absent). Feeds
+          ``EntityAssetResolutionWorker``'s vanished-asset check
+          without a second dataset load — reuses the same
+          ``prior_dataset`` already loaded for KPI computation
+          above.
         """
         from satsa.analysis.drift import compute_kpis
         from satsa.analysis.insights import cross_entity_aggregate
@@ -412,6 +441,7 @@ class RunService:
                         prior.get("period_start") or 0.0):
                     prior = a
             if prior is not None:
+                prior_dataset = None
                 try:
                     prior_dataset = load_dataset(
                         self._db, entity_id, prior["id"])
@@ -430,6 +460,9 @@ class RunService:
                     "period_end": float(prior.get("period_end") or 0.0),
                     "metrics": prior_metrics or {},
                 }
+                if prior_dataset is not None:
+                    extras["previous_period_assets"] = sorted(
+                        {a.native_id for a in prior_dataset.assets})
 
         # ---- cross-entity aggregate (same assessment, other entities) ----
         try:

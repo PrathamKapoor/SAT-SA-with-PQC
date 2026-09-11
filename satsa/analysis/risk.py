@@ -41,6 +41,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Optional
 
+from satsa.analysis.correlation import CorrelationCluster, correlate_findings
+
 
 DIMENSION_WEIGHTS: dict[str, int] = {
     "execution_gap": 25,
@@ -102,6 +104,7 @@ class EntityRiskProfile:
     confidence_bucket: str
     dimensions: list  # list[DimensionRisk]
     weights: dict
+    correlation_clusters: list = field(default_factory=list)  # list[CorrelationCluster]
 
     def to_dict(self) -> dict:
         return {
@@ -110,6 +113,7 @@ class EntityRiskProfile:
             "confidence_bucket": self.confidence_bucket,
             "dimensions": [d.to_dict() for d in self.dimensions],
             "weights": dict(self.weights),
+            "correlation_clusters": [c.to_dict() for c in self.correlation_clusters],
         }
 
     def decomposition(self) -> dict:
@@ -173,12 +177,18 @@ def compute_entity_risk(engine, entity_id: str, *,
         " WHERE observation_id IN (SELECT id FROM satsa_observations WHERE run_id=?)"
         " ORDER BY created_at", (run_id,))
 
+    signal_findings = [f for f in finding_rows if f.get("state") == "signal"]
+
     by_dimension: dict[str, list] = {k: [] for k in DIMENSION_WEIGHTS}
-    for f in finding_rows:
-        if f.get("state") != "signal":
-            continue
+    for f in signal_findings:
         dim = _dimension_for(f.get("rule_or_category", ""))
         by_dimension[dim].append(f)
+
+    # Correlation & signal fusion: cluster signal findings that share
+    # a scoped subject, ahead of (and independent from) risk scoring.
+    # See satsa/analysis/correlation.py for why this is a distinct
+    # analytical step from the per-dimension aggregation below.
+    correlation_clusters = correlate_findings(signal_findings)
 
     dims: list[DimensionRisk] = []
     total = 0.0
@@ -224,4 +234,5 @@ def compute_entity_risk(engine, entity_id: str, *,
         total_score=min(TOTAL_WEIGHT, total),  # cap at 100
         confidence_bucket=_confidence_bucket(avg_conf),
         dimensions=dims, weights=dict(DIMENSION_WEIGHTS),
+        correlation_clusters=correlation_clusters,
     )

@@ -10,7 +10,7 @@ against a cohort baseline built from other entities in the same
 * the per-metric deviation rule and the per-metric output shape,
 * the "insufficient_data" behaviour when the peer cohort is too
   small (< min_peers),
-* the end-to-end run with the default worker set (14 workers now),
+* the end-to-end run with the default worker set (16 workers now),
 * a sanity check that the spec-style output (entity observed value,
   peer median, deviation, signal) is present and computed from
   real numbers.

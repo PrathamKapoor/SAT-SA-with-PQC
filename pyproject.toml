@@ -34,8 +34,28 @@ qsmlops = "qsmlops.cli:cli"
 sat-sa = "satsa.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["qsmlops*", "satsa*"]
+include = ["qsmlops*", "satsa*", "evaluation*", "public_benchmarks*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+
+[tool.coverage.run]
+source = ["satsa", "evaluation"]
+omit = ["*/__pycache__/*"]
+
+[tool.coverage.report]
+precision = 1
+skip_covered = false
+
+[tool.mypy]
+ignore_missing_imports = true
+# Gradually-typed codebase (see CHANGELOG.md / docs/roadmap-status.md
+# P26 addendum, checklist item 10): not run as a CI gate yet. Existing
+# type errors are in pre-P26 modules (satsa/analysis/run.py, trust.py,
+# workers/anomaly.py, workers/peer_benchmark.py,
+# domain/workflow.py — see the measured baseline in
+# docs/roadmap-status.md). Every module added in phase P26
+# (satsa/analysis/calibration.py, correlation.py, satsa/security.py,
+# evaluation/baselines/, evaluation/ablation/) is mypy-clean on its
+# own — verified, not assumed.

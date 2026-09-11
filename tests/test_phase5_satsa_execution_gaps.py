@@ -619,4 +619,6 @@ def test_workers_register_in_deterministic_order():
         "cross-entity-insights",
         "case-similarity",
         "evidence-completeness",
+        "workflow-reconstruction",
+        "entity-asset-resolution",
     ]

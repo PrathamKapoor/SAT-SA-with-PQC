@@ -51,6 +51,14 @@ ANALYSIS_RUN = "analysis.run"
 VALIDATION_RUN = "validation.run"
 TRUST_VERIFY = "trust.verify"
 REPORT_EXPORT = "report.export"
+CALIBRATION_APPROVE = "calibration.approve"  # phase P26: gate the
+# propose -> test -> approve -> deploy detector-threshold calibration
+# workflow (satsa.analysis.calibration). Testing a proposal against
+# labeled data only needs VALIDATION_RUN (already granted to analyst
+# and supervisor); approving/deploying a change to production
+# thresholds is restricted the same way DECISION_RECORD is — to the
+# supervisor, the terminal human authority — not the analyst who can
+# merely propose and test.
 
 ROLES: dict[str, frozenset[str]] = {
     # Full platform control for human administrators.
@@ -161,7 +169,7 @@ ROLES: dict[str, frozenset[str]] = {
         {
             FINDING_VIEW, EVIDENCE_VIEW, REVIEW_READ, REVIEW_CREATE,
             DECISION_RECORD, ANALYSIS_RUN, VALIDATION_RUN,
-            TRUST_VERIFY, REPORT_EXPORT,
+            TRUST_VERIFY, REPORT_EXPORT, CALIBRATION_APPROVE,
         }
     ),
     # Read-heavy oversight role: everything a supervisor can see, plus
