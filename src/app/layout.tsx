@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fontSans = Outfit({
   subsets: ["latin"],
+  variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const fontMono = JetBrains_Mono({
   subsets: ["latin"],
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
-  title: "Website Clone",
-  description: "Pixel-perfect website clone",
+  title: "Agent-Ready Sanity Kit for Next.js & Astro | The Content Architecture",
+  description:
+    "The agent-ready Sanity kit for Next.js and Astro. Six years of decisions committed: page builder, fetch layer, AGENTS.md, skills, MCP servers, llms.txt. Buy once, own it forever.",
 };
 
 export default function RootLayout({
@@ -23,11 +24,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en">
+      <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
+        {children}
+      </body>
     </html>
   );
 }
