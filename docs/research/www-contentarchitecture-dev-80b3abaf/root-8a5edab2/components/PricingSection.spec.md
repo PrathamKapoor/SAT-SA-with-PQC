@@ -18,7 +18,7 @@
      - the price row: a big price `span.inline-flex text-headline-20 leading-none`, then a compare-at price in `font-mono text-caption-10` with a strike line `span.pointer-events-none absolute inset-x-0 top-1/2 h-px bg-current`, then an optional third mono element (see the DOM)
   2. **Spec list** `ul.flex flex-1 flex-col gap-4 p-16 font-mono text-caption-10 uppercase lg:p-32 rounded-8 bg-black`, with `li.flex gap-24` → `span.text-dark-grey tabular-nums` num + `span.text-ghost-grey` text
   3. **CTA block** `div.flex flex-col gap-12 rounded-8 bg-black p-16 lg:p-32` → `CaButton variant="light" leftText rightText href`, plus any extra line in the DOM
-- **Price reel:** each digit is `span.relative inline-block overflow-hidden align-baseline`, containing `span.invisible` (the target digit) and `span.absolute inset-x-0 top-0 flex flex-col` with a column of 0–9.
+- **Price reel** (verified live: each digit column rolls from 0 to the target in ≈1s with a strong ease-out; the markup rows are `span.block` with inline `height:1em; line-height:1em`, and only the target row lacks `aria-hidden`): each digit is `span.relative inline-block overflow-hidden align-baseline`, containing `span.invisible` (the target digit) and `span.absolute inset-x-0 top-0 flex flex-col` with a column of 0–9.
   - On viewport enter, translate the column to `-{digit}em`, which needs `leading-[1em]` rows. Use transition 900ms with ease `cubic-bezier(0.23,1,0.32,1)` and a per-digit delay of 60ms.
   - The currency symbol stays static. Keep the `sr-only` full price. Reduced motion: no transition.
 - **Includes panel** `div.flex flex-col gap-16 rounded-8 bg-black p-16 text-white lg:col-span-12 lg:row-start-3 lg:p-32`:

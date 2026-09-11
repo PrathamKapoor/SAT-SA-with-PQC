@@ -74,7 +74,7 @@ Source of truth for exact class strings: `dom/*.html` (condensed live DOM). Toke
 - **Backdrop:** a GlyphField (background-only, non-interactive, 30fps, no entrance), with phrase `glyph-phrases.json → showcase`.
 - **Header:** H2 headline-10 "The work that gets remembered." plus body-20 with dotted-underline links (Awwwards, FWA, CSSDA).
 - **Grid:** 2 columns on lg of 16:9 cards. Each card is an **AsciiImage** (120×37, 64 levels, reveal on hover) with the real screenshot `<img>` stacked on top at `opacity-0` → `group-hover:opacity-100` (500ms ease-out). Below each card is its mono uppercase label. There are 11 cards.
-- Mobile: 1 column. The card nearest the viewport centre gets `data-active=true`, which reveals its image. *(Inferred from the `group-data-[active=true]` classes.)*
+- Mobile: 1 column. On touch devices (`pointer: coarse`), every card has `data-active=true`, so all screenshots are visible. *(Verified 2026-09-12.)*
 
 ## Reviews (#reviews, black)
 - Uses the same GlyphField backdrop as Showcase, with phrase `reviews`.
@@ -89,7 +89,7 @@ Source of truth for exact class strings: `dom/*.html` (condensed live DOM). Toke
   - price block: tag, "● AVAILABLE NOW" pill, then `€399` plus a struck-through `€549`
   - two numbered spec lines
   - a light split button [GET]=[ACCESS]
-  - The price digits roll into place (odometer reel 0–9) when they enter the viewport. *(Inferred from the reel markup "€ 0 1 2 … 9".)*
+  - The price digits roll from 0 to their value (≈1s ease-out) when they enter the viewport. *(Verified 2026-09-12.)*
 - **Includes panel:** a full-width black block titled "EVERY EDITION INCLUDES", listing numbered items in 2 CSS columns on lg.
 
 ## FAQ (#faq, black)
@@ -98,7 +98,7 @@ Source of truth for exact class strings: `dom/*.html` (condensed live DOM). Toke
 - **Accordion** on the right: rows read `Q.001 / QUESTION` (the number in white/40), and each has a 20px square `+`/`−` toggle. Q.001 is open by default.
   - Answers are body-20 white.
   - Rows are divided by `border-white/10`.
-  - A single item is open at a time, with a height transition. *(Inferred; verify against `dom/08-faq.html`.)*
+  - A single item is open at a time. There are 17 items; height and opacity transition over ≈350ms; the `+` bar rotates 90°. *(Verified 2026-09-12.)*
 
 ## Banner (off-white)
 - A DitherFrame titled "THE CONTENT ARCHITECTURE" containing a `<pre>` figlet (`/$$` font) of "The next 3 days / are yours." in white mono.
