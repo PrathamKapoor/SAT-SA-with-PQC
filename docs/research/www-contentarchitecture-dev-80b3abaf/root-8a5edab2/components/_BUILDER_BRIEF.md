@@ -17,7 +17,8 @@ You are building one piece of a Next.js 16 + React 19 + TypeScript (strict) + Ta
 
 ## 2. Shared primitives (import from `@/components/sites/www-contentarchitecture-dev-80b3abaf/shared/…`; do not edit them, report bugs instead)
 - `Odometer` — `<Odometer text="Features" />` renders the sr-only text plus the slot-machine glyph columns. The **ancestor** must carry `[--odometer-progress:0] motion-safe:hover:[--odometer-progress:1]`. In the DOM files, `<Odometer text="…"/>` marks where to use it.
-- `CaButton` — `<CaButton leftText="Get" rightText="access" variant="dark|light" showPulseDot href="/#pricing" />` is the split pill with connector. It also accepts `type`, `onClick`, `className`, `external` and `disabled`.
+- `EmailCapture` — `<EmailCapture copy={{label, placeholder, ctaText, ctaRightText?, successMessage, errorMessage}} buttonVariant="light" onSuccess? />` (CA newsletter form with validation + status line).
+- `CaButton` — (includes the live hover colours: light → white, dark → black-deep) `<CaButton leftText="Get" rightText="access" variant="dark|light" showPulseDot href="/#pricing" />` is the split pill with connector. It also accepts `type`, `onClick`, `className`, `external` and `disabled`.
 - `Connector` — `<Connector orientation="vertical|horizontal" length={26} className="text-black" />` is the 6px concave bridge.
 - `PulseDot` — `<PulseDot className="absolute top-8 right-8" size="size-6" />`.
 - `DitherFrame` — `<DitherFrame title="Common problems" titleRight={…} draggable innerClassName="…">body</DitherFrame>`: the frame, inner black window and 26px title bar. Its markup matches the DOM files' `rounded-8 p-6 … bg-black-deep` frame.
@@ -26,7 +27,7 @@ You are building one piece of a Next.js 16 + React 19 + TypeScript (strict) + Ta
 - `AsciiImage` — `<AsciiImage cells levels cols rows aspect label className />` for precomputed ASCII art; the type is `AsciiGrid`.
 - `DeferredMount` — `<DeferredMount placeholder={…} releaseMargin="100%" className>` for heavy children.
 - `GlyphField` and `SpiralScene` are WebGL scenes (other builders own them). Import and use them by their props; they currently render a solid-colour stub.
-- `CursorLabel` and `setupCursorTracking`; icons in `icons.tsx` (`LogoMark`, `TerminalIcon`, `SearchIcon`, `ChevronRightIcon`, `FolderIcon`, `FolderOpenIcon`, `ComponentFileIcon`, `CodeFileIcon`, `ConfigFileIcon`, `FileIcon`, `JsonFileIcon`, `TextFileIcon`, `CommitsIcon`). `<Icon id="svg-…"/>` in the DOM files maps to these via `docs/research/www-contentarchitecture-dev-80b3abaf/root-8a5edab2/source/svgs.json`.
+- `CursorLabel` and `setupCursorTracking`; icons in `icons.tsx` (`LogoMark`, `TerminalIcon`, `SearchIcon`, `ChevronRightIcon`, `FolderIcon`, `FolderOpenIcon`, `ComponentFileIcon`, `CodeFileIcon`, `ConfigFileIcon`, `FileIcon`, `JsonFileIcon`, `TextFileIcon`, `ImageFileIcon`, `CssFileIcon`, `CommitsIcon`). `<Icon id="svg-…"/>` in the DOM files maps to these via `docs/research/www-contentarchitecture-dev-80b3abaf/root-8a5edab2/source/svgs.json`.
 - Hooks in `hooks.ts`: `usePrefersReducedMotion`, `useIsDesktop`, `useIsTouchDevice`, `useInView(ref, {rootMargin, threshold, once})`, `useElementSize(ref)`, `useTypewriter(lines, {charDelay, lineDelay, startDelay, enabled})` → `{visibleChars[], activeRow, done}`.
 - `cn()` from `@/lib/utils` (tailwind-merge already knows the custom text sizes).
 - Lenis: `useLenis` from `lenis/react` (a root Lenis is mounted by `PageShell`).

@@ -17,7 +17,8 @@ body (off-white, flex-col)
    │   ├─ 08 FAQ         10552–12224    black; GlyphField backdrop; accordion       click
    │   ├─ 09 Banner      12224–12781    off-white; framed figlet                    static
    │   ├─ Minimap        fixed top-8 right-8 z-3 (lg top-16 right-16)               time (scan)
-   │   └─ LearnMore      fixed right-8 bottom-8 z-4 (lg right/bottom-16) → README drawer (dialog)
+   │   ├─ LearnMore      fixed right-8 bottom-8 z-4 (lg right/bottom-16) → README drawer (dialog)
+   │   └─ FloatingCapture fixed bottom-left z-50, newsletter popup after 12s (once per session)            time
    └─ footer  sticky bottom-0 z-0 bg-black px-16 py-72 lg:p-80 → SiteFooter (revealed as main ends)
 ```
 
@@ -34,14 +35,21 @@ Namespace: `src/components/sites/www-contentarchitecture-dev-80b3abaf/`
 | 01 | HeroSection.tsx | hero.ts | B4 |
 | 02 | ProblemsSection.tsx | problems.ts | B5 |
 | 03 | FeaturesSection.tsx | features.ts | B6 |
-| 04 | RepoSection.tsx (+ Repo*.tsx parts) | repo.ts | B7 |
+| 04 | RepoSection.tsx + repo/RepoSearch.tsx | repo.ts (data/ide.json) | B7d |
+| 04a | repo/RepoFileTree.tsx | — | B7a |
+| 04b | repo/RepoEditor.tsx + repo/highlight.tsx | — | B7b |
+| 04c | repo/RepoTerminal.tsx + terminal-engine.ts + CrashScreen.tsx | — | B7c |
 | 05 | ShowcaseSection.tsx | showcase.ts | B8 |
 | 06 | ReviewsSection.tsx | reviews.ts | B9 |
 | 07 | PricingSection.tsx | pricing.ts | B10 |
 | 08 | FaqSection.tsx | faq.ts | B11 |
 | 09/13 | BannerSection.tsx + SiteFooter.tsx | banner.ts, footer.ts | B12 |
-| 10–12 | Minimap.tsx + LearnMore.tsx (+ ReadmeDrawer) | learn-more.ts | B13 |
+| 10–12 | Minimap.tsx + LearnMore.tsx (+ ReadmeDrawer) + FloatingCapture.tsx | learn-more.ts, floating-capture.ts | B13 |
 
-Every section component exports `XxxContent` (its props contract) and `XxxSection({ content })`. The shared primitives in `shared/` were built by the foreman during the foundation phase: Odometer, CaButton, Connector, PulseDot, DitherFrame, Marquee, Reveal, AsciiImage, DeferredMount, PageShell, SmoothScroll, hooks, icons, and glyph-model.
+Every section component exports `XxxContent` (its props contract) and `XxxSection({ content })`. The shared primitives in `shared/` were built by the foreman during the foundation phase: Odometer, CaButton, EmailCapture, Connector, PulseDot, DitherFrame, Marquee, Reveal, AsciiImage, DeferredMount, PageShell, SmoothScroll, hooks, icons, and glyph-model.
 
 Assembly (foreman): `src/app/reference/contentarchitecture/page.tsx` renders `PageShell` with header = SiteNav, children = sections 01–09, overlays = Minimap + LearnMore, and footer = SiteFooter.
+
+Repo parts share `root-8a5edab2/repo/model.ts` (types + path helpers, foreman-owned); the three sub-components start as stubs with final props so B7a–d build in parallel.
+
+Easter egg: `sudo rm -rf /` → `y` in the IDE terminal ends in a full-screen BIOS overlay (`z-10000`, portal) — any key reloads the page.
