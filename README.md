@@ -1,15 +1,41 @@
 # SAT-SA — Supervisory Analytics Tool for SOC Assessment
 
-**SIH 26157 · NCIIPC.** A periodic, offline, evidence-driven supervisory
-analytics system supporting human examiners in identifying entities,
-controls, processes, investigations, and alert samples requiring
-supervisory attention.
+**Smart India Hackathon (SIH) 26157 · NCIIPC.** A periodic, offline,
+evidence-driven supervisory analytics system supporting human examiners in
+identifying entities, controls, processes, investigations, and alert samples
+requiring supervisory attention.
 
 SAT-SA turns structured CSE (Constituent Security Entity) submissions
 into evidence-backed supervisory intelligence: who needs attention, why,
 on what evidence, with what confidence — terminating in a human
 supervisor's recorded decision over cryptographically verified evidence
 (**TRUST-SAT**).
+
+## System identity and practical use
+
+- **Repository:** [SAT-SA-with-PQC](https://github.com/PrathamKapoor/SAT-SA-with-PQC)
+- **Packages:** `satsa` `0.16.0-phase52-ui` and `qsmlops` `0.1.0`
+- **Deployment model:** local, offline-first Python application with SQLite
+  evidence storage; it does not require a cloud account, SaaS connection, or
+  live SOC feed to run the committed demo.
+
+With this repository, an examiner or analyst can:
+
+1. launch a local FastAPI dashboard with a bootstrapped five-CSE demo dataset;
+2. run an end-to-end demonstration that ingests evidence, surfaces supervisory
+   findings, scores risk, records a review decision, and verifies its trust
+   chain;
+3. ingest CSV, JSON, JSONL, or SQLite submissions and operate the same
+   workflow from the `sat-sa` CLI;
+4. examine operational failures such as implausibly fast closures,
+   acknowledgement without investigation, missing escalation, and critical
+   assets with no observed alerts; and
+5. verify ML-DSA-65 signatures, canonical SHA3-256 digests, and the
+   append-only evidence ledger after a run.
+
+The committed demo and synthetic scenarios are suitable for local evaluation
+and demonstrations. They are not a claim that SAT-SA has processed NCIIPC,
+CIC-IDS2017, or Splunk BOTS production data.
 
 ## What this is — and is not
 
@@ -28,44 +54,30 @@ autonomous supervisory authority.
 
 ## Architecture
 
-```
-                         SAT-SA
-                           │
-               ┌───────────┴───────────┐
-               │                       │
-        SECURITY DATA             ML / ANALYTICS
-               │                       │
-               └───────────┬───────────┘
-                           │
-                  SUPERVISORY AGENTS
-                           │
-             ┌─────────────┼─────────────┐
-             │             │             │
-          DETECT       CORRELATE    ASSESS/REASON
-             │             │             │
-             └─────────────┼─────────────┘
-                           │
-                  THREAT / RISK FINDING
-                           │
-                     RECOMMENDATION
-                           │
-                   HUMAN SUPERVISOR
-                           │
-                     ACTION / DECISION
-                           │
-                        TRUST-SAT
-                           │
-        ┌──────────────────┼──────────────────┐
-        │                  │                  │
-   PQC SIGNATURES      PROVENANCE       HASH-CHAIN
-                                             │
-                                      EVIDENCE INTEGRITY
+```mermaid
+flowchart LR
+    Input[CSE submissions<br/>CSV · JSON · JSONL · SQLite] --> Ingest[Readers and normalizer<br/>canonical evidence records]
+    Ingest --> Workers[16 analytical workers<br/>execution gaps · negative space · anomalies]
+    Workers --> Correlate[Correlation and 7-dimension risk]
+    Correlate --> Queue[Prioritized findings and<br/>bounded recommendations]
+    Queue --> Review[Human examiner review<br/>confirm · reject · defer · escalate]
+    Review --> Ledger[TRUST-SAT evidence ledger<br/>SHA3-256 · ML-DSA-65]
+    Ledger --> Verify[Live-row and chain verification]
+
+    Ingest --> Store[(Local SQLite)]
+    Workers --> Store
+    Correlate --> Store
+    Review --> Store
+    Ledger --> Store
+    Store --> UI[FastAPI dashboard]
+    Store --> CLI[sat-sa CLI]
 ```
 
-The diagram is the product: Security Data + ML/Analytics feed the
-supervisory agent fabric → Detect/Correlate/Assess → risk findings →
-bounded recommendations → **human decision** → recorded action, all over
-the TRUST-SAT integrity foundation.
+The five layers are: (1) ingestion and normalization, (2) analytical workers
+and supervisory coordination, (3) correlation, risk, and prioritization, (4)
+TRUST-SAT evidence integrity, and (5) human presentation and terminal
+authority. See [the detailed SAT-SA architecture](docs/SATSA_SYSTEM_ARCHITECTURE.md)
+for component boundaries and the evidence flow.
 
 ## The 32-agent model
 
@@ -113,7 +125,7 @@ sources normalizes to equivalent canonical records.
 
 ## ML / analytics layer
 
-14 analytical workers in the default run: 6 execution-gap detectors
+16 analytical workers in the default run: 6 execution-gap detectors
 (fast closure, ack-without-investigation, critical-without-escalation,
 repeated investigation, recurring-without-remediation, metric gaming),
 negative space (6 rules), robust anomaly statistics, peer benchmarking
@@ -252,7 +264,7 @@ Per-layer + composition, never one accuracy number:
 FastAPI + Jinja2 + vanilla JS, all local: Overview (command center) ·
 Entities · Entity detail · Findings · Finding detail (WHAT/WHY/EVIDENCE/
 CONFIDENCE/LIMITATIONS/NEXT/TRUST) · Review queue · Benchmarks ·
-Analytics pipeline · Security data · Decisions · TRUST-SAT · Agents (26) ·
+Analytics pipeline · Security data · Decisions · TRUST-SAT · Agents ·
 Architecture · System · Reports · Ingest (submit your own CSE data).
 
 ## Authentication
@@ -338,11 +350,11 @@ logic.
   reproduced in a single-entity fixture (peer cohort / multi-period
   baseline / threshold-edge scenarios) and are reported as
   `not_executed` with a specific reason.
-- **CI and the Dockerfile are unverified** — both are written and
-  consistent with the commands verified working locally, but neither
-  has actually executed on GitHub Actions or a real Docker daemon.
-  The native (non-container) install/run path in `docs/deployment.md`
-  *has* been verified live. See `docs/FINAL-READINESS-AUDIT.md`.
+- **Release-gate status must be checked from GitHub Actions** — the Docker
+  image build and `sat-sa doctor` smoke command have run successfully on a
+  GitHub-hosted Ubuntu runner. The workflow is not release-clear while any
+  required matrix job is failing; consult the current Actions run rather than
+  treating this README as a live status dashboard.
 
 ## Testing
 
