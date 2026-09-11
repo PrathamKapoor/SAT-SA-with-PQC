@@ -10,11 +10,6 @@ name: CI
 # runs), the same distinction the project already draws for local
 # `pip install` during deployment (docs/deployment.md).
 #
-# This workflow file is committed locally only. Per this repository's
-# standing instruction, nothing in this session pushes it (or
-# anything else) to GitHub — it will not actually execute until a
-# human explicitly pushes the branch.
-
 on:
   push:
     branches: ["**"]
@@ -91,3 +86,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
           python -c "import satsa, qsmlops; import satsa.cli, satsa.ui, satsa.service; print('import ok:', satsa.__version__)"
+
+  docker-build-smoke:
+    name: Docker build/smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build --pull --tag trust-sat:ci .
+      - name: Run SAT-SA CLI smoke
+        run: >-
+          docker run --rm --entrypoint sat-sa trust-sat:ci
+          --db /tmp/satsa.db --trust-key-dir /tmp/satsa-keys doctor
