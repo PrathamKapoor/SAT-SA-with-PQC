@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
-import { Outfit, JetBrains_Mono } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const fontSans = Outfit({
+const fontSans = Geist({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-geist-sans",
 });
 
-const fontMono = JetBrains_Mono({
+const fontMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  variable: "--font-geist-mono",
 });
 
 export const metadata: Metadata = {
-  title: "Agent-Ready Sanity Kit for Next.js & Astro | The Content Architecture",
+  title: "SAT-SA — Supervisory Analytics Tool for SOC Assessment",
   description:
-    "The agent-ready Sanity kit for Next.js and Astro. Six years of decisions committed: page builder, fetch layer, AGENTS.md, skills, MCP servers, llms.txt. Buy once, own it forever.",
+    "A periodic, offline, evidence-driven supervisory analytics system supporting human examiners, with post-quantum trusted evidence (TRUST-SAT).",
 };
 
 export default function RootLayout({
@@ -24,10 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${fontSans.variable} ${fontMono.variable} antialiased`}>
-        {children}
-      </body>
+    <html lang="en" className={`${fontSans.variable} ${fontMono.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }
