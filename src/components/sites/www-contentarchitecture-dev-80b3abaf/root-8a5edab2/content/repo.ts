@@ -26,7 +26,8 @@ export const repoContent: RepoContent = {
     ariaLabel: edition.ariaLabel,
     repo: edition.repo,
     tree: edition.tree as unknown as RepoFolderNode,
-    cta: { label: ide.cta.label, note: ctaNote(edition.id), href: ide.cta.link.href },
+    // In-page anchor: the live "/#pricing" would leave the clone's route (/reference/contentarchitecture).
+    cta: { label: ide.cta.label, note: ctaNote(edition.id), href: "#pricing" },
   })),
   labels: {
     hideTerminal: "Hide terminal",
