@@ -4,7 +4,7 @@
 - **Target files:** `…/root-8a5edab2/ShowcaseSection.tsx` (exports `ShowcaseContent` and `ShowcaseSection({ content })`) and `…/root-8a5edab2/content/showcase.ts` (`showcaseContent`).
 - **DOM reference:** `docs/research/www-contentarchitecture-dev-80b3abaf/root-8a5edab2/dom/05-showcase.html`.
 - **Screenshot:** `…/design-references/…/root-8a5edab2/06-showcase-1440.jpeg`.
-- **Interaction model:** hover (desktop: the ASCII card reveals the real screenshot), plus scroll position (mobile: the centred card becomes active).
+- **Interaction model:** hover (desktop: the ASCII card reveals the real screenshot), plus input capability (touch devices show every screenshot).
 
 ## Structure (verbatim classes)
 - **Section:** `div#showcase relative isolate bg-black px-16 py-72 text-white lg:px-80 lg:py-160`.
@@ -18,7 +18,7 @@
     - `<AsciiImage {...grid} label={label} className="absolute inset-0" />`
     - `<img className="max-w-full pointer-events-none absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100 group-data-[active=true]:opacity-100 motion-reduce:transition-none" aria-hidden alt>`. Copy the exact class string from the DOM.
   - `h3.font-mono text-caption-20 uppercase` (label), in Reveal.
-- **Mobile active card:** on touch/coarse pointers, set `data-active="true"` on the item whose centre is nearest the viewport centre (scroll listener, rAF-throttled). Only on `(pointer: coarse)`; on desktop, hover handles it.
+- **Touch devices (verified live with touch emulation at 390px):** on `(pointer: coarse)` EVERY card carries `data-active="true"` (all 11, including ones never scrolled into view), so the real screenshots are always visible and the ASCII layer only shows on hover-capable devices. Set it from `matchMedia("(pointer: coarse)")` after mount, and listen for changes. On fine pointers, render `data-active="false"`; hover handles the reveal.
 
 ## Content (CA)
 - title: "The work that gets remembered."
@@ -43,5 +43,5 @@
 - Item type: `{ label: string; href?: string; ascii: AsciiGrid; image: { src: string; alt: string } }`.
 
 ## Responsive
-- **Mobile:** 1 column, px-16, the card nearest the centre shows its image.
+- **Mobile:** 1 column, px-16. On touch devices, every card shows its image.
 - **Desktop:** 2 columns, gap-x-24, gap-y-64, px-80.
