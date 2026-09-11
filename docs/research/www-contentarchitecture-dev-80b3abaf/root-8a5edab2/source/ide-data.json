@@ -1,0 +1,964 @@
+{
+ "next": {
+  "readme": "# The Content Architecture (Next.js)\n\nA modern Next.js 16.3 starter with Sanity CMS integration: content model, in-app Studio, and product features, running on a Next.js App Router frontend.\n\n## Features\n\n- Next.js 16.3 with the App Router and Server Components: the Studio and the API routes live on the same origin as the site\n- Sanity CMS with the Studio mounted at `/studio`\n- The pages model: a catch-all route renders any `page` document by its `uri`, homepage included\n- Reusable page builder (text, media, headline, CTA, contact form sections) rendered by self-fetching Server Components\n- Rich text via Portable Text with media blocks, inline media, links, colors\n- Media pipeline: Sanity images (responsive srcset + LQIP), Mux video, native video, Lottie, and Rive\n- Draft mode with the Presentation tool, Sanity Live, and Visual Editing overlays\n- SEO helpers: per-page metadata with Site singleton fallbacks, og:image cropping, per-scheme favicons plus a stable `/favicon.ico` for Google, JSON-LD, CMS-driven sitemap and robots\n- **Cache Components** ([the modern Next.js caching model](https://nextjs.org/docs/app/getting-started/cache-components)): every page prerenders into a static shell with a one-year lifetime, and publishing in the Studio is the only revalidation signal (webhook + tags, no timers). See [`docs/sanity/revalidation-and-caching.md`](docs/sanity/revalidation-and-caching.md).\n- **HTTP Basic Auth (optional)**: `proxy.ts` gates the site or individual URLs using `BASIC_AUTH_*` environment variables and CMS toggles (Site, Security; per-entry \"Password protect\"). See [`docs/features/basic-auth.md`](docs/features/basic-auth.md).\n- **llms.txt for AI assistants**: an editable, AI-generated [`/llms.txt`](https://llmstxt.org) drafted from your content with Sanity Agent Actions (Site, Agents tab). See [`docs/features/llms-txt.md`](docs/features/llms-txt.md).\n- **Agent Markdown (content negotiation)**: pages and articles serve a token-light Markdown version to agents that send `Accept: text/markdown`, on the same URL. Generated and stored per page from the Agents tab (one click), then served verbatim. See [`docs/features/agent-markdown.md`](docs/features/agent-markdown.md).\n- **Real 404s**: an unknown path answers a genuine `404`, decided in `proxy.ts` before the response starts, rather than the `200` a streamed shell would return. Agents get a short Markdown recovery map instead of an error string, so one that followed a stale link can re-orient. See [`docs/features/agent-404.md`](docs/features/agent-404.md).\n- **Published API description**: [`/openapi.json`](https://spec.openapis.org/oas/v3.1.0) describes the public endpoints for agents, titled from your Site singleton, alongside one JSON error shape (`error`, `code`, `hint`) across the API routes. See [`docs/features/openapi.md`](docs/features/openapi.md).\n- CMS-managed redirects baked into the build from the Settings singleton\n- Feature modules for Umami analytics and spam prevention\n- Scaffolding via Plop for repeatable section/route/block generation\n- Starter **seed dataset** (`seed/`), imported by `npm run sanity:project-setup` so a new project boots with example content\n- Contact form with honeypot + timing spam prevention and Resend notifications\n- [`@mantine/hooks`](https://mantine.dev/hooks/getting-started/) for shared React hooks; `features/dom/use-breakpoint.ts` wraps [`useMediaQuery`](https://mantine.dev/hooks/use-media-query/) for Tailwind-aligned breakpoints and touch detection, alongside `constants` / `parseResponsiveValues`\n\n## Getting Started\n\n**New here? Start with [`GETTING-STARTED.md`](GETTING-STARTED.md).** It is the guided, top to bottom path from a fresh clone to your first rendered section. The sections below are the reference.\n\n### Prerequisites\n\n- Node.js 24.15.0, pinned in `.nvmrc` and in `package.json` (`engines`, `volta`). `engines` requires the `^24.15.0` LTS line, so npm refuses to install on any other major.\n- npm >= 11.6.2\n\n### Installation\n\n```bash\nnpm install\n```\n\n### Environment Variables\n\nCopy `.env.example` to `.env` and fill it in. The minimum for local dev:\n\n```env\nNEXT_PUBLIC_URL=http://localhost:3000\nNEXT_PUBLIC_SANITY_PROJECT_ID=your-project-id\nNEXT_PUBLIC_SANITY_DATASET=production\nNEXT_PUBLIC_SANITY_API_VERSION=2025-02-19\nNEXT_PUBLIC_SANITY_STUDIO_BASE_PATH=/studio\nSANITY_API_VIEW_TOKEN=your-view-token\nSANITY_API_EDIT_TOKEN=your-edit-token\n```\n\n`npm run sanity:project-setup` creates the project, both tokens, CORS entries, and writes `.env` for you.\n\n`NEXT_PUBLIC_SANITY_STUDIO_BASE_PATH` is the **public** URL for Studio. The app mounts Studio under `app/sanity-studio/…`; `next.config.ts` rewrites the public path to that folder. If a **content page** must use the same path (e.g. you need `/studio` for a page), set this variable to a different path (e.g. `/admin`) in every environment. See [`docs/sanity/studio-and-structure.md`](docs/sanity/studio-and-structure.md#public-url-rewrites-and-reserved-paths).\n\n### HTTP Basic Auth (optional)\n\nFor staging or client-review gates, set `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD` in the same environment as the app. Turn protection on in Sanity (site-wide and/or per document with \"Password protect\"); credentials are not stored in the CMS. Full behavior: [`docs/features/basic-auth.md`](docs/features/basic-auth.md).\n\n### Seed starter content\n\n`npm run sanity:project-setup` imports the bundled example content at the end of its run, unless you answer its last question with **Completely empty**. To load it separately (a blank dataset, a second dataset, a reset), with the CLI authenticated (`npm run sanity:cli -- login`):\n\n```bash\nnpm run sanity:dataset-import -- --file seed/seed-dataset.tar.gz\n```\n\nSee [`docs/sanity/seed-dataset.md`](docs/sanity/seed-dataset.md).\n\n### Development\n\n```bash\nnpm run dev\n```\n\n- Site: [http://localhost:3000](http://localhost:3000)\n- Studio: `http://localhost:3000` + your `NEXT_PUBLIC_SANITY_STUDIO_BASE_PATH` (default `/studio`)\n\n### Build\n\n```bash\nnpm run build\nnpm run start\n```\n\n`next build` prerenders every page into a static shell with a one-year lifetime, so a deploy is not what refreshes content: publishing in the Studio is. That takes a Sanity webhook pointed at `/api/revalidate`, created once by hand and secured with `SANITY_REVALIDATE_SECRET`. See [`docs/sanity/revalidation-and-caching.md`](docs/sanity/revalidation-and-caching.md).\n\n## Docs\n\nFeature-level docs live in `docs/` so the root README stays lightweight. Start at [`docs/README.md`](docs/README.md).\n\n## Scripts\n\n- `npm run dev`: Start the dev server (site + Studio + APIs)\n- `npm run build`: Build for production (`next build`)\n- `npm run start`: Start the production server\n- `npm run check`: Run all checks (`check.*` in parallel)\n- `npm run check.types`: TypeScript type checking\n- `npm run check.biome`: Biome lint (errors only)\n- `npm run format`: Format and fix with Biome (`biome check --write --unsafe`)\n- `npm test`: Run the unit tests\n- `npm run plop`: Scaffold new sections, prefix routes, and rich text blocks\n- `npm run clear`: Remove local build and cache output (`.next`, `node_modules/.cache`)\n- `npm run sanity:typegen`: Extract the Sanity schema and generate `sanity/types.ts`\n- `npm run sanity:cli`: Run the Sanity CLI with `.env` loaded (via dotenvx)\n- `npm run sanity:schema-deploy`: Deploy the schema to Sanity (required by Agent Actions)\n- `npm run sanity:dataset-export`: Backup a dataset to `./backups/`\n- `npm run sanity:dataset-import`: Restore a `.tar.gz` into a dataset\n- `npm run sanity:dataset-migrate`: Copy one dataset into another\n\nEvery `sanity:*` script above is interactive: run it with no flags and it asks what it needs, prints a summary, and confirms before touching anything. Flags answer those questions up front, `--dry-run` prints the plan and stops, and `--yes` skips every prompt (see `scripts/README.md`).\n- `npm run sanity:project-setup`: Interactive wizard for a Sanity project, tokens, CORS, and `.env`\n\n## Project Structure\n\n```text\n.\n|-- app/\n|   |-- (web)/           # Site routes ([[...uri]] is the pages model) and the page shell\n|   |-- api/             # Route handlers (served at /api/*)\n|   `-- sanity-studio/   # Studio mount, rewritten to your public Studio path\n|-- components/          # Shared React components (Button, Icon, Dialog)\n|-- features/            # Feature modules (page-builder, site, agents, sanity, rich-text, style, ...)\n|-- public/              # Static assets\n|-- sanity/              # Sanity Studio config, schema, structure (standalone folder)\n|-- seed/                # Starter dataset shipped with the template\n|-- scripts/             # Dataset + project-setup CLIs\n|-- templates/           # Plop templates\n|-- docs/                # Project documentation\n|-- proxy.ts             # Basic Auth + agent Markdown negotiation + real 404s\n|-- env.ts               # Typed environment config\n`-- next.config.ts       # Cache Components, Studio rewrite, CMS redirects\n```\n\n## Agent Skills\n\nAI guidance for this repository lives in `AGENTS.md` and `.agents/skills/`.\n\n## Learn More\n\n- [Next.js Documentation](https://nextjs.org/docs)\n- [Sanity Documentation](https://www.sanity.io/docs)\n- [Tailwind CSS Documentation](https://tailwindcss.com/docs)\n\n## License\n\nCommercial, one license per buyer. Build unlimited personal, commercial, and client projects with it, and sell what you build. Do not resell or republish the boilerplate itself.\n\nSee [`LICENSE.md`](LICENSE.md) for the full terms, and the [Terms of Service](https://www.contentarchitecture.dev/terms-of-service) for the purchase terms.\n",
+  "items": [
+   {
+    "name": ".agents",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".zed",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "app",
+    "pad": 20,
+    "expanded": "true",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "(web)",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "api",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "favicon.ico",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "llms.txt",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "openapi.json",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "robots.txt",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity-studio",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "global-not-found.tsx",
+    "pad": 48,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "not-found.tsx",
+    "pad": 48,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "shared-web-layout.tsx",
+    "pad": 48,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sitemap.ts",
+    "pad": 48,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "components",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "docs",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "features",
+    "pad": 20,
+    "expanded": "true",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "agents",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "api",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "auth",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "blog",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "dom",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "draft-mode",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "fonts",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "forms",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "legal",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "motion",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "mux",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "page-builder",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "rich-text",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "site",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "spam-prevention",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "style",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "umami",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "utils",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "view-transition",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "lenis.tsx",
+    "pad": 48,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "use-content-ready.ts",
+    "pad": 48,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "public",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "scripts",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "seed",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "templates",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".env.example",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".gitignore",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".lefthookrc",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".mcp.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".npmrc",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".nvmrc",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "AGENTS.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "assets.d.ts",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "biome.jsonc",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "CLAUDE.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "commitlint.config.mjs",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "env.ts",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "GETTING-STARTED.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "lefthook.yml",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "LICENSE.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "next.config.ts",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "package-lock.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "package.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "plopfile.mjs",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "proxy.ts",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "README.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity-schema.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity.cli.ts",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity.config.ts",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "skills-lock.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "tsconfig.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   }
+  ]
+ },
+ "astro": {
+  "readme": "# The Content Architecture (Astro)\n\nA modern Astro 7 starter with Sanity CMS integration: content model, embedded Studio, and product features, running on an Astro static-first frontend.\n\n## Features\n\n- Astro 7 in SSR mode: pages render on demand, with the embedded Studio and API endpoints on the same origin, deployable to any host through Astro's adapter system\n- Sanity CMS with the Studio embedded at `/studio`\n- The pages model: a catch-all route renders any `page` document by its `uri`, homepage included\n- Reusable page builder (text, media, headline, CTA, contact form sections) rendered by self-fetching Astro components\n- Rich text via Portable Text with media blocks, inline media, links, colors\n- Media pipeline: Sanity images (responsive srcset + LQIP), Mux video, native video, Lottie, and Rive\n- Draft mode with the Presentation tool and Visual Editing overlays\n- SEO helpers: per-page metadata with Site singleton fallbacks, og:image cropping, per-scheme favicons plus a stable `/favicon.ico` for Google, JSON-LD, CMS-driven sitemap and robots\n- **HTTP Basic Auth (optional)**: `src/middleware.ts` gates the site or individual URLs using `BASIC_AUTH_*` environment variables and CMS toggles (Site, Security; per-entry \"Password protect\"). See [`docs/features/basic-auth.md`](docs/features/basic-auth.md).\n- **llms.txt for AI assistants**: an editable, AI-generated [`/llms.txt`](https://llmstxt.org) drafted from your content with Sanity Agent Actions (Site, Agents tab). See [`docs/features/llms-txt.md`](docs/features/llms-txt.md).\n- **Agent Markdown (content negotiation)**: pages and articles serve a token-light Markdown version to agents that send `Accept: text/markdown`, on the same URL. A 404 answers with a short Markdown recovery map instead of an error string, so an agent that followed a stale link can re-orient. See [`docs/features/agent-markdown.md`](docs/features/agent-markdown.md).\n- **Published API description**: [`/openapi.json`](https://spec.openapis.org/oas/v3.1.0) describes the public endpoints for agents, titled from your Site singleton, alongside one JSON error shape (`error`, `code`, `hint`) across the API endpoints. See [`docs/features/openapi.md`](docs/features/openapi.md).\n- CMS-managed redirects baked into the build from the Settings singleton\n- Feature modules for Umami analytics and spam prevention\n- Scaffolding via Plop for repeatable section/route/block generation\n- Starter **seed dataset** (`seed/`), imported by `npm run sanity:project-setup` so a new project boots with example content\n- Contact form with honeypot + timing spam prevention and Resend notifications\n\n## Getting Started\n\n**New here? Start with [`GETTING-STARTED.md`](GETTING-STARTED.md).** It is the guided, top to bottom path from a fresh clone to your first rendered section. The sections below are the reference.\n\n### Prerequisites\n\n- Node.js 24.15.0, pinned in `.nvmrc` and in `package.json` (`engines`, `volta`). `engines` requires the `^24.15.0` LTS line, so npm refuses to install on any other major.\n- npm >= 11.6.2\n\n### Installation\n\n```bash\nnpm install\n```\n\n### Environment Variables\n\nCopy `.env.example` to `.env` and fill it in. The minimum for local dev:\n\n```env\nPUBLIC_SITE_URL=http://localhost:4321\nPUBLIC_SANITY_PROJECT_ID=your-project-id\nPUBLIC_SANITY_DATASET=production\nPUBLIC_SANITY_API_VERSION=2025-02-19\nPUBLIC_SANITY_STUDIO_BASE_PATH=/studio\nSANITY_API_VIEW_TOKEN=your-view-token\nSANITY_API_EDIT_TOKEN=your-edit-token\n```\n\n`npm run sanity:project-setup` creates the project, both tokens, CORS entries, and writes `.env` for you.\n\n### HTTP Basic Auth (optional)\n\nFor staging or client-review gates, set `BASIC_AUTH_USERNAME` and `BASIC_AUTH_PASSWORD` in the same environment as the app. Turn protection on in Sanity (site-wide and/or per document with \"Password protect\"); credentials are not stored in the CMS. Full behavior: [`docs/features/basic-auth.md`](docs/features/basic-auth.md).\n\n### Seed starter content\n\n`npm run sanity:project-setup` imports the bundled example content at the end of its run, unless you answer its last question with **Completely empty**. To load it separately (a blank dataset, a second dataset, a reset), with the CLI authenticated (`npm run sanity:cli -- login`):\n\n```bash\nnpm run sanity:dataset-import -- --file seed/seed-dataset.tar.gz\n```\n\nSee [`docs/sanity/seed-dataset.md`](docs/sanity/seed-dataset.md).\n\n### Development\n\n```bash\nnpm run dev\n```\n\n- Site: [http://localhost:4321](http://localhost:4321)\n- Studio: `http://localhost:4321` + your `PUBLIC_SANITY_STUDIO_BASE_PATH` (default `/studio`)\n\n### Build\n\n```bash\nnpm run build\n```\n\nThe deploy target is the adapter in `astro.config.mjs`; the repo ships with `@astrojs/vercel` preconfigured as a working default, so `.vercel/output/` holds a serverless function serving the site, the Studio, and `/api/*`, plus the static assets. Deploying anywhere else (a VPS, a container, another platform) is an adapter swap, not an app change: the app answers every route cache lookup itself, so the caching policy is identical on every host. Only the store behind it changes, and on Vercel `ROUTE_CACHE_VERCEL_RUNTIME=true` opts into the Runtime Cache, one cache shared by every function instance rather than one per process. A deploy empties it either way. See [`docs/deployment.md`](docs/deployment.md).\n\n## Docs\n\nFeature-level docs live in `docs/` so the root README stays lightweight. Start at [`docs/README.md`](docs/README.md).\n\n## Scripts\n\n- `npm run dev`: Start the dev server (site + Studio + APIs)\n- `npm run build`: Build for production (`astro build`; the output shape follows the configured adapter)\n- `npm run start`: Run the site through `vercel dev`, the shipped adapter's local emulator (requires the Vercel CLI)\n- `npm run check`: Run all checks (`check.*` in parallel)\n- `npm run check.types`: `astro check` type checking (runs typegen first)\n- `npm run check.biome`: Biome lint (errors only)\n- `npm run format`: Format and fix with Biome (`biome check --write --unsafe`)\n- `npm test`: Run the unit tests\n- `npm run plop`: Scaffold new sections, prefix routes, and rich text blocks\n- `npm run clear`: Remove local build and cache output (`.astro`, `node_modules/.vite`, `dist`, `.vercel/output`)\n- `npm run sanity:typegen`: Extract the Sanity schema and generate `sanity/types.ts`\n- `npm run sanity:cli`: Run the Sanity CLI with `.env` loaded (via dotenvx)\n- `npm run sanity:schema-deploy`: Deploy the schema to Sanity (required by Agent Actions)\n- `npm run sanity:dataset-export`: Backup a dataset to `./backups/`\n- `npm run sanity:dataset-import`: Restore a `.tar.gz` into a dataset\n- `npm run sanity:dataset-migrate`: Copy one dataset into another\n\nEvery `sanity:*` script above is interactive: run it with no flags and it asks what it needs, prints a summary, and confirms before touching anything. Flags answer those questions up front, `--dry-run` prints the plan and stops, and `--yes` skips every prompt (see `scripts/README.md`).\n- `npm run sanity:project-setup`: Interactive wizard for a Sanity project, tokens, CORS, and `.env`\n\n## Project Structure\n\n```text\n.\n|-- src/\n|   |-- pages/           # Astro routes ([...uri].astro is the pages model)\n|   |-- layouts/         # Web.astro page shell (head, SEO, transitions)\n|   |-- components/      # Shared Astro components (Button, Icon, Lenis)\n|   |-- features/        # Feature modules (page-builder, site, agents, sanity fragments, ...)\n|   |-- sanity/          # Client-side Sanity layer: loadQuery, media + rich text renderers, queries\n|   |   `-- api/         # API endpoints (served at /api/*)\n|   |-- middleware.ts    # Basic Auth + agent Markdown negotiation\n|   `-- styles/          # Tailwind v4 setup (tokens, typography, global)\n|-- sanity/              # Sanity Studio config, schema, structure (standalone folder)\n|-- seed/                # Starter dataset shipped with the template\n|-- scripts/             # Dataset + project-setup CLIs\n|-- templates/           # Plop templates\n|-- docs/                # Project documentation\n`-- astro.config.mjs     # Env schema, cache provider, CMS redirects\n```\n\n## Agent Skills\n\nAI guidance for this repository lives in `AGENTS.md` and `.agents/skills/`.\n\n## Learn More\n\n- [Astro Documentation](https://docs.astro.build)\n- [Sanity Documentation](https://www.sanity.io/docs)\n- [Tailwind CSS Documentation](https://tailwindcss.com/docs)\n\n## License\n\nCommercial, one license per buyer. Build unlimited personal, commercial, and client projects with it, and sell what you build. Do not resell or republish the boilerplate itself.\n\nSee [`LICENSE.md`](LICENSE.md) for the full terms, and the [Terms of Service](https://www.contentarchitecture.dev/terms-of-service) for the purchase terms.\n",
+  "items": [
+   {
+    "name": ".agents",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".zed",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "docs",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "public",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "scripts",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "seed",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "src",
+    "pad": 20,
+    "expanded": "true",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "components",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "features",
+    "pad": 48,
+    "expanded": "true",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "agents",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "api",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "auth",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "blog",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "dom",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "forms",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "legal",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "mux",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "page-builder",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "rich-text",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "site",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "spam-prevention",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "style",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "umami",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "utils",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "layouts",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "lib",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "pages",
+    "pad": 48,
+    "expanded": "true",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "api",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "blog",
+    "pad": 76,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "[...uri].astro",
+    "pad": 76,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "404.astro",
+    "pad": 76,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "favicon.ico.ts",
+    "pad": 76,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "llms.txt.ts",
+    "pad": 76,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "openapi.json.ts",
+    "pad": 76,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "robots.txt.ts",
+    "pad": 76,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sitemap.xml.ts",
+    "pad": 76,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "styles",
+    "pad": 48,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "env.d.ts",
+    "pad": 48,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "middleware.ts",
+    "pad": 48,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "templates",
+    "pad": 20,
+    "expanded": "false",
+    "icons": 2,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".env.example",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".gitignore",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".lefthookrc",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".mcp.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".npmrc",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": ".nvmrc",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "AGENTS.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "astro.config.mjs",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "biome.jsonc",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "CLAUDE.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "commitlint.config.mjs",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "GETTING-STARTED.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "lefthook.yml",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "LICENSE.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "package-lock.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "package.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "plopfile.mjs",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "README.md",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity-schema.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity.cli.ts",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "sanity.config.ts",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "skills-lock.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   },
+   {
+    "name": "tsconfig.json",
+    "pad": 20,
+    "expanded": null,
+    "icons": 1,
+    "cls": "flex w-full items-center gap-6 py-3 pr-10 text-left font-mon"
+   }
+  ]
+ }
+}
