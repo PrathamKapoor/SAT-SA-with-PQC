@@ -19,6 +19,7 @@
       - `div.min-w-0 flex-1 font-mono text-caption-10 uppercase` → `p.truncate text-white` name and `p.truncate text-dark-grey` role
 - **Controls** under the track, centred, mono: `[<]`, `01 / 03` (current white, the slash and total dimmer), `[>]`. Find the exact markup and classes at the end of the DOM file.
   - Buttons scroll to the previous/next slide (`scrollTo` with smooth behaviour, snap-center). They are disabled (dimmed) at the ends.
+- **No autoplay** (verified live: 10s in view, scrollLeft stayed 0). The live carousel is `blossom-carousel`, which adds **mouse drag-to-scroll** on desktop. Implement pointer drag: on pointerdown with a mouse, track the delta, set `scrollLeft`, and disable snap while dragging; on release, snap to the nearest slide with smooth scrolling. Touch uses native scrolling.
 - **Active slide** = the one whose centre is nearest the track centre (scroll listener, rAF-throttled).
   - Typewriter: when a slide becomes active (and the section is in view), type its quote from 0 at ≈22ms/char. Previously typed slides stay complete.
   - Inactive, never-typed slides show only the blinking cursor followed by the transparent text.

@@ -16,10 +16,10 @@
   - **List** `ul.flex flex-col lg:col-span-7 lg:col-start-6`. Each `li.border-white/15 border-b` holds:
     - `h3 > button.group flex w-full cursor-pointer items-center justify-between gap-24 py-24 text-left font-…` (copy the classes) with `aria-expanded` and `aria-controls` pointing to the panel id
       - left: `span.text-dark-grey` "Q.{num} /" + `span` question (mono caption uppercase per the DOM classes)
-      - right: a 24px square `span.relative grid size-24 shrink-0 place-items-center rounded-2 bg-white/10 transition-colors …` with a horizontal bar and a vertical bar. When open, the vertical bar scales to 0 (the `+` becomes `−`), with a 200ms transform transition.
+      - right: a 24px square `span.relative grid size-24 shrink-0 place-items-center rounded-2 bg-white/10 transition-colors …` with a horizontal bar and a vertical bar. When open, the vertical bar **rotates 90°** onto the horizontal one (the `+` becomes `−`). Verified live: `transform: rotate(90deg)` open and `none` closed, animated ≈300ms ease-out.
     - Panel `div.overflow-hidden` (`id`, `role="region"`, `aria-labelledby`) → `div.w-full pb-24 text-body-20 text-ghost-grey > div.flex w-full flex-col gap-[1em]`, one div per paragraph.
-    - Open/close animates height (a CSS grid-rows `0fr → 1fr` trick or measured height, ~300ms ease-out) with opacity.
-- **Behaviour:** one open at a time (clicking another closes the previous; clicking the open one closes it). Item 0 is open initially.
+    - Open/close animates height with opacity (verified live: closing took ≈380ms, and opacity drops to 0 once the height reaches 0; opening fades in while growing). Use a measured-height or `grid-rows 0fr → 1fr` transition of 350ms `cubic-bezier(0.23,1,0.32,1)`, plus opacity.
+- **Behaviour (verified live, 17 items):** one open at a time (clicking another closes the previous; clicking the open one closes it). Item 0 is open initially.
 
 ## Content (CA, verbatim from the DOM)
 - title: "Before you buy"
