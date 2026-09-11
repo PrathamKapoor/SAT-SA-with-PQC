@@ -90,6 +90,22 @@ export function TextFileIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+export function ImageFileIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <rect x="2.6" y="3.6" width="10.8" height="8.8" rx="1.3" /><circle cx="5.9" cy="6.6" r="1" /><path d="M3.2 11.6 6.4 8.7 8.3 10.4 10.5 8.2 13.2 10.6" />
+    </svg>
+  );
+}
+
+export function CssFileIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M6.6 3.8 5.4 12.2" /><path d="M10.6 3.8 9.4 12.2" /><path d="M4 6.6h8.2" /><path d="M3.8 9.4h8.2" />
+    </svg>
+  );
+}
+
 export function CommitsIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>

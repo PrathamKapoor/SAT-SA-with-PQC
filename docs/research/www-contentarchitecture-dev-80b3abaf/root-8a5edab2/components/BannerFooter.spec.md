@@ -26,19 +26,14 @@
   - Top overlay `div.pointer-events-none absolute inset-0 bg-black will-change-[opacity]` with `opacity: (1 - p) * 0.7`.
 - **Inside** `div.flex flex-col justify-between gap-32 lg:gap-64`:
   - Top row `div.flex flex-col gap-32 lg:flex-row lg:items-start lg:justify-between lg:gap-64`:
-    - **Form column** `div.flex w-full flex-col gap-16 lg:max-w-md` → `form.flex w-full min-w-0 flex-col gap-12` (noValidate) with a label (sr-only "Email") and `div.flex gap-4 lg:flex-row`, containing:
-      - the email input (copy its exact class string from the DOM, `bg-black lg:flex-1`)
-      - `CaButton type="submit" variant="light" leftText="Stay" rightText="updated" className="shrink-0"`
-    - On submit, `preventDefault` and show an inline status line (mono caption-10): `content.newsletter.successMessage` if the email matches a basic regex, otherwise `content.newsletter.errorMessage`. There is no network call.
+    - **Form column** `div.flex w-full flex-col gap-16 lg:max-w-md` → `<EmailCapture copy={content.newsletter} buttonVariant="light" />`. This is the shared primitive in `shared/EmailCapture.tsx`, built by the foreman. It renders the live form exactly (`form.relative flex w-full min-w-0 flex-col`, honeypot, sr-only label, 48px input, and a light split pill when `ctaRightText` is set). Validation and the absolutely-positioned status line (`font-mono text-ui`, error in `#dc2626`) are built in. There is no network call.
     - **Footer nav** `nav[aria-label=Footer].flex flex-col gap-y-12 lg:items-end`, with links `a.[--odometer-progress:0] motion-safe:hover:[--odometer-progress:1] inline-flex items-center gap-8 font-mono text-caption-20 uppercase transition-colors hover:text-current` → `<Odometer text>` plus an optional pulse dot (`span.relative flex size-6` variant from the DOM).
   - Bottom `div.flex flex-col gap-24`:
     - divider `div.h-px w-full bg-current/10`
     - `div.flex flex-col gap-4`: `p.font-mono text-caption-20 uppercase` "© <span class='inline-block w-[4ch] tabular-nums'>{year}</span> {owner}", then the credit link `a.w-fit font-mono text-caption-10 uppercase opacity-50 transition-opacity hover:opacity-100`
 
 ### Footer content (CA)
-- newsletter:
-  - `{ label: "Email", placeholder: "your@email.com", leftText: "Stay", rightText: "updated" }`
-  - `successMessage: "Thanks — you're on the list."` and `errorMessage: "Enter a valid email address."` (the clone's own copy; the original posts to a server action)
+- newsletter (type `EmailCaptureCopy` from `shared/EmailCapture`): `{ label: "Email", placeholder: "your@email.com", ctaText: "Stay", ctaRightText: "updated", successMessage: "You're on the list.", errorMessage: "Enter a valid email address." }`. Both messages are verbatim from the live site's EmailCapture.
 - links:
   - Blog → https://www.contentarchitecture.dev/blog
   - Roadmap → https://www.contentarchitecture.dev/roadmap
