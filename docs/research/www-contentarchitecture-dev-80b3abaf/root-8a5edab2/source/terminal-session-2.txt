@@ -1,0 +1,68 @@
+TERMINAL
+~/the-content-architecture-next-js > help
+commands: help, ls, cd, tree, cat, open, grep, plop, history, pwd, whoami, echo, clear, git
+tab completes paths, up/down recalls history
+~/the-content-architecture-next-js > git
+main · Updated today · 162 commits
+ 
+·············█············
+·············█············
+·············█········█···
+·············█·▒▒▒·▓··█··▓
+············▒█▒▒▒▒·▓▒▒█▒▒▓
+············▒█▒▒▒▒·▓▒▒█▒▒▓
+···········░▒█▒▒▒▒░▓▒▒█▒▒▓
+ 
+less ·░▒▓█ more   (last 26 weeks · commit volume, not contents)
+~/the-content-architecture-next-js > ls
+.agents/
+.zed/
+app/
+components/
+docs/
+features/
+public/
+sanity/
+scripts/
+seed/
+templates/
+.env.example
+.gitignore
+.lefthookrc
+.mcp.json
+.npmrc
+.nvmrc
+AGENTS.md
+assets.d.ts
+biome.jsonc
+CLAUDE.md
+commitlint.config.mjs
+env.ts
+GETTING-STARTED.md
+lefthook.yml
+LICENSE.md
+next.config.ts
+package-lock.json
+package.json
+plopfile.mjs
+proxy.ts
+README.md
+sanity-schema.json
+sanity.cli.ts
+sanity.config.ts
+skills-lock.json
+tsconfig.json
+~/the-content-architecture-next-js > plop
+? Name (section names will automatically be suffixed with 'Section'. eg. 'cta' -> 'ctaSection')
+❯ whoami
+? Running "Page Builder Section"
+✔  ++ /sanity/schemas/page-sections/whoami-section.tsx
+✔  |- /sanity/schemas/page-sections/index.ts
+✔  |- /sanity/schemas/page-sections/index.ts
+✔  ++ /features/page-builder/sections/whoami-section.tsx
+✔  |- /features/page-builder/page-sections.tsx
+✔  |- /features/page-builder/page-sections.tsx
+✔  Generate types
+✔  Format code
+~/the-content-architecture-next-js > get-access   # €399 · was €549 · one-time
+~/the-content-architecture-next-js > 
