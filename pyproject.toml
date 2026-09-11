@@ -17,6 +17,7 @@ dependencies = [
     "cryptography>=42.0",
     "pyyaml>=6.0",
     "fastapi>=0.110",
+    "jinja2>=3.1",
     "starlette>=0.36",
     "uvicorn>=0.29",
     "python-multipart>=0.0.9",
@@ -34,7 +35,10 @@ qsmlops = "qsmlops.cli:cli"
 sat-sa = "satsa.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["qsmlops*", "satsa*", "evaluation*", "public_benchmarks*"]
+# `satsa.ui.demo` resolves its committed input set from the installed
+# site-packages/docs/demo tree.  Discover `docs` as a namespace package so
+# the existing CLI demo remains usable from a wheel (not only from a clone).
+include = ["qsmlops*", "satsa*", "evaluation*", "public_benchmarks*", "docs*"]
 
 [tool.setuptools.package-data]
 # P28: public_benchmarks/workflow_augmentation/generator.py reads
@@ -49,6 +53,7 @@ include = ["qsmlops*", "satsa*", "evaluation*", "public_benchmarks*"]
 # relative path) but are shipped alongside policy.yaml for the same
 # reason any package ships its own non-code resource files together.
 public_benchmarks = ["**/*.yaml", "**/*.json"]
+docs = ["demo/submissions/*/*.csv"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
