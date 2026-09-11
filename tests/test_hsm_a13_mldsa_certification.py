@@ -61,6 +61,28 @@ from qsmlops.passport.passport import Passport, new_passport, SignatureBlock
 
 # ---------------------------------------------------------------------------
 # Sentinel — written to disk for forensic audit
+#
+# P28: this used to write to the TRACKED file
+# tests/_a13_artifacts/mldsa_provider_sentinel.txt on every run. R6/R6.process
+# embed a freshly-generated key_id fragment (KeyStore.generate_keypair()
+# generates a real random key each run, by design — that randomness is part
+# of what R6 actually certifies: a *real*, non-deterministic key surviving
+# KeyStore recreation and a fresh process boundary), so the committed file
+# changed on every test run, dirtying the working tree of any release-test
+# invocation. No test in this module ever reads the sentinel file back or
+# asserts against its content — it exists purely as forensic evidence for a
+# human auditor, decoupled from pass/fail. Redirecting the write target does
+# not touch the R1-R7/backend-matrix/fail-closed/secret-handling assertions
+# above at all; every real ML-DSA sign/verify/tamper/persistence/subprocess
+# check is unchanged.
+#
+# `tests/_a13_artifacts/mldsa_provider_sentinel.txt` itself is now treated
+# as a stable, committed FIXTURE — a genuine historical record proving this
+# suite executed for real against dilithium_py at least once — and is no
+# longer overwritten by test runs. Fresh evidence from every run is written
+# instead to a pytest-managed temp directory (tmp_path_factory), which is
+# never tracked by git and is pytest's own standard mechanism for "an
+# untracked runtime location," not a hand-rolled one.
 # ---------------------------------------------------------------------------
 EXECUTION_LOG: list[dict[str, Any]] = []
 
@@ -69,10 +91,7 @@ def _record(test_id: str, outcome: str, detail: str = "") -> None:
     EXECUTION_LOG.append({"test_id": test_id, "outcome": outcome, "detail": detail})
 
 
-def _write_sentinel() -> None:
-    from pathlib import Path as _P
-    out = _P(__file__).resolve().parent / "_a13_artifacts"
-    out.mkdir(parents=True, exist_ok=True)
+def _sentinel_lines() -> list[str]:
     any_real = any(e["outcome"] == "executed_real" for e in EXECUTION_LOG)
     lines = [
         "# A1.3 ML-DSA provider certification evidence",
@@ -85,13 +104,88 @@ def _write_sentinel() -> None:
     ]
     for e in EXECUTION_LOG:
         lines.append(f"- [{e['outcome']}] {e['test_id']}: {e['detail']}")
-    (out / "mldsa_provider_sentinel.txt").write_text("\n".join(lines), encoding="utf-8")
+    return lines
+
+
+def _write_sentinel(out_dir: Path) -> Path:
+    """Write this run's fresh forensic evidence to ``out_dir`` (an
+    untracked, pytest-managed temp directory — never the tracked
+    ``tests/_a13_artifacts/mldsa_provider_sentinel.txt`` fixture).
+    Returns the path written, so a human running the suite locally can
+    still find and read this run's real evidence if they want it."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / "mldsa_provider_sentinel.txt"
+    path.write_text("\n".join(_sentinel_lines()), encoding="utf-8")
+    return path
 
 
 @pytest.fixture(scope="module", autouse=True)
-def _write_sentinel_at_end():
+def _write_sentinel_at_end(tmp_path_factory: pytest.TempPathFactory):
     yield
-    _write_sentinel()
+    _write_sentinel(tmp_path_factory.mktemp("a13_artifacts"))
+
+
+# ---------------------------------------------------------------------------
+# P28 regression: this module must never dirty the tracked sentinel fixture
+# ---------------------------------------------------------------------------
+_TRACKED_SENTINEL_PATH = (
+    Path(__file__).resolve().parent / "_a13_artifacts" / "mldsa_provider_sentinel.txt"
+)
+
+
+class TestSentinelDoesNotDirtyTrackedFixture:
+    """Proves the property Part 2 of P28 required: running this module's
+    sentinel-writing machinery must leave the tracked
+    tests/_a13_artifacts/mldsa_provider_sentinel.txt fixture byte-for-byte
+    unchanged, while still producing fresh, real evidence elsewhere."""
+
+    def test_write_sentinel_target_is_outside_the_tracked_artifacts_dir(self, tmp_path):
+        """_write_sentinel() must never be pointed at the tracked
+        _a13_artifacts directory next to this test file."""
+        written = _write_sentinel(tmp_path)
+        assert written == tmp_path / "mldsa_provider_sentinel.txt"
+        tracked_dir = Path(__file__).resolve().parent / "_a13_artifacts"
+        assert tracked_dir not in written.parents
+        assert written.parent != tracked_dir
+
+    def test_write_sentinel_produces_real_content_in_the_temp_location(self, tmp_path):
+        """The redirected write still produces real, structured forensic
+        evidence -- this is not a no-op stub standing in for the real
+        write, only a different destination."""
+        EXECUTION_LOG.append({"test_id": "regression.probe",
+                              "outcome": "executed_real", "detail": "probe event"})
+        try:
+            written = _write_sentinel(tmp_path)
+            content = written.read_text(encoding="utf-8")
+            assert "MLDSA_PROVIDER_EXECUTED: YES" in content
+            assert "regression.probe" in content
+        finally:
+            EXECUTION_LOG.pop()
+
+    def test_tracked_sentinel_fixture_is_byte_identical_before_and_after(self, tmp_path):
+        """The actual property this regression exists to prove: invoking
+        the module's sentinel-writing logic (as the autouse fixture does
+        at module teardown) does not touch the tracked fixture file at
+        all, regardless of how many events have been recorded."""
+        assert _TRACKED_SENTINEL_PATH.exists(), (
+            "tracked sentinel fixture is missing -- cannot prove it is "
+            "unchanged if it was never there")
+        before = _TRACKED_SENTINEL_PATH.read_bytes()
+        before_mtime = _TRACKED_SENTINEL_PATH.stat().st_mtime_ns
+
+        # Exercise the same function the autouse fixture calls, with a
+        # non-trivial EXECUTION_LOG, the same way a real module run would.
+        EXECUTION_LOG.append({"test_id": "regression.dirty-check",
+                              "outcome": "executed_real", "detail": "x"})
+        try:
+            _write_sentinel(tmp_path)
+        finally:
+            EXECUTION_LOG.pop()
+
+        after = _TRACKED_SENTINEL_PATH.read_bytes()
+        after_mtime = _TRACKED_SENTINEL_PATH.stat().st_mtime_ns
+        assert after == before, "tracked sentinel fixture content changed"
+        assert after_mtime == before_mtime, "tracked sentinel fixture was rewritten (mtime changed)"
 
 
 # ---------------------------------------------------------------------------

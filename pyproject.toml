@@ -36,6 +36,20 @@ sat-sa = "satsa.cli:main"
 [tool.setuptools.packages.find]
 include = ["qsmlops*", "satsa*", "evaluation*", "public_benchmarks*"]
 
+[tool.setuptools.package-data]
+# P28: public_benchmarks/workflow_augmentation/generator.py reads
+# policy.yaml relative to its own installed package directory at
+# runtime (POLICY_PATH = Path(__file__).resolve().parent /
+# "policy.yaml") -- without this, a built wheel omits the .yaml/.json
+# files (setuptools only includes .py files by default) and
+# generate_workflow()'s default policy load fails on an installed
+# distribution. Confirmed missing from a real built wheel before this
+# fix (see docs/roadmap-status.md P28). The .json files are not
+# currently read by production code (only by tests, via a repo-root-
+# relative path) but are shipped alongside policy.yaml for the same
+# reason any package ships its own non-code resource files together.
+public_benchmarks = ["**/*.yaml", "**/*.json"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"

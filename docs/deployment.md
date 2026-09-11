@@ -8,9 +8,13 @@ Everything below runs on an air-gapped host.
 - Python ≥ 3.10 (3.13 verified)
 - `pip install -r requirements.txt`
 
-Core: `kyber-py`, `dilithium-py`, `numpy`, `scipy`, `cryptography`,
-`pyyaml`, `fastapi`, `uvicorn`, `click`, `scikit-learn`, `pydantic`,
-`python-pkcs11` (optional, HSM only). Dev: `pytest`, `httpx`.
+Core (runtime — mirrors `[project].dependencies` in `pyproject.toml`
+and `requirements.txt`'s Runtime section exactly): `kyber-py`,
+`dilithium-py`, `numpy`, `scipy`, `cryptography`, `pyyaml`, `fastapi`,
+`starlette`, `uvicorn`, `python-multipart` (required — Starlette's
+multipart form/file-upload parsing, used by `/ingest`), `click`,
+`scikit-learn`, `pydantic`, `python-pkcs11` (optional, HSM only). Dev
+(mirrors `[project.optional-dependencies].dev`): `pytest`, `httpx`.
 
 ## 2. Verify the tree
 
