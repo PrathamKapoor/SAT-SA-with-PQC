@@ -47,6 +47,9 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          # requirements.txt supplies runtime/test dependencies; this step
+          # installs the project console scripts (including `sat-sa`).
+          pip install -e . --no-deps
 
       - name: Byte-compile the whole tree (import/syntax integrity)
         run: python -m compileall -q satsa qsmlops scripts tests
