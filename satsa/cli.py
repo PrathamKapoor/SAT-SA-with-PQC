@@ -15,9 +15,12 @@ Subcommands mirror the roadmap:
     sat-sa demo          — load the committed demo dataset
     sat-sa validate      — run synthetic ground-truth validation
     sat-sa benchmark     — print the latest scaling benchmark
-    sat-sa agents        — print the 26-agent registry
+    sat-sa agents        — print the 32-agent registry
     sat-sa decision      — run the supervisor engine on a run
     sat-sa doctor        — diagnose the local install/deployment
+    sat-sa audit         — database-wide meta-audit of trust coverage
+    sat-sa calibrate     — propose/test/decide/deploy a threshold change
+    sat-sa ablate        — each worker's unique finding-family contribution
 """
 from __future__ import annotations
 
@@ -199,6 +202,7 @@ def cmd_review(args) -> int:
         reason=args.reason or "",
         finding_content_digest=live,
         previous_revision_id=prev_id,
+        trust_key_dir=key_dir,
     )
     print(f"recorded review {entry.id} (action={entry.action}, "
           f"principal={principal.name})")
@@ -277,7 +281,7 @@ def cmd_benchmark(args) -> int:
 
 
 def cmd_agents(args) -> int:
-    """Print the 26-agent registry grouped by family."""
+    """Print the 32-agent registry grouped by family."""
     from satsa.supervisor import list_agents
     agents = list_agents()
     print(f"SAT-SA {SATSA_VERSION} — {len(agents)} agents")
@@ -287,6 +291,197 @@ def cmd_agents(args) -> int:
             print(f"  {a.agent_id:<32} {a.name}")
             print(f"    purpose: {a.purpose}")
             print(f"    impl:    {a.implementation_ref}")
+    return 0
+
+
+def cmd_audit(args) -> int:
+    """Database-wide meta-audit: sweep every run/finding/review
+    decision and verify trust-receipt and provenance-binding
+    coverage (satsa.analysis.meta_audit.run_meta_audit) — distinct
+    from `sat-sa verify <run>`, which checks one run."""
+    from satsa.analysis.meta_audit import run_meta_audit
+    svc = _open_service(args.db, args.trust_key_dir)
+    key_dir = Path(args.trust_key_dir) if args.trust_key_dir else Path(".satsa_identity")
+    report = run_meta_audit(svc._db, key_dir)
+    print(json.dumps(report.to_dict(), indent=2, default=str))
+    return 0 if report.fully_compliant else 1
+
+
+# Workers with a governed calibration path via `sat-sa calibrate`.
+# Deliberately a small, explicit registry rather than auto-discovering
+# every worker's threshold dataclass (field names vary per worker) —
+# extend this dict, one line per worker, as calibration is wired for
+# more of them. See satsa/analysis/calibration.py for why this is
+# scoped rather than automatic.
+def _calibratable_workers() -> dict:
+    from satsa.analysis.workers.fast_closure import (
+        FastClosureThresholds, FastClosureWorker)
+    return {"fast-closure": (FastClosureWorker, FastClosureThresholds)}
+
+
+def _calibration_ledger(args):
+    from satsa.analysis.calibration import CalibrationLedger
+    key_dir = Path(args.trust_key_dir) if args.trust_key_dir else Path(".satsa_identity")
+    path = Path(args.calibration_ledger) if getattr(args, "calibration_ledger", None) \
+        else key_dir / "calibration_ledger.jsonl"
+    return CalibrationLedger(path)
+
+
+def _latest_calibration_state(ledger, proposal_id: str):
+    from satsa.analysis.calibration import CalibrationProposal
+    rows = ledger.history(proposal_id)
+    if not rows:
+        raise SystemExit(f"no calibration proposal found with id {proposal_id!r}")
+    return CalibrationProposal.from_dict(rows[-1])
+
+
+def _authenticated_calibration_approver(svc, args):
+    """Shared auth path for `decide`/`deploy`: requires
+    calibration.approve, the same terminal-authority restriction
+    decision.record carries (see qsmlops/security/permissions/model.py)."""
+    import os
+    from satsa import security as satsa_security
+    from qsmlops.security.permissions.model import CALIBRATION_APPROVE
+    token = args.credential or os.environ.get("SATSA_CREDENTIAL", "")
+    if not token:
+        raise SystemExit(
+            "this action requires an authenticated identity: pass "
+            "--credential <key_id.secret> or set SATSA_CREDENTIAL")
+    key_dir = Path(args.trust_key_dir) if args.trust_key_dir else Path(".satsa_identity")
+    identity_service = satsa_security.build_identity_service(svc._db, ledger_dir=key_dir)
+    try:
+        principal = identity_service.authenticate(token)
+    except Exception as exc:
+        raise SystemExit(f"authentication failed: {exc}")
+    if not principal.has_permission(CALIBRATION_APPROVE):
+        raise SystemExit(
+            f"identity {principal.name!r} lacks the calibration.approve "
+            "permission (needs a satsa_supervisor or satsa_admin role)")
+    return principal
+
+
+def cmd_calibrate(args) -> int:
+    """Propose / test / decide / deploy a detector-threshold change
+    (satsa.analysis.calibration) — the N17 governed calibration
+    workflow extending the Validation Agent. Each action is one step;
+    running them out of order is rejected with the same "must be
+    tested before decided, must be approved before deployed" ordering
+    the underlying module enforces."""
+    try:
+        return _dispatch_calibrate(args)
+    except ValueError as exc:
+        raise SystemExit(str(exc))
+
+
+def _dispatch_calibrate(args) -> int:
+    ledger = _calibration_ledger(args)
+
+    if args.calibrate_action == "propose":
+        import time
+        from satsa.analysis.calibration import propose_calibration
+        if not args.thresholds:
+            raise SystemExit("--thresholds <JSON object> is required")
+        try:
+            thresholds = json.loads(args.thresholds)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"--thresholds is not valid JSON: {exc}")
+        proposal_id = args.id or f"calib-{int(time.time())}"
+        proposal = propose_calibration(
+            proposal_id=proposal_id, worker_name=args.worker,
+            layer=args.layer, proposed_thresholds=thresholds,
+            rationale=args.rationale, proposer=args.proposer)
+        ledger.append(proposal)
+        print(json.dumps(proposal.to_dict(), indent=2, default=str))
+        return 0
+
+    if args.calibrate_action == "test":
+        from satsa.analysis.calibration import run_calibration_test
+        from satsa.analysis.validate import load_expert_labels
+        from satsa.contracts.worker import RunContext, SnapshotRef
+        from satsa.store.dataset import load_dataset
+        if not args.id:
+            raise SystemExit("--id <proposal_id> is required")
+        proposal = _latest_calibration_state(ledger, args.id)
+        registry = _calibratable_workers()
+        if proposal.worker_name not in registry:
+            raise SystemExit(
+                f"worker {proposal.worker_name!r} has no registered "
+                f"calibration path; known workers: {sorted(registry)}")
+        worker_cls, thresholds_cls = registry[proposal.worker_name]
+        if not args.entity_id or not args.assessment_id:
+            raise SystemExit("--entity-id and --assessment-id are required "
+                              "(the dataset a proposal is tested against)")
+        if not args.expert_labels:
+            raise SystemExit("--expert-labels <path> is required — a "
+                              "proposal is graded against real labels, "
+                              "never against its own output")
+        svc = _open_service(args.db, args.trust_key_dir)
+        dataset = load_dataset(svc._db, args.entity_id, args.assessment_id)
+        expert_labels = load_expert_labels(Path(args.expert_labels))
+        run_context = RunContext(run_id=f"calib-test-{proposal.id}",
+                                 entity_id=args.entity_id,
+                                 assessment_id=args.assessment_id)
+        tested = run_calibration_test(
+            proposal,
+            baseline_worker=worker_cls(),
+            candidate_worker=worker_cls(thresholds_cls(**proposal.proposed_thresholds)),
+            snapshot=SnapshotRef("cli", args.entity_id, args.assessment_id),
+            dataset=dataset, baselines=[], run_context=run_context,
+            expert_labels=expert_labels)
+        ledger.append(tested)
+        print(json.dumps(tested.to_dict(), indent=2, default=str))
+        return 0
+
+    if args.calibrate_action in ("approve", "reject"):
+        from satsa.analysis.calibration import decide_calibration_proposal
+        if not args.id:
+            raise SystemExit("--id <proposal_id> is required")
+        if not args.rationale:
+            raise SystemExit("--rationale is required for a decision")
+        svc = _open_service(args.db, args.trust_key_dir)
+        principal = _authenticated_calibration_approver(svc, args)
+        proposal = _latest_calibration_state(ledger, args.id)
+        decided = decide_calibration_proposal(
+            proposal, decided_by=principal.identity_id,
+            approve=(args.calibrate_action == "approve"),
+            rationale=args.rationale)
+        ledger.append(decided)
+        print(json.dumps(decided.to_dict(), indent=2, default=str))
+        return 0
+
+    if args.calibrate_action == "deploy":
+        from satsa.analysis.calibration import deploy_calibration_proposal
+        if not args.id:
+            raise SystemExit("--id <proposal_id> is required")
+        if not args.version:
+            raise SystemExit("--version <label> is required")
+        svc = _open_service(args.db, args.trust_key_dir)
+        _authenticated_calibration_approver(svc, args)  # deployment is
+        # also a supervisor action — an approved proposal is not yet
+        # live until someone with authority pushes it out
+        proposal = _latest_calibration_state(ledger, args.id)
+        deployed = deploy_calibration_proposal(proposal, version=args.version)
+        ledger.append(deployed)
+        print(json.dumps(deployed.to_dict(), indent=2, default=str))
+        return 0
+
+    if args.calibrate_action == "history":
+        rows = ledger.history(args.id)
+        print(json.dumps(rows, indent=2, default=str))
+        return 0
+
+    raise SystemExit(f"unknown calibrate action {args.calibrate_action!r}")
+
+
+def cmd_ablate(args) -> int:
+    """Run the ablation study (evaluation.ablation.run_ablation_study)
+    for one already-ingested entity/assessment scope: disable exactly
+    one default worker at a time and report which finding families
+    disappear — each worker's measured, unique contribution."""
+    from evaluation.ablation.runner import run_ablation_study
+    svc = _open_service(args.db, args.trust_key_dir)
+    report = run_ablation_study(svc._db, args.entity_id, args.assessment_id)
+    print(json.dumps(report, indent=2, default=str))
     return 0
 
 
@@ -546,6 +741,53 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser(
         "doctor", help="diagnose the local install/deployment")
     sp.set_defaults(func=cmd_doctor)
+
+    sp = sub.add_parser(
+        "audit", help="database-wide meta-audit of trust/provenance coverage")
+    sp.set_defaults(func=cmd_audit)
+
+    sp = sub.add_parser(
+        "ablate", help="ablation study: each worker's unique finding-family contribution")
+    sp.add_argument("entity_id")
+    sp.add_argument("assessment_id")
+    sp.set_defaults(func=cmd_ablate)
+
+    sp = sub.add_parser(
+        "calibrate",
+        help="propose / test / approve / reject / deploy a detector "
+             "threshold change (N17 calibration workflow)")
+    sp.add_argument("calibrate_action",
+                    choices=("propose", "test", "approve", "reject",
+                             "deploy", "history"))
+    sp.add_argument("--id", default=None, help="proposal id "
+                    "(required for test/approve/reject/deploy; optional "
+                    "filter for history)")
+    sp.add_argument("--worker", default=None,
+                    help="worker name, e.g. 'fast-closure' (propose only)")
+    sp.add_argument("--layer", default=None,
+                    help="rule_or_category prefix this proposal targets "
+                         "(propose only)")
+    sp.add_argument("--thresholds", default=None,
+                    help="JSON object of proposed threshold field values, "
+                         "e.g. '{\"critical_max_seconds\": 300}' (propose only)")
+    sp.add_argument("--rationale", default=None,
+                    help="required for propose and for approve/reject")
+    sp.add_argument("--proposer", default="cli-user", help="propose only")
+    sp.add_argument("--entity-id", default=None, help="test only")
+    sp.add_argument("--assessment-id", default=None, help="test only")
+    sp.add_argument("--expert-labels", default=None,
+                    help="path to a JSON file of ExpertLabel records "
+                         "to score the proposal against (test only)")
+    sp.add_argument("--version", default=None,
+                    help="deployed version label (deploy only)")
+    sp.add_argument("--credential", default=None,
+                    help="key_id.secret bearer credential holding "
+                         "calibration.approve (or set SATSA_CREDENTIAL); "
+                         "required for approve/reject/deploy")
+    sp.add_argument("--calibration-ledger", default=None,
+                    help="path to the calibration ledger JSONL file "
+                         "(default: <trust-key-dir>/calibration_ledger.jsonl)")
+    sp.set_defaults(func=cmd_calibrate)
 
     return p
 

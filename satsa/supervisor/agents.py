@@ -1,38 +1,47 @@
-"""SAT-SA supervisor agent registry — the canonical 26-agent roster.
+"""SAT-SA supervisor agent registry — the canonical 32-agent roster.
 
-The roadmap explicitly identifies 26 agents:
+The roadmap identifies 32 agents (grown from 26 in phase P25 by
+adding genuine new analytical responsibility, then to 32 in phase P26
+by splitting correlation/signal-fusion out from entity risk scoring
+as its own distinct agent — see ``docs/AGENT_INVENTORY.md``):
 
 * **9 retained MLOps agents** — the agents the existing
   ``qsmlops`` supervisor orchestrates (Data, Performance, Security,
   QuantumSecurity, RedTeam, Governance, IncidentResponse,
   Optimization, TrainingOptimization).
-* **17 new SAT-SA supervisory agents** — one per distinct
+* **23 SAT-SA supervisory agents** — one per distinct
   analytical responsibility, mapped below to a real worker
   implementation that exists in ``satsa.analysis.workers`` or to
   a real synthesis / risk / review / recommendation engine that
   exists in ``satsa.analysis``.
 
-The 17 SAT-SA agents are:
+The 23 SAT-SA agents are:
 
- 1. IngestionAgent          — satsa.ingest.service
- 2. NormalizationAgent      — satsa.ingest.normalize
- 3. ExecutionGapAgent       — analytical worker (synthesises the
+ 1. EntityAssetResolutionAgent — EntityAssetResolutionWorker (Phase P25)
+ 2. IngestionAgent          — satsa.ingest.service
+ 3. NormalizationAgent      — satsa.ingest.normalize
+ 4. ExecutionGapAgent       — analytical worker (synthesises the
                                 six SIH-EG detectors into one
                                 supervisory observation stream)
- 4. NegativeSpaceAgent      — NegativeSpaceWorker
- 5. AnomalyAgent            — AnomalyWorker
- 6. PeerBenchmarkAgent      — PeerBenchmarkWorker
- 7. CoverageGapAgent        — CoverageGapWorker (Phase P12)
- 8. DriftAgent              — DriftWorker (Phase P12)
- 9. CrossEntityInsightsAgent — CrossEntityInsightsWorker (Phase P12)
-10. CaseSimilarityAgent     — CaseSimilarityWorker (Phase P12)
-11. EvidenceCompletenessAgent — EvidenceCompletenessWorker (Phase P12)
-12. FusionAgent             — RiskAggregator (satsa.analysis.risk)
-13. PrioritizationAgent     — satsa.analysis.prioritize
-14. RecommendationAgent     — satsa.analysis.recommend
-15. ReviewWorkflowAgent     — satsa.analysis.review
-16. TrustProvenanceAgent    — satsa.analysis.trust
-17. ValidationAgent         — satsa.analysis.validate (Phase P13)
+ 5. NegativeSpaceAgent      — NegativeSpaceWorker
+ 6. WorkflowReconstructionAgent — WorkflowReconstructionWorker (Phase P25)
+ 7. AnomalyAgent            — AnomalyWorker
+ 8. PeerBenchmarkAgent      — PeerBenchmarkWorker
+ 9. CoverageGapAgent        — CoverageGapWorker (Phase P12)
+10. DriftAgent              — DriftWorker (Phase P12)
+11. CrossEntityInsightsAgent — CrossEntityInsightsWorker (Phase P12)
+12. CaseSimilarityAgent     — CaseSimilarityWorker (Phase P12)
+13. EvidenceCompletenessAgent — EvidenceCompletenessWorker (Phase P12)
+14. CorrelationSignalFusionAgent — satsa.analysis.correlation (Phase P26)
+15. FusionAgent (Entity Risk Scoring) — RiskAggregator (satsa.analysis.risk)
+16. PrioritizationAgent     — satsa.analysis.prioritize
+17. RecommendationAgent     — satsa.analysis.recommend
+18. ReviewWorkflowAgent     — satsa.analysis.review
+19. TrustProvenanceAgent    — satsa.analysis.trust
+20. EvidenceAssemblyAgent   — satsa.analysis.evidence_assembly (Phase P25)
+21. MetaAuditAgent          — satsa.analysis.meta_audit (Phase P25)
+22. ReportGenerationAgent   — satsa.analysis.report (Phase P25, newly registered)
+23. ValidationAgent         — satsa.analysis.validate (Phase P13)
 
 This module does not implement the analytical logic itself — it
 only registers the agents and exposes their declared inputs /
@@ -169,6 +178,18 @@ RETAINED_MLOPS_AGENTS: tuple[AgentSpec, ...] = (
 
 SATSA_AGENTS: tuple[AgentSpec, ...] = (
     AgentSpec(
+        agent_id="satsa.entity_asset_resolution",
+        name="Entity & Asset Resolution Agent",
+        family="satsa",
+        purpose="Maintains a cross-period asset-inventory view per entity; "
+                "flags assets present in the prior assessment that vanished "
+                "from the current one (decommission vs. silent reporting gap)",
+        inputs=("canonical_dataset", "previous_period_assets"),
+        outputs=("vanished_asset_finding_set",),
+        evidence_types=("asset_native_id",),
+        implementation_ref="satsa.analysis.workers.entity_asset_resolution",
+    ),
+    AgentSpec(
         agent_id="satsa.ingest",
         name="Ingestion Agent",
         family="satsa",
@@ -213,6 +234,19 @@ SATSA_AGENTS: tuple[AgentSpec, ...] = (
         outputs=("absence_finding_set",),
         evidence_types=("expected_evidence_id", "coverage_gap"),
         implementation_ref="satsa.analysis.workers.negative_space",
+    ),
+    AgentSpec(
+        agent_id="satsa.workflow_reconstruction",
+        name="Workflow Reconstruction Agent",
+        family="satsa",
+        purpose="Reconstructs the ordered event timeline per case from raw "
+                "timestamped records and flags temporal-sequence violations: "
+                "escalation after closure, disposition before investigation, "
+                "declared-sequence-vs-chronology mismatch",
+        inputs=("canonical_dataset",),
+        outputs=("workflow_sequence_finding_set",),
+        evidence_types=("case_id", "escalation_id", "disposition_id", "step_id"),
+        implementation_ref="satsa.analysis.workers.workflow_reconstruction",
     ),
     AgentSpec(
         agent_id="satsa.anomaly",
@@ -292,11 +326,26 @@ SATSA_AGENTS: tuple[AgentSpec, ...] = (
         implementation_ref="satsa.analysis.workers.evidence_completeness",
     ),
     AgentSpec(
+        agent_id="satsa.correlation_fusion",
+        name="Correlation & Signal Fusion Agent",
+        family="satsa",
+        purpose="Cross-finding corroboration: clusters signal findings "
+                "sharing a scoped subject and flags cross-detector-"
+                "family corroboration, ahead of and independent from "
+                "risk scoring (Phase P26)",
+        inputs=("entity_finding_set",),
+        outputs=("correlation_clusters",),
+        evidence_types=("subject", "rule_families", "corroborated"),
+        implementation_ref="satsa.analysis.correlation.correlate_findings",
+    ),
+    AgentSpec(
         agent_id="satsa.fusion",
-        name="Fusion Agent",
+        name="Entity Risk Scoring Agent",
         family="satsa",
         purpose="SIH-AN-01..07 — risk fusion: 7-dimension decomposable "
-                "entity risk profile, deduplication, explainable aggregation",
+                "entity risk profile, explainable aggregation, "
+                "consuming the correlation clusters from "
+                "satsa.correlation_fusion as supporting evidence",
         inputs=("entity_finding_set", "policy_ref"),
         outputs=("entity_risk_profile",),
         evidence_types=("dimension", "score", "rationale"),
@@ -353,16 +402,62 @@ SATSA_AGENTS: tuple[AgentSpec, ...] = (
         implementation_ref="satsa.analysis.trust",
     ),
     AgentSpec(
+        agent_id="satsa.evidence_assembly",
+        name="Evidence & Explainability Assembly Agent",
+        family="satsa",
+        purpose="Assembles the uniform WHAT/WHY/EVIDENCE/CONFIDENCE/"
+                "LIMITATIONS/RECOMMENDATION decomposition every finding "
+                "renders through, plus drill-down linking — a single "
+                "source of truth the UI now actually calls, replacing "
+                "logic that was duplicated inline",
+        inputs=("finding", "evidence_records", "observation"),
+        outputs=("explanation_bundle",),
+        evidence_types=("finding_id", "source_record_id"),
+        implementation_ref="satsa.analysis.evidence_assembly.assemble_explanation",
+    ),
+    AgentSpec(
+        agent_id="satsa.meta_audit",
+        name="Supervisory Audit & Compliance (Meta-Audit) Agent",
+        family="satsa",
+        purpose="Sweeps every run, every signal finding, and every review "
+                "decision in the database and verifies trust-receipt and "
+                "provenance-binding coverage — a database-wide compliance "
+                "check, not the single-run verify_run() check",
+        inputs=("satsa_runs", "satsa_findings", "satsa_review_decisions"),
+        outputs=("meta_audit_report",),
+        evidence_types=("run_id", "finding_id", "review_id"),
+        implementation_ref="satsa.analysis.meta_audit.run_meta_audit",
+    ),
+    AgentSpec(
+        agent_id="satsa.report_generation",
+        name="Supervisory Report Generation Agent",
+        family="satsa",
+        purpose="Assembles a supervisory report (entity risk decomposition, "
+                "findings, evidence, drill-down links) as printable/exportable "
+                "HTML — was real, working code that had never been formally "
+                "registered as one of the roster's agents",
+        inputs=("entity", "assessments", "risk_profile", "finding_set"),
+        outputs=("html_report",),
+        evidence_types=("finding_id", "assessment_id"),
+        implementation_ref="satsa.analysis.report.render_report",
+    ),
+    AgentSpec(
         agent_id="satsa.validation",
         name="Validation Agent",
         family="satsa",
         purpose="Per-layer + composition validation; expert labels; "
                 "synthetic ground truth; performance benchmark; "
-                "offline guarantee",
-        inputs=("run", "ground_truth", "expert_labels"),
-        outputs=("layer_metrics", "composition_metrics"),
-        evidence_types=("layer", "metric", "ground_truth_id"),
-        implementation_ref="satsa.analysis.validate",
+                "offline guarantee; extended in Phase P26 with a "
+                "governed threshold-calibration workflow (propose -> "
+                "test against labeled data -> supervisor approval -> "
+                "versioned deployment, satsa.analysis.calibration)",
+        inputs=("run", "ground_truth", "expert_labels",
+                "calibration_proposal"),
+        outputs=("layer_metrics", "composition_metrics",
+                 "calibration_decision"),
+        evidence_types=("layer", "metric", "ground_truth_id",
+                        "calibration_proposal_id"),
+        implementation_ref="satsa.analysis.validate, satsa.analysis.calibration",
     ),
 )
 

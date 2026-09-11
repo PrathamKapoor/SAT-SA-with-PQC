@@ -1,0 +1,41 @@
+{
+  "_meta": {
+    "purpose": "Executable ground truth for public_benchmarks.cicids2017.ingest_adapter, mirrored from ATTACK_SEVERITY in that module so the mapping is auditable outside Python. This describes what the ADAPTER must produce from labelled flow rows, not what SAT-SA's analytics will find downstream (that depends on which workflow_augmentation scenario, if any, is layered on top).",
+    "source_dataset": "CIC-IDS2017",
+    "provenance_type": "derived_from_source",
+    "not_verified_against": "an actual downloaded CIC-IDS2017 CSV file (unavailable in this development environment) -- verified only against hand-built schema-conformant sample rows in tests/test_phase82_public_benchmarks_cicids2017.py"
+  },
+  "label_to_severity": {
+    "BENIGN": "not_an_alert",
+    "DDoS": "critical",
+    "DoS Hulk": "critical",
+    "DoS GoldenEye": "critical",
+    "DoS slowloris": "high",
+    "DoS Slowhttptest": "high",
+    "Heartbleed": "critical",
+    "Bot": "critical",
+    "Infiltration": "critical",
+    "PortScan": "medium",
+    "Web Attack - Brute Force": "high",
+    "Web Attack - XSS": "high",
+    "Web Attack - Sql Injection": "critical",
+    "FTP-Patator": "high",
+    "SSH-Patator": "high"
+  },
+  "unrecognized_label_default": {
+    "severity": "medium",
+    "surfaced_as": "ConvertReport.unrecognized_labels -- never silently absorbed"
+  },
+  "downstream_analytics_applicability": {
+    "usable_directly": [
+      "anomaly (alert rate / severity distribution over time)",
+      "peer_benchmark (alert volume/severity vs. a peer cohort of other converted CIC-IDS2017 windows)",
+      "coverage_gap / detection_gap (assets with zero alerts vs. assets attacked)"
+    ],
+    "requires_workflow_augmentation": [
+      "execution_gap (needs acknowledged_at/closed_at -- CIC-IDS2017 has neither)",
+      "negative_space (needs cases/escalations/dispositions -- CIC-IDS2017 has none)",
+      "case_similarity, cross_entity_insights, evidence_completeness (all workflow-dependent)"
+    ]
+  }
+}

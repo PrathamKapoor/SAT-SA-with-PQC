@@ -1,0 +1,212 @@
+# Workflow augmentation policy — controlled generation of cases,
+# investigation_steps, escalations, and dispositions on top of
+# source-derived alerts/assets (from public_benchmarks.cicids2017 or
+# public_benchmarks.bots). Every record this policy produces is
+# tagged provenance_type="derived_synthetic_workflow" — see
+# public_benchmarks/provenance.py. These are controlled validation
+# fixtures, never a claim about real analyst behavior.
+#
+# Each scenario is deliberately engineered to trigger its declared
+# SAT-SA detector family (scenario 12 deliberately triggers several,
+# to validate satsa.analysis.correlation's cross-family corroboration)
+# — the same "generator defines truth independently of the detector"
+# discipline satsa/analysis/synth.py already uses for fully synthetic
+# data, applied here on top of schema-compatible (not yet real-data-
+# executed -- see docs/PUBLIC_BENCHMARKS.md) alert fixtures instead.
+#
+# "Triggers its declared family" is a presence claim, not an
+# exclusivity claim: most scenarios' tests assert the declared family
+# IS emitted, not that no other detector family also legitimately
+# fires on the same minimal fixture (e.g. a zero-investigation-step
+# case can legitimately also draw a negative_space finding). Only the
+# healthy_control negative control is asserted exhaustively clean of
+# every execution_gap/negative_space family — see
+# tests/test_phase84_public_benchmarks_workflow_augmentation.py.
+
+policy_version: workflow-policy-v1
+
+scenarios:
+  - scenario_id: healthy_control
+    description: >
+      Every alert gets a case, a full 3-step investigation, an
+      escalation for critical/high severity, and a disposition —
+      closed at a realistic pace (2-6 hours). Expected to produce NO
+      execution-gap / negative-space signals; a negative control.
+    expects_signal_families: []
+    params:
+      close_after_seconds_min: 7200
+      close_after_seconds_max: 21600
+      investigation_steps: [triage, containment, recovery]
+      escalate_severities: [critical, high]
+
+  - scenario_id: fast_closure
+    description: >
+      Critical/high alerts closed in under 60 seconds with a case but
+      no real investigation gap between open and close. Targets
+      execution_gap.fast_closure.
+    expects_signal_families: [execution_gap.fast_closure]
+    params:
+      close_after_seconds_min: 10
+      close_after_seconds_max: 55
+      investigation_steps: [triage]
+      escalate_severities: []
+
+  - scenario_id: no_escalation
+    description: >
+      Critical alerts get a case and investigation but are NEVER
+      escalated, regardless of severity. Targets
+      execution_gap.critical_without_escalation.
+    expects_signal_families: [execution_gap.critical_without_escalation]
+    params:
+      close_after_seconds_min: 3600
+      close_after_seconds_max: 7200
+      investigation_steps: [triage, containment]
+      escalate_severities: []
+
+  - scenario_id: ack_no_investigation
+    description: >
+      Alerts are acknowledged AND closed (both required for
+      AckWithoutInvestigationWorker to consider them at all) but their
+      case gets exactly 1 investigation step -- below
+      min_steps_per_case=2, so the rule fires, but NOT zero, so
+      negative_space.missing_investigation (which only cares about
+      exactly-zero-step cases) deliberately does not also fire on the
+      same case. Targets execution_gap.ack_without_investigation only.
+    expects_signal_families: [execution_gap.ack_without_investigation]
+    params:
+      close_after_seconds_min: 1800
+      close_after_seconds_max: 3600
+      investigation_steps: [triage]
+      escalate_severities: []
+
+  - scenario_id: missing_investigation
+    description: >
+      Cases are opened and closed with NO investigation_steps records
+      at all (the investigation_steps category is present but empty,
+      not omitted -- see missing_escalation_file below for the
+      omitted-file variant). Alerts deliberately have NO
+      acknowledged_at set (only created_at/closed_at, which
+      Alert.validate() permits), so
+      execution_gap.ack_without_investigation's acknowledged_at
+      precondition fails and it does NOT also fire on the same
+      alerts -- this scenario targets
+      negative_space.missing_investigation only.
+    expects_signal_families: [negative_space.missing_investigation]
+    params:
+      close_after_seconds_min: 3600
+      close_after_seconds_max: 10800
+      investigation_steps: []
+      leave_acknowledged_at_unset: true
+      escalate_severities: [critical]
+
+  - scenario_id: missing_escalation_file
+    description: >
+      The escalations category is not submitted at all (the file
+      itself is absent, not merely empty) for critical alerts that
+      would otherwise need one. Targets negative_space's
+      attenuated-confidence missing-escalation rule (see
+      satsa/analysis/workers/negative_space.py — this exact scenario
+      shape is what phase P26 fixed a real bug in: the finding must
+      still fire, at attenuated confidence, when the file is entirely
+      missing).
+    expects_signal_families: [negative_space.missing_escalation]
+    params:
+      omit_escalations_category: true
+      close_after_seconds_min: 3600
+      close_after_seconds_max: 7200
+      investigation_steps: [triage]
+
+  - scenario_id: silent_critical_asset
+    description: >
+      Adds critical-criticality assets that have ZERO alerts against
+      them anywhere in the submission — hosts present in the
+      environment (per assets.csv) but silent in the telemetry.
+      Targets negative_space.missing_monitoring / detection_gap.
+    expects_signal_families: [negative_space.missing_monitoring]
+    params:
+      silent_asset_count: 3
+      silent_asset_criticality: critical
+
+  - scenario_id: low_activity
+    description: >
+      Selects a small, deliberately sparse subset of the source
+      alerts (fewer than negative_space's min_alert_volume_for_low_
+      activity threshold) against a critical/high-heavy asset
+      inventory. Targets negative_space.unexpectedly_low_activity
+      (NOT satsa.analysis.workers.anomaly, which is a self-baseline
+      MAD-based upper-tail outlier detector over closure-time/
+      investigation-duration-style metrics and has no "too few
+      alerts" rule of its own).
+    expects_signal_families: [negative_space.unexpectedly_low_activity]
+    params:
+      max_alert_count: 2
+      close_after_seconds_min: 3600
+      close_after_seconds_max: 7200
+      investigation_steps: [triage]
+
+  - scenario_id: template_investigation
+    description: >
+      Every case gets >= 5 total investigation steps (across all
+      cases combined, satisfying RepeatedInvestigationThresholds.
+      min_steps_total) using the exact same (action_type, note) pair
+      with a short note (<=30 chars), so a single shallow pattern
+      dominates >=60% of all steps. Targets
+      execution_gap.repeated_investigation_pattern.
+    expects_signal_families: [execution_gap.repeated_investigation_pattern]
+    params:
+      close_after_seconds_min: 1800
+      close_after_seconds_max: 3600
+      template_action_type: triage
+      template_note: "reviewed, no action needed"
+      template_analyst: shared-queue-analyst
+      min_steps_total: 6
+
+  - scenario_id: recurring_no_remediation
+    description: >
+      A single closed case absorbs >= 3 alerts (RecurringWithout
+      RemediationThresholds.recurrence_threshold) via matching
+      case_refs, with no remediation recorded (remediation_refs is
+      not an ingestible CSV field, so this is automatic for any
+      CSV-ingested case). Targets
+      execution_gap.recurring_without_remediation.
+    expects_signal_families: [execution_gap.recurring_without_remediation]
+    params:
+      recurrence_min_count: 4
+      disposition_outcome: benign
+      investigation_steps: []
+
+  - scenario_id: peer_outlier
+    description: >
+      Reuses the healthy_control behaviour (real cases, real
+      investigations, real escalations) but skews this entity's
+      closure times to be dramatically faster than a generated peer
+      cohort of otherwise-identical entities. Targets
+      peer_benchmark deviation. Must be paired with >= 3 peer entities
+      generated under healthy_control for the peer-benchmark worker's
+      min_peers gate to engage.
+    expects_signal_families: [peer_benchmark]
+    params:
+      close_after_seconds_min: 30
+      close_after_seconds_max: 90
+      investigation_steps: [triage, containment, recovery]
+      escalate_severities: [critical, high]
+      peer_close_after_seconds_min: 7200
+      peer_close_after_seconds_max: 21600
+      peer_count: 4
+
+  - scenario_id: multi_signal
+    description: >
+      Deliberately combines fast_closure (execution_gap) AND
+      no_escalation (also execution_gap, different rule) on the SAME
+      underlying alerts/case, so two different detector families both
+      reference the same scoped subject — the intended target for
+      satsa.analysis.correlation's cross-family corroboration
+      clustering, not just a union of unrelated findings.
+    expects_signal_families:
+      - execution_gap.fast_closure
+      - execution_gap.critical_without_escalation
+    params:
+      close_after_seconds_min: 10
+      close_after_seconds_max: 55
+      investigation_steps: []
+      escalate_severities: []

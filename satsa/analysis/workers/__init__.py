@@ -11,9 +11,23 @@ worker (not the whole run).
 
 Phases P12–P13 add the eight remaining SAT-SA supervisory agents
 (coverage_gap, drift, cross_entity_insights, case_similarity,
-evidence_completeness) so the platform exposes all 17 SAT-SA
+evidence_completeness) so the platform exposes all 17 original SAT-SA
 supervisory workers — combined with the 9 retained MLOps agents
-they reach the 26-agent target the roadmap requires.
+they reached the 26-agent target the roadmap required at the time.
+
+Phase P25 adds two more workers to the default pipeline
+(``workflow_reconstruction``, ``entity_asset_resolution``, taking the
+default worker set from 14 to 16) plus three more SAT-SA agents
+registered outside the default worker set (evidence_assembly,
+meta_audit, and the newly-registered report generator), bringing the
+roster to 31 total (9 + 22).
+
+Phase P26 adds one further SAT-SA agent (correlation_fusion, in
+``satsa.analysis.correlation`` — not a ``workers/`` module, since it
+runs as a pre-scoring step inside ``compute_entity_risk`` rather than
+as its own ``AnalyticalWorker`` in the default pipeline), bringing the
+roster to 32 total (9 + 23). The default worker set here stays at 16.
+See ``docs/AGENT_INVENTORY.md``.
 """
 from __future__ import annotations
 
@@ -51,6 +65,11 @@ from satsa.analysis.workers.drift import (
     DEFAULT_DRIFT_POLICY,
     DriftThresholds,
     DriftWorker,
+)
+from satsa.analysis.workers.entity_asset_resolution import (
+    DEFAULT_ENTITY_ASSET_RESOLUTION_POLICY,
+    EntityAssetResolutionThresholds,
+    EntityAssetResolutionWorker,
 )
 from satsa.analysis.workers.evidence_completeness import (
     DEFAULT_EVIDENCE_COMPLETENESS_POLICY,
@@ -90,6 +109,11 @@ from satsa.analysis.workers.repeated_investigation_pattern import (
     RepeatedInvestigationThresholds,
     RepeatedInvestigationWorker,
 )
+from satsa.analysis.workers.workflow_reconstruction import (
+    DEFAULT_WORKFLOW_RECONSTRUCTION_POLICY,
+    WorkflowReconstructionThresholds,
+    WorkflowReconstructionWorker,
+)
 
 __all__ = [
     "FastClosureWorker", "FastClosureThresholds", "DEFAULT_FAST_CLOSURE_POLICY",
@@ -114,4 +138,8 @@ __all__ = [
     "DEFAULT_CASE_SIMILARITY_POLICY",
     "EvidenceCompletenessWorker", "EvidenceCompletenessThresholds",
     "DEFAULT_EVIDENCE_COMPLETENESS_POLICY",
+    "WorkflowReconstructionWorker", "WorkflowReconstructionThresholds",
+    "DEFAULT_WORKFLOW_RECONSTRUCTION_POLICY",
+    "EntityAssetResolutionWorker", "EntityAssetResolutionThresholds",
+    "DEFAULT_ENTITY_ASSET_RESOLUTION_POLICY",
 ]
