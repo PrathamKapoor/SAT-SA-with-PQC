@@ -2,41 +2,36 @@
 
 ## 1. Current Phase
 
-- **Phase**: P26/P27 ("agent-taxonomy expansion + hardening checklist" and
-  "public-dataset benchmark framework"), plus a following **release-readiness
-  correction pass** and a **Git/GitHub publish**.
-- **Subphase**: release-readiness correction (package discovery fix + claim-
-  wording correction + stale-doc cleanup) → commit → push to GitHub.
-- **Objective of this subphase**: make the repository's documentation
-  strictly consistent with actual evidence (no overclaiming what public
-  datasets or the workflow-augmentation layer prove), fix a real Python
-  packaging bug, and ship the accumulated P26/P27 work to the project's
-  GitHub remote without touching any UI-facing file (another agent was
-  reportedly working on the UI concurrently) and without any destructive
-  git operation.
+- **Phase**: P26 (agent-taxonomy expansion + hardening checklist) → P27
+  (public-dataset benchmark framework) → P28 (release integrity, offline
+  package verification, dependency-manifest reconciliation) → P29
+  (deployment verification and packaging correction).
+- **Subphase**: release-publishing correction. The P29 commit is on
+  GitHub; this handoff records the subsequently discovered CI setup defect
+  and its correction.
 - **Overall project objective**: SAT-SA — a periodic, offline,
   evidence-driven supervisory analytics tool for SIH 26157 / NCIIPC, with a
   post-quantum trust layer (TRUST-SAT). See `README.md` for the full
   product description.
-- **Status**: **COMPLETE for what was scoped.** The correction pass fixed
-  everything it identified, the narrow test set + a full-suite run both
-  passed, and the commit was pushed and verified against the GitHub remote
-  (local HEAD == `newrepo/main`, ahead=0/behind=0, confirmed via `git fetch`
-  + `git ls-remote`, not just trusted from `git push` output). Explicitly
-  **NOT** complete, and not claimed complete anywhere in the repo: real
-  BOTS/CIC-IDS2017 file execution, real NCIIPC/SOC expert validation, CI/
-  Docker execution — see section 8/9 below.
+- **Status**: **COMPLETE for everything scoped through P28.** The full test
+  suite passes (`python -m pytest tests/ -q`, exit 0), the current HEAD is
+  pushed to GitHub and independently verified there (not just trusted from
+  a push exit code), and a wheel built from this tree has been proven —
+  twice, across two sessions — to contain everything an installed
+  distribution needs, including the `sat-sa` CLI working end to end from
+  outside the source tree. Explicitly **NOT** complete, and not claimed
+  complete anywhere in the repo: real BOTS/CIC-IDS2017 file execution, real
+  NCIIPC/SOC expert validation and fully dependency-isolated installation
+  on a separate target machine — see section 8/9. CI has been executed and
+  failed; Docker could not be executed because this host has no Docker
+  executable or daemon.
 
 ## 2. Work Completed
 
-### A. P26/P27 feature work (already in the repo before this subphase started)
+### A. P26/P27 feature work (agent expansion + public-benchmark framework)
 
-This subphase did not implement these; it verified and documented them
-honestly. They are load-bearing context for what the correction pass then
-had to fix:
-
-- **Agent roster** grew 26 → 31 → 32 (9 MLOps + 23 SAT-SA). New this
-  session: Entity & Asset Resolution, Workflow Reconstruction, Evidence &
+- **Agent roster** grew 26 → 31 → 32 (9 MLOps + 23 SAT-SA). Additions:
+  Entity & Asset Resolution, Workflow Reconstruction, Evidence &
   Explainability Assembly, Meta-Audit, formal registration of Report
   Generation, Correlation & Signal Fusion (split from Entity Risk Scoring),
   N17 calibration workflow. See `docs/AGENT_INVENTORY.md`.
@@ -56,21 +51,18 @@ had to fix:
 - **Security hardening**: CSRF (double-submit cookie, header-auth exempt)
   on `/findings/{id}/review` and `/ingest`; login rate limiting
   (`satsa/security.py`'s `LoginRateLimiter`). TLS/encryption-at-rest/
-  session-expiry remain explicitly NOT implemented (disclosed, not
-  fabricated).
+  session-expiry remain explicitly NOT implemented (disclosed).
 - **`satsa/analysis/review.py`**'s `verify_ledger_integrity()` — closes a
-  previously-disclosed gap (`docs/TRUST_MODEL.md`: review-decision
-  deletion/reordering was "⚠️ not detected") by mirroring every recorded
-  decision into an independent hash-chained `EvidenceLedger` (reusing the
-  same class the identity-audit trail already used) and cross-checking the
-  DB table against it in both directions.
+  previously-disclosed gap (review-decision deletion/reordering was
+  undetectable) by mirroring every recorded decision into an independent
+  hash-chained `EvidenceLedger` and cross-checking the DB table against it.
 - **`public_benchmarks/`** — the three-layer public-dataset benchmark
   framework:
   1. `public_benchmarks/cicids2017/` and `public_benchmarks/bots/` —
      adapters converting CIC-IDS2017/Splunk-BOTS-shaped rows into SAT-SA
      canonical alert/asset dicts. **Schema-compatible, NOT run against real
-     downloaded dataset files** — see section 6/8 below, this is the
-     single most important fact about this package.
+     downloaded dataset files** — see section 6/9, this is the single most
+     important fact about this package.
   2. `public_benchmarks/workflow_augmentation/` — `policy.yaml` (12
      scenarios) + `generator.py` (one function per scenario) +
      `serialize.py` (CSV writers + `provenance_manifest.json` sidecar).
@@ -83,539 +75,463 @@ had to fix:
   `satsa.ingest` → `RunService` → detector pipeline in
   `tests/test_phase84_public_benchmarks_workflow_augmentation.py`.
 
-### B. This subphase's actual work (the release-readiness correction pass)
+### B. First release-readiness correction pass (post-P26/P27)
 
-1. **Fixed a real Python packaging bug.** `pyproject.toml`'s
-   `[tool.setuptools.packages.find]` declared `include = ["qsmlops*",
-   "satsa*"]` only — `evaluation*` and `public_benchmarks*` were absent.
-   `satsa/cli.py::cmd_ablate` imports `evaluation.ablation.runner` at call
-   time; a `pip install` built from the old config would omit both
-   packages, and `sat-sa ablate` would raise `ModuleNotFoundError` in that
-   installed environment (masked in this source checkout because the repo
-   root is directly importable). Fixed by adding both prefixes to
-   `include`. Verified via `setuptools.find_packages()` — the actual
-   discovery function the build backend calls — run against the repo with
-   the include patterns read live from `pyproject.toml` (not a hardcoded
-   duplicate), in a new test file
-   `tests/test_phase86_packaging_discovery.py` (3 tests, all passing). A
-   genuine isolated `pip install`/wheel build was **not** performed: the
-   `build` and `wheel` packages are not installed locally, and installing
-   them would require network access, which this task forbade. This
-   boundary is disclosed, not silently assumed away.
-2. **Corrected public-dataset claim wording** so no document implies real
-   BOTS/CIC-IDS2017 files were downloaded and processed (they were not).
-   The one genuine violation found: `docs/PUBLIC_BENCHMARKS.md`'s own
-   "What you can claim" section literally listed `"Validated on public
-   BOTS/CIC-IDS-derived benchmark data"` as an allowed claim — contradicting
-   its own "critical, disclosed limitation" section two paragraphs above.
-   Rewrote that section to lead with an explicit "not yet claimable"
-   statement and replaced it with the five framework-scoped claims the
-   task specified verbatim. Extended "What you must NOT claim" with the
-   exact forbidden phrases. Applied the same correction (schema-compatible
-   *framework*, not "validated on X data") to `README.md` (two places),
-   `CHANGELOG.md` (P27 section header + intro), `docs/CLAIMS.md` (row
-   label), and `docs/roadmap-status.md` (P27 phase-entry status line).
-3. **Corrected "exactly" wording.** Several places claimed each scenario
-   triggers "exactly" one detector family — true for `healthy_control`
-   (the negative control, exhaustively asserted clean) but not
-   demonstrated for the other 11, whose tests use presence-only (`in
-   families`) assertions and do not rule out legitimate cross-detector
-   side effects (e.g. `multi_signal`'s minimal, zero-investigation-step
-   alert also legitimately draws a `negative_space` finding). Changed
-   wording from "exactly its declared family" to "its declared family;
-   known/permitted cross-detector side effects are documented" in
-   `public_benchmarks/workflow_augmentation/policy.yaml`'s header comment,
-   `tests/test_phase84_public_benchmarks_workflow_augmentation.py`'s module
-   docstring, `docs/PUBLIC_BENCHMARKS.md`, `docs/roadmap-status.md`, and
-   `CHANGELOG.md`. **Did not** add stricter test assertions or an
-   allow-list mechanism — the task explicitly said only to do that after
-   proving the scenario contract defines a complete allow-list, which it
-   does not, and forbade suppressing/filtering findings to force scenario
-   purity.
-4. **Removed stale test-count claims.** `docs/deployment.md` said
-   `# ~850 tests, ~8 min, 0 failed expected`; `docs/phase25/demo-runbook.md`
-   said `# 717 passed, 17 skipped, 0 failed` as a literal pre-flight
-   command comment a fresh user would run today. Both replaced with
-   `# release acceptance requires 0 failed` (no invented number).
-   `README.md`'s "full suite (1000+, ...)" was also replaced with a
-   non-numeric form, since Part 5's instruction was to avoid asserting a
-   number not proven by an executed final command in *this* task session.
-   **Preserved as historical** (per the task's own instruction): numbers in
-   `docs/FINAL-READINESS-AUDIT.md` ("887 → 926"), `docs/autonomous-run/
-   24-hour-final-report.md` and `post-24h-hardening-final-report.md`
-   ("717 passed"), and the P27 roadmap entry's "98 new tests" — all are
-   self-dated retrospective records of a specific historical run, not
-   current operational instructions.
-5. **Inspected `SAT-SA-with-PQC/`** (untracked nested directory) — it is a
-   **separate, complete nested git clone** (has its own `.git/`) of
-   `https://github.com/PrathamKapoor/SAT-SA-with-PQC`, currently at the
-   same commit the `release-fresh` branch was at *before* this subphase's
-   commit. It is almost certainly a verification checkout from an earlier
-   session (used to prove a prior push was clean). **Not modified, not
-   deleted, not added to git** — git does not recurse into a nested `.git`
-   directory, so it correctly stays untracked by the parent repo. Its
-   disposition (keep, delete, or turn into a real submodule) is the
-   repository owner's decision, not made in this subphase.
-6. **Improved `.gitignore`** — added `.coverage`, `.mypy_cache/`,
-   `.ruff_cache/`, `htmlcov/`, a defensive `.env`/`*.pem`/`*.key`/
-   `credentials.json`/`secrets.json` block (none currently exist in the
-   repo — this is future-proofing per the task's Phase 3/7 instructions),
-   and a general `*.db`/`*.sqlite*` pattern (no `.db` file was tracked
-   before or after; all DB usage in this codebase is via `pytest`'s
-   `tmp_path` or explicit `--db` CLI flags, never a committed file).
-7. **Committed and pushed** everything above plus all pending P26/P27 work
-   to `https://github.com/PrathamKapoor/SAT-SA-with-PQC`, branch `main`
-   (pushed from local `release-fresh`, now tracking `newrepo/main`).
-   Commit `f6a515289414c688598bb5a2327761fceb6be851`. **No UI file was
-   touched** — verified via `git status`/timestamps before and after; the
-   pre-existing UI diffs (`satsa/ui/**`) were authored in an *earlier*
-   part of this same overall session, before this subphase's "don't touch
-   UI" constraint was given, and were committed as-is without further
-   edits (leaving them alone was the explicit instruction).
+1. Fixed `pyproject.toml`'s package discovery, which excluded
+   `evaluation*`/`public_benchmarks*` — `sat-sa ablate` would have failed
+   to import from an installed distribution.
+2. Corrected public-dataset claim wording repo-wide so no document implies
+   real BOTS/CIC-IDS2017 files were downloaded and processed (they were
+   not) — see `docs/PUBLIC_BENCHMARKS.md`, the authoritative claims
+   boundary.
+3. Corrected "exactly one detector family" wording to "its declared
+   family; known/permitted cross-detector side effects are documented" —
+   only `healthy_control` (the negative control) is actually proven
+   exhaustively clean; the other 11 scenarios are presence-proven, not
+   exclusivity-proven.
+4. Removed stale hardcoded test-count comments from `docs/deployment.md`
+   and `docs/phase25/demo-runbook.md`.
+5. Improved `.gitignore` (coverage/cache/env/db patterns).
+6. Committed and pushed to `https://github.com/PrathamKapoor/SAT-SA-with-PQC`
+   — this was the **first** publish round (commit `f6a5152`, then a
+   follow-up `d375916` adding the previous version of this handoff file).
+
+### C. P28 — release integrity hardening (this is the most recent feature work)
+
+1. **Stopped the ML-DSA certification test from dirtying a tracked file.**
+   `tests/test_hsm_a13_mldsa_certification.py` used to overwrite the
+   *tracked* `tests/_a13_artifacts/mldsa_provider_sentinel.txt` with a
+   fresh, randomly-generated key-id fragment on every run (R6/R6.process
+   generate real random keys by design — that's part of what they
+   certify). Fixed by redirecting `_write_sentinel()`'s output to a
+   `tmp_path_factory`-managed temp directory; the tracked file is now a
+   stable, never-overwritten fixture. No cryptographic assertion (R1–R7,
+   backend-selection matrix, fail-closed tests, secret-handling tests) was
+   touched or weakened. Added `TestSentinelDoesNotDirtyTrackedFixture` (3
+   tests) proving this property directly, with byte-for-byte sha256
+   before/after verification.
+2. **Reconciled `requirements.txt` and `pyproject.toml`.** All 14 runtime
+   package versions already matched exactly; the only real inconsistency
+   was that `requirements.txt` mixed its 2 dev-only packages (`pytest`,
+   `httpx`) in with the 14 runtime ones with no separation. Fixed with
+   clearly-labeled Runtime/Development comment sections in
+   `requirements.txt` (kept as one file, since `README.md`'s documented
+   install flow runs `pip install -r requirements.txt` immediately
+   followed by `pytest`). New test:
+   `tests/test_phase87_dependency_manifest_consistency.py` (5 tests,
+   comparing the two manifests to each other — no network, no comparison
+   against locally-installed package versions).
+3. **Found and fixed a real packaging bug via an actual wheel build.**
+   Building a wheel offline (`python -m pip wheel --no-deps
+   --no-build-isolation . -w <tmp>`) and inspecting it with `zipfile`
+   revealed `public_benchmarks/workflow_augmentation/policy.yaml` (and the
+   sibling `.json` files) were **missing** from the wheel —
+   `generator.py`'s `load_policy()` reads `policy.yaml` at runtime,
+   relative to the installed package's own directory, so this would have
+   broken `generate_workflow()`'s default policy load on any installed
+   (non-source-tree) distribution. Fixed via a new
+   `[tool.setuptools.package-data]` table in `pyproject.toml`. Verified by
+   rebuilding the wheel and re-inspecting it — the fix works. This exact
+   proof was **repeated a second time** in the second publish round with
+   identical results (no drift).
+4. Fixed `docs/deployment.md`'s "Core:" dependency list, which was missing
+   `starlette` and `python-multipart` (both real, confirmed-via-source-
+   search runtime dependencies).
+5. Added one narrow `.gitignore` rule for `SAT-SA-with-PQC/` (see section
+   6) plus `build/`/`*.egg-info/`/`dist/` (wheel-build byproducts that
+   `pip wheel .` leaves in the repo root even when the output wheel itself
+   goes elsewhere).
+6. **Full end-to-end wheel verification performed twice** (once per
+   publish round): built the wheel, installed it with `pip install
+   --no-deps` into a fresh venv, `cd`ed to a directory outside the repo,
+   and confirmed `import satsa` / `import evaluation` / `import
+   public_benchmarks` all resolve to the installed `site-packages`, not
+   the source tree. A `--no-deps`-only venv (no runtime deps installed at
+   all) correctly imported `satsa`/`evaluation`/`public_benchmarks` but
+   not `qsmlops` (needs `dilithium_py` etc. — expected, not a packaging
+   bug). A second venv with `--system-site-packages` (explicitly disclosed
+   as **not** fully dependency-isolated) completed the full picture:
+   `sat-sa --version`, `sat-sa ablate --help`, `sat-sa calibrate --help`,
+   and a real `sat-sa ablate <entity> <assessment>` invocation against a
+   fresh empty DB (forcing past `--help` into the actual deferred `from
+   evaluation.ablation.runner import run_ablation_study` line) all
+   succeeded from outside the repository.
+
+### D. Second Git/GitHub publish round (most recent action)
+
+1. Fresh Phase-1-style inspection confirmed no drift since the first
+   publish round: `newrepo/main` on GitHub still equaled local
+   `release-fresh` HEAD exactly before this round's commit — a clean
+   fast-forward was guaranteed.
+2. Repeated the full secret/database/artifact safety audit (Phase 2) —
+   clean, zero matches, same as before.
+3. Re-verified the sentinel file has no semantic diff via `git diff`,
+   `git diff --ignore-space-at-eol`, `git diff --check`, and sha256
+   comparison against `HEAD` — all confirmed clean, both before and after
+   running the targeted tests and the full suite in this round.
+4. Added the narrow `SAT-SA-with-PQC/` `.gitignore` rule (this task's own
+   instruction differed from an earlier, more restrictive one that said
+   not to touch `.gitignore` for it at all — the later, more specific
+   instruction was followed, since it was the controlling one for that
+   task).
+5. Re-ran every targeted test file plus `compileall` plus the full suite —
+   all green, all confirmed via fresh command output in that session, not
+   cited from memory.
+6. Rebuilt and re-inspected the wheel — identical result to the first
+   time (433,078 bytes, same 4-family + 4-data-file contents).
+7. Staged exactly six files by explicit path (`git add -- <paths>`, never
+   `git add .`/`-A`): `.gitignore`, `docs/deployment.md`, `pyproject.toml`,
+   `requirements.txt`, `tests/test_hsm_a13_mldsa_certification.py`,
+   `tests/test_phase87_dependency_manifest_consistency.py`. The sentinel
+   file was deliberately left unstaged (nothing real to stage).
+8. Committed as `chore: verify offline release packaging` and pushed with
+   `git push newrepo HEAD:main` — a plain fast-forward
+   (`d375916..6cdbe97`), no force used or needed.
+9. **Verified independently**, not just trusted from the push output:
+   `git fetch newrepo --prune` then `git ls-remote newrepo HEAD
+   refs/heads/main` both returned `6cdbe97b6db6e6534c6225d1f608d5bb92ccb4f9`
+   — exactly matching local `HEAD` and local `newrepo/main`. All three
+   agree.
+10. Confirmed `origin` (`https://github.com/PrathamKapoor/SAT-SA.git`) was
+    completely untouched: `git ls-remote origin HEAD` returned the same
+    `4e38d5a...` hash before and after this entire round.
 
 ## 3. Files Changed
 
-Full diff is in commit `f6a515289414c688598bb5a2327761fceb6be851`
-(`git show --stat f6a5152`). The subphase-specific edits (as opposed to
-pre-existing P26/P27 work already in the working tree) are:
+**P29 release commit**: `9885373a58699097695a9f30183a968816055f5c`, pushed
+to `https://github.com/PrathamKapoor/SAT-SA-with-PQC` branch `main`.
+
+The P28-specific commit (`6cdbe97`, on top of the earlier P26/P27 commits
+`f6a5152`/`d375916`) touched exactly:
 
 | Path | What changed | Why it matters |
 |---|---|---|
-| `pyproject.toml` | `include` list gained `"evaluation*"`, `"public_benchmarks*"` | Real packaging bug fix — `sat-sa ablate` and the benchmark adapters would not import from an installed (non-source-tree) distribution otherwise |
-| `tests/test_phase86_packaging_discovery.py` (new) | 3 tests verifying the fix via real `setuptools.find_packages()` | The one new test file this subphase added |
-| `docs/PUBLIC_BENCHMARKS.md` | Rewrote "What you can claim" / "What you must NOT claim"; fixed "exactly one detector family" wording | This is the *authoritative* claims-boundary doc for `public_benchmarks/` — every other doc points here |
-| `README.md` | Two spots: the Validation-section bullet and the Project-structure comment for `public_benchmarks/` | Both previously implied real BOTS/CIC-IDS2017 data was processed |
-| `docs/CLAIMS.md` | Row 50 label gained "**framework**"; body tightened | Same claim-boundary correction, in the claims table specifically |
-| `docs/roadmap-status.md` | P27 phase-entry `status:` line + `acceptance:` line | Same correction, in the detailed phase record |
-| `CHANGELOG.md` | P27 section header + intro paragraph + one bullet | Same correction, in the release summary |
-| `public_benchmarks/workflow_augmentation/policy.yaml` | Header comment block | Same "exactly" correction, at the source-of-truth config level |
-| `tests/test_phase84_public_benchmarks_workflow_augmentation.py` | Module docstring only (no assertions changed) | Same correction; test logic itself was already correctly scoped (presence checks) |
-| `docs/deployment.md` | One line: stale `~850 tests` comment → non-numeric | Part of Part 5's stale-count cleanup |
-| `docs/phase25/demo-runbook.md` | One line: stale `717 passed` comment → non-numeric | Same |
-| `.gitignore` | Expanded (coverage/cache/env/db patterns) | Release-cleanliness (Phase 5 of the git-publish instructions) |
-| `handoff.md` (new, this file) | — | This document |
+| `pyproject.toml` | Added `[tool.setuptools.package-data]` for `public_benchmarks = ["**/*.yaml", "**/*.json"]` | Fixes a real bug: `policy.yaml` was missing from built wheels, which would break `generate_workflow()`'s default policy load on any installed distribution |
+| `requirements.txt` | Added Runtime/Development comment section headers; no package/version changed | Was previously mixing dev-only deps into the runtime list with no distinction |
+| `docs/deployment.md` | Fixed the "Core:" dependency list (added missing `starlette`, `python-multipart`) | Was already inaccurate before this pass — now matches the real dependency set exactly |
+| `.gitignore` | Added `build/`/`*.egg-info/`/`dist/` (wheel-build byproducts) and one line for `SAT-SA-with-PQC/` | Prevents accidental future tracking of generated artifacts and the nested clone |
+| `tests/test_hsm_a13_mldsa_certification.py` | Redirected the sentinel write target to a pytest temp dir; added `TestSentinelDoesNotDirtyTrackedFixture` (3 tests) | The actual fix for the tracked-file-dirtying problem, plus a regression test proving it |
+| `tests/test_phase87_dependency_manifest_consistency.py` (new) | 5 tests comparing `requirements.txt` and `pyproject.toml` | Automated enforcement of item 2 above |
 
-Everything else in the commit (`satsa/analysis/calibration.py`,
+Everything else in the repository (`satsa/analysis/calibration.py`,
 `correlation.py`, `evidence_assembly.py`, `meta_audit.py`,
 `public_benchmarks/**`, `evaluation/ablation/**`, `evaluation/baselines/**`,
-`tests/test_phase70_...` through `test_phase85_...`, and the modifications
-to `satsa/analysis/review.py`, `risk.py`, `run.py`,
-`workers/negative_space.py`, `workers/__init__.py`, `cli.py`,
-`security.py`, `service.py`, `supervisor/agents.py`,
-`supervisor/engine.py`, `qsmlops/security/permissions/model.py`, and the
-several `tests/test_phase{4,5,6,8,53,54,56,57,63,64}_*.py` count-cascade
-fixes) is **P26/P27 feature work that predates this subphase** — this
-subphase reviewed, tested, and shipped it, but did not author it in this
-pass. See `docs/roadmap-status.md`'s P26/P27 entries for the detailed
-rationale behind each of those files.
+`tests/test_phase70_...` through `test_phase86_...`, and the P26/P27
+modifications to `satsa/analysis/review.py`, `risk.py`, `run.py`,
+`workers/negative_space.py`, `cli.py`, `security.py`, `service.py`,
+`supervisor/agents.py`, `supervisor/engine.py`,
+`qsmlops/security/permissions/model.py`) predates this handoff's most
+recent work — see `docs/roadmap-status.md`'s P26/P27/P28 entries for the
+detailed rationale behind each.
+
+**Not committed, not part of any release**: `SAT-SA-with-PQC/` (separate
+nested git clone, gitignored, untouched), `build/` and `qsmlops.egg-info/`
+(gitignored wheel-build byproducts, still physically present on disk from
+verification runs — safe, but the repo owner may want to delete them
+manually; this agent could not delete them under the constraints of the
+task that created them).
 
 ## 4. Current Architecture / State
 
-- **Entry points**: `sat-sa` CLI (`satsa/cli.py`, `main()`) and the FastAPI
-  UI (`satsa/ui/__init__.py`, `create_app()`, launched via
-  `scripts/serve_ui.py`). Both call the same `SatsaService`
-  (`satsa/service.py`) — no logic duplicated between CLI and UI.
+- **Entry points**: `sat-sa` CLI (`satsa/cli.py::main`) and the FastAPI UI
+  (`satsa/ui/__init__.py::create_app`, launched via `scripts/serve_ui.py`).
+  Both call the same `SatsaService` (`satsa/service.py`) — no logic
+  duplicated between CLI and UI.
 - **Data flow**: CSE submission (CSV/JSON/JSONL/SQLite) → `satsa/ingest/`
-  normalizes into canonical domain records (`satsa/domain/`) → persisted
-  to SQLite (`satsa/store/`) → `satsa/analysis/run.py`'s `RunService` runs
-  the 16-worker default set (`satsa/analysis/workers/`) →
+  normalizes into canonical domain records → SQLite (`satsa/store/`) →
+  `satsa/analysis/run.py`'s `RunService` runs the 16-worker default set →
   `satsa/analysis/risk.py` aggregates into a 7-dimension risk profile
-  (now also carrying `correlation_clusters` from
-  `satsa/analysis/correlation.py`) → `satsa/analysis/prioritize.py` /
-  `recommend.py` → human review (`satsa/analysis/review.py`, now with
-  ledger-integrity verification) → TRUST-SAT signing
-  (`satsa/analysis/trust.py`).
-- **Agent registry**: `satsa/supervisor/agents.py` — 32 `AgentSpec`
-  entries (9 MLOps retained, 23 SAT-SA), consumed by
-  `satsa/supervisor/engine.py` (`SupervisorEngine`, two decision
-  vocabularies) and the UI's `/agents`/`/architecture` pages.
-- **Auth**: `satsa/security.py` wires the UI/CLI to the existing
-  `qsmlops.security.identity` system (salted API-key credentials, role/
-  permission checks). New this session: `verify_csrf()` (double-submit
+  (carrying `correlation_clusters`) → `satsa/analysis/prioritize.py`/
+  `recommend.py` → human review (`satsa/analysis/review.py`, with ledger-
+  integrity verification) → TRUST-SAT signing (`satsa/analysis/trust.py`).
+- **Agent registry**: `satsa/supervisor/agents.py` — 32 `AgentSpec` entries
+  (9 MLOps retained, 23 SAT-SA), consumed by
+  `satsa/supervisor/engine.py`'s `SupervisorEngine`.
+- **Auth**: `satsa/security.py` wires the UI/CLI to `qsmlops.security.identity`
+  (salted API-key credentials). Includes `verify_csrf()` (double-submit
   cookie, header-auth exempt) and `LoginRateLimiter` (in-memory,
-  per-client-address, single-process — does not survive a restart or
-  scale across workers, disclosed).
-- **`evaluation/`** and **`public_benchmarks/`** are both deliberately
-  independent of `satsa/analysis/` (ground truth / expected signals
-  defined before, not derived from, the detectors being measured) — this
-  is a load-bearing architectural invariant across the whole project, not
-  specific to this session's additions.
-- **Configuration**: `configs/settings.{development,testing,production}.yaml`
-  — no secrets in any of them (verified this session). No `.env` file
-  exists or is expected; the project's actual runtime configuration
-  surface is the SQLite DB path + trust-key directory, both passed as CLI
-  flags/env vars (`SATSA_CREDENTIAL`), not a `.env` file.
-- **Dependencies**: declared in `pyproject.toml` (`dependencies = [...]`);
-  `requirements.txt` is a separate, parallel dependency list (both are
-  referenced in different docs — `README.md`'s Installation section uses
-  `requirements.txt`; `pyproject.toml` is what `pip install .`/`-e .`
-  would actually use). **These were not reconciled in this subphase** —
-  see section 8.
-- **Git remotes** (as of this handoff): `origin` → `https://github.com/
-  PrathamKapoor/SAT-SA.git` (the OLD/abandoned repo — an earlier session
-  incident put a Claude co-author trailer in a commit there; the user made
-  it private and abandoned it — **never push to `origin`**). `newrepo` →
-  `https://github.com/PrathamKapoor/SAT-SA-with-PQC.git` (the correct,
-  current, intended destination — this is what `README.md`'s "Author:
-  Pratham Kapoor" and the whole project's public identity now points to).
-  Local branches: `release-fresh` (current, tracks `newrepo/main`,
-  single-lineage history starting from an orphan "Initial commit"),
-  `main` (tracks `origin/main` — the OLD repo's history — **do not use**),
-  `backup/pre-undo-accidental-satsa-push` (a preserved backup branch from
-  the earlier incident — **do not touch**).
+  per-client-address, single-process — disclosed limitation).
+- **Package layout**: four top-level first-party packages —
+  `qsmlops/` (retained MLOps infra), `satsa/` (the product),
+  `evaluation/` (baselines/ablation/workload, deliberately independent of
+  the detectors they measure), `public_benchmarks/` (BOTS/CIC-IDS2017
+  adapter framework + workflow scenarios + review instrument, also
+  deliberately independent of the detectors). All four are now correctly
+  discovered by `pyproject.toml`'s `[tool.setuptools.packages.find]`, and
+  `public_benchmarks`' non-Python resource files are now correctly
+  shipped via `[tool.setuptools.package-data]`.
+- **Dependency contract**: `pyproject.toml`'s `[project].dependencies` is
+  authoritative; `requirements.txt` mirrors it exactly (same 14 packages,
+  same version specifiers) with dev-only `pytest`/`httpx` clearly
+  separated in their own labeled section of the same file.
+- **Git remotes** (critical, easy to get wrong): `origin` →
+  `https://github.com/PrathamKapoor/SAT-SA.git` — an **old, abandoned**
+  repo from an earlier incident (a commit there once carried an AI
+  co-author trailer the user did not want; the user made it private and
+  started fresh). **Never push here.** `newrepo` →
+  `https://github.com/PrathamKapoor/SAT-SA-with-PQC.git` — the correct,
+  current, public destination; `README.md`'s "Author: Pratham Kapoor" and
+  the whole project's public identity point here. Local branches:
+  `release-fresh` (current, tracks `newrepo/main`, orphan history starting
+  from a single "Initial commit"), `main` (tracks `origin/main` — do not
+  use), `backup/pre-undo-accidental-satsa-push` (preserved backup from the
+  earlier incident — do not touch).
 
 ## 5. Decisions Made
 
-- **Decision**: Push to `newrepo` (SAT-SA-with-PQC.git) on branch `main`,
-  never to `origin` (SAT-SA.git).
-  **Reason**: `origin` is the repo the user abandoned after an earlier
-  session accidentally pushed a commit with a Claude co-author trailer
-  there; `newrepo` is the fresh, clean, orphan-history repo created
-  specifically to avoid that history, and matches the URL the user gave
-  in this task (`https://github.com/PrathamKapoor/SAT-SA-with-PQC`).
-  **Consequence for future work**: any future push must target `newrepo`
-  (or whatever remote currently points to that URL) explicitly — never
-  assume `origin` is safe just because it is the conventional default
-  remote name in this particular repo.
-- **Decision**: No `Co-Authored-By: Claude` trailer (or any AI-attribution
-  line) on the commit, despite a standing system-level instruction earlier
-  in this session that said commits should carry one.
-  **Reason**: this exact project has direct, documented user history of a
-  strong negative reaction to exactly this attribution appearing on a
-  commit, leading to the SAT-SA → SAT-SA-with-PQC repo migration in the
-  first place. This task's own instructions repeated "do not reveal that
-  it was pushed by you." The user's specific, repeated, contextual
-  instruction was treated as controlling over the generic system default
-  for this one project.
-  **Consequence**: any future agent committing to this repo should
-  default to **no AI co-author attribution** unless the user explicitly
-  says otherwise for this specific project.
-  **Alternatives considered**: including the trailer (rejected — directly
-  contradicts explicit user history); asking the user (rejected — the
-  task's own instructions were explicit enough that asking would have
-  been redundant given "Do NOT ask me for GitHub credentials if the
-  existing authentication works" and the overall directive to just get it
-  shipped).
-- **Decision**: Did not attempt a real isolated `pip install`/wheel build
-  to verify the packaging fix end-to-end.
-  **Reason**: the `build` and `wheel` packages are not installed in this
-  environment, and installing them would require network access, which
-  every layer of instruction in this task explicitly forbade ("Do not
-  download anything from the internet").
-  **Alternative used**: verified the fix via `setuptools.find_packages()`
-  — the real discovery function the build backend calls — parameterized
-  from `pyproject.toml`'s own config, which proves the discovery *logic*
-  is correct without an actual isolated build.
-  **Consequence**: a genuinely fresh `pip install` from a built
-  sdist/wheel has still never been performed for this project — this
-  remains an open verification gap (see section 8).
-- **Decision**: Did not add strict "no other signal family fired"
-  assertions to the 11 non-`healthy_control` scenario tests in
-  `test_phase84_public_benchmarks_workflow_augmentation.py`, even though
-  the module docstring now explicitly discloses the gap.
-  **Reason**: the task explicitly said to only add such assertions "if
-  you first prove the scenario contract actually defines a complete
-  allow-list of permitted signal families" (it does not — `policy.yaml`
-  declares one *target* family per scenario, not an exhaustive allow-list
-  of every family permitted to co-occur), and explicitly forbade
-  "brittle assertions that merely make tests pass" or "suppress or filter
-  real detector findings to force scenario purity."
-  **Consequence**: this is intentionally left as documented, honest,
-  known scope — not a bug to silently fix later without first designing
-  what a real allow-list would mean for each scenario.
-- **Decision**: Excluded `SAT-SA-with-PQC/` from every git operation
-  (staging, committing, inspecting-for-modification) entirely, treating
-  it as fully out of scope.
-  **Reason**: explicit, repeated instruction ("do not remove," "do not
-  modify... for modification purposes," "report its nature ... before
-  release" — never "clean it up" or "decide what to do with it").
-  **Consequence**: it remains on disk, untracked, unexplained-to-git,
-  exactly as found. A future agent should not assume it needs cleanup
-  without a fresh, explicit instruction to do so.
+- **Redirect the sentinel write, don't remove the sentinel or weaken the
+  test.** Reason: the sentinel write is a pure forensic side-effect (no
+  test ever reads it back or asserts against it); the *randomness* in
+  R6/R6.process's key-ids is itself part of what's being certified (a
+  real, non-deterministic key surviving KeyStore recreation and a fresh
+  process boundary), so it must not be made deterministic just to stop the
+  file from changing. Consequence: the tracked file is now a frozen,
+  historical fixture; fresh per-run evidence lives in pytest's own temp
+  directory and is not committed.
+- **`requirements.txt` stays one file, with labeled sections, rather than
+  splitting into `requirements.txt` + `requirements-dev.txt`.** Reason:
+  `README.md`'s documented install flow (`pip install -r requirements.txt`
+  immediately followed by `pytest`) would break if dev deps were removed
+  from this file; splitting into two files would have required updating
+  that documented flow, which the task instructions said to avoid unless
+  actually necessary. Consequence: a future agent wanting truly separate
+  install paths (e.g. a slim production-only install) will need to
+  revisit this — it was a deliberate, disclosed trade-off, not an
+  oversight.
+- **No AI/Claude/assistant co-author attribution on any commit, ever, for
+  this project.** This is not a one-time preference — it has been
+  explicitly re-stated across multiple separate tasks in this project's
+  history, following a real incident where such attribution appeared
+  unwanted on the old (`origin`) repo. Every commit made in every publish
+  round used the user's own git identity only, with zero mention of any
+  authoring tool anywhere in the message, the diff, or any doc this agent
+  touched.
+- **Add the `SAT-SA-with-PQC/` `.gitignore` rule.** An earlier task in
+  this project's history explicitly said not to touch `.gitignore` for
+  this path; a later, more specific task explicitly asked for exactly one
+  narrow rule to be added. The later, more specific instruction was
+  treated as controlling for that particular action. The directory itself
+  was never modified, moved, or deleted — only prevented from being
+  accidentally `git add`-able going forward.
+- **Verify wheel packaging by actually building a wheel, twice, across two
+  sessions, rather than trusting `setuptools.find_packages()` alone.**
+  This is what caught the real `policy.yaml` packaging bug — a
+  configuration-level check alone would not have caught a missing
+  `package-data` declaration. Consequence for future work: any future
+  change to what `public_benchmarks/` (or any other package) ships as
+  non-Python resources should be verified the same way — build a real
+  wheel, inspect it with `zipfile`, don't just trust the discovery config.
 
 ## 6. Requirements and Constraints
 
-- **No UI file may be touched** while another agent is reportedly working
-  on the UI concurrently: `satsa/ui/**` (including `templates/**`,
-  `static/**`), any `frontend/**`, any CSS/JS/HTML/Jinja file. This
-  constraint was scoped to *this specific subphase* by the user's
-  instructions — it is not a permanent project rule, but any agent
-  resuming work immediately after this handoff should confirm with the
-  user whether the concurrent UI work is still in progress before
-  touching those paths.
-- **No destructive git operations, ever, without explicit fresh
-  instruction**: no `git reset --hard`, `git checkout --`, `git clean`,
-  force-push, deleting branches/directories. This is a standing
-  discipline for this project (see `main` and `backup/pre-undo-...`
-  branches — both exist precisely because of a prior incident where a
-  destructive-adjacent operation was needed and handled carefully).
-- **No AI/Claude attribution in commits or PR descriptions for this
-  project** — see Decision in section 5. Also: never add Claude as a
-  GitHub collaborator, never reveal in commit history that an AI agent
-  made the change.
-- **Never fabricate validation claims.** This project has an unusually
-  strict, explicit, self-enforced honesty discipline (`docs/CLAIMS.md`,
-  `docs/PUBLIC_BENCHMARKS.md`, the "Limitations" section of `README.md`).
-  Every claim must cite a real test or an explicit "pending"/"unverified"
-  label. This is not optional stylistic preference — it is a repeated,
-  explicit, load-bearing project requirement going back to the original
-  SIH mega-prompt this project was built against.
-- **Real NCIIPC/SOC data and real expert validation are explicitly,
-  permanently out of scope** until the user has real data to provide —
-  do not attempt to simulate, fabricate, or "close" this gap by any means
-  other than actually obtaining real data.
-- **Never delete or weaken a test to make the suite pass.** Stated
-  explicitly in `README.md`'s Testing section.
-- **Package discovery must include every first-party package a
-  documented CLI command imports** — this is now a tested invariant
-  (`tests/test_phase86_packaging_discovery.py`); if a new top-level
-  package is ever added (a fourth sibling to `satsa`/`qsmlops`/
-  `evaluation`/`public_benchmarks`), `pyproject.toml`'s `include` list and
-  that test's `REQUIRED_PACKAGE_PREFIXES` tuple both need updating.
+- **No UI file may be touched** without explicit fresh instruction:
+  `satsa/ui/**` (including `templates/**`, `static/**`), any
+  `frontend/**`, any CSS/JS/HTML/Jinja file, UI-focused README sections.
+  This has been a standing constraint across every recent task in this
+  project's history (another agent has reportedly been working on the UI
+  concurrently) — confirm with the user before assuming it has lapsed.
+- **No destructive git operations without explicit fresh instruction**:
+  no `git reset --hard`, `git checkout --`, `git clean`, `git restore`,
+  force-push, deleting branches/directories.
+- **No AI/Claude attribution in commits, PR descriptions, docs, or
+  comments, ever, for this project** — see Decision in section 5.
+- **Never fabricate validation claims.** `docs/CLAIMS.md` and
+  `docs/PUBLIC_BENCHMARKS.md` exist specifically to keep every claim
+  traceable to a real test or an explicit "pending" label. Any new claim
+  added anywhere must get a row in `docs/CLAIMS.md` with real evidence, or
+  not be made at all — this is the project's own stated rule.
+- **Real NCIIPC/SOC data and real expert validation are permanently out of
+  scope** until the user has real data to provide.
+- **Never delete or weaken a test to make the suite pass.**
+- **Package discovery must include every first-party package a documented
+  CLI command imports, and package-data must include every non-Python
+  resource file a package reads at runtime** — both are now tested
+  invariants (`tests/test_phase86_packaging_discovery.py`,
+  and the wheel-inspection procedure documented in section 5's last
+  bullet). If a fifth top-level package or a new resource-file-reading
+  module is ever added, update both the config and the relevant test.
+- **Never `git add .` / `git add -A`.** Every commit in this project's
+  history has staged explicit paths after reviewing the diff.
 
 ## 7. Testing and Verification
 
-Commands actually executed in this subphase, with actual results:
+Commands actually executed in the most recent (second) publish round, with
+actual results — all re-run fresh in that session, not cited from an
+earlier one:
 
-- `git status --short`, `git diff --name-only`, `git log -3 --oneline` —
-  run at the start (Part 1 fact-finding). Confirmed the repository's
-  dirty-but-coherent starting state.
-- `python -m pytest tests/test_phase86_packaging_discovery.py -q` — **3
-  passed.**
-- `python -m pytest tests/test_phase77_evaluation_baselines.py
-  tests/test_phase78_evaluation_ablation.py
-  tests/test_phase81_public_benchmarks_provenance.py
-  tests/test_phase82_public_benchmarks_cicids2017.py
-  tests/test_phase83_public_benchmarks_bots.py
-  tests/test_phase84_public_benchmarks_workflow_augmentation.py
-  tests/test_phase85_public_benchmarks_review_packet.py
-  tests/test_phase86_packaging_discovery.py -v` — **124 passed** (the
-  narrow set the task specified, run together after the doc/comment
-  edits, to confirm no test assertion was accidentally weakened by a
-  wording-only change).
-- `python -m compileall -q satsa evaluation public_benchmarks qsmlops
-  tests` — **exit 0**, no syntax/import errors across every first-party
-  package.
-- Live end-to-end check: ingested a real one-alert submission via
-  `satsa_cli.main([..., "ingest", ...])` then ran
-  `satsa_cli.main([..., "ablate", entity_id, assessment_id])` from a
-  fresh Python process — **both returned rc 0**, `sat-sa ablate` produced
-  a correct, real ablation report (confirms the packaging-fix import
-  path works end-to-end from source, though not from an installed
-  distribution — see section 8).
-- `python -m pytest tests/ -q` (the **full** suite, run twice in this
-  overall session: once before this subphase's edits began, once after
-  all edits and the commit) — **both runs exited 0, full green, no
-  failures.** (Exact pass/skip counts were not captured precisely due to
-  a tooling/path quirk when trying to grep the background-task output
-  file from a different shell than the one that produced it; this does
-  not affect the exit-code result, which was directly observed as `0`
-  both times.)
-- Secret scan: `git grep` / `Grep` tool searches across the full working
-  tree, the new untracked packages, the actual diff content, and the
-  existing single commit's full history for private-key headers, AWS/
-  Slack/GitHub/OpenAI/Google key patterns, and `password=`/`api_key=`
-  literal assignments — **zero matches** in all cases.
-- `git ls-files | grep` for `.db`/`.sqlite`/`__pycache__`/cache/build
-  patterns — **zero matches** (nothing risky was ever tracked).
-- Post-push verification: `git fetch newrepo` then `git ls-remote newrepo
-  main` — returned `f6a515289414c688598bb5a2327761fceb6be851`, exactly
-  matching local `HEAD`; `git rev-list --left-right --count
-  release-fresh...newrepo/main` — **`0	0`** (zero ahead, zero behind).
+- `python -m pytest tests/test_hsm_a13_mldsa_certification.py -q` — **31
+  passed, 2 skipped** (SoftHSM2 unavailable in this environment — expected,
+  pre-existing, unrelated to this work).
+- Sentinel sha256 check before/after that run, and again after the full
+  suite: `7ecbbe411634861c00b587493e525a15f40140401b93b2877ea13246590ad403`
+  every time. `git diff -- tests/_a13_artifacts/mldsa_provider_sentinel.txt`
+  empty every time.
+- Each of `test_phase86_packaging_discovery.py`,
+  `test_phase87_dependency_manifest_consistency.py`,
+  `test_phase77_evaluation_baselines.py`,
+  `test_phase78_evaluation_ablation.py`,
+  `test_phase81_public_benchmarks_provenance.py` through
+  `test_phase85_public_benchmarks_review_packet.py` — **all passed**, run
+  individually.
+- `python -m compileall -q satsa qsmlops evaluation public_benchmarks
+  scripts tests` — **exit 0**.
+- `python -m pytest tests/ -q` (full suite) — **exit 0, full green**.
+- Public-benchmark claim-boundary regression search (the exact `rg`/grep
+  pattern list from the task) — re-run, zero new violations; every match
+  found is the documentation explicitly *forbidding* a phrase, not
+  asserting it.
+- `python -m pip wheel --no-deps --no-build-isolation . -w <temp dir
+  outside repo>` — **succeeded**, no network access, using only local
+  `setuptools` 84.0.0 (the separate `wheel`/`build` PyPI packages are not
+  installed and were not needed for this code path).
+- `zipfile` inspection of the built wheel — **all four package families
+  present** (`qsmlops/` 86 files, `satsa/` 68, `evaluation/` 8,
+  `public_benchmarks/` 15) and **all four `public_benchmarks` data files
+  present** (`bots/expected_signals.json`, `bots/scenario_manifest.json`,
+  `cicids2017/expected_signals.json`,
+  `workflow_augmentation/policy.yaml`) — identical result to the first
+  time this was checked, confirming no drift.
+- Secret scan (private-key headers, AWS/GitHub/Slack/OpenAI/Google key
+  patterns, `password=`/`api_key=` literals) across tracked files, the
+  staged diff, the new test file, and `git log --all -p` for `*.pem`/
+  `*.key` paths — **zero matches** every time this has been run across
+  every task in this project's recent history.
+- `git ls-files` for `.db`/`.sqlite`/`.env`/`.pem`/`.key`/
+  `credentials.json`/`service-account.json` patterns — **zero matches**.
+- Post-push: `git fetch newrepo --prune` + `git rev-parse HEAD` +
+  `git rev-parse newrepo/main` + `git ls-remote newrepo HEAD
+  refs/heads/main` — **all four values identical**:
+  `6cdbe97b6db6e6534c6225d1f608d5bb92ccb4f9`.
+- `git ls-remote origin HEAD` — **`4e38d5a...`**, unchanged from before
+  this round, confirming `origin` was never touched.
 
-**What could not be verified**: a genuine isolated `pip install`/wheel
-build (see section 5's Decision on this — `build`/`wheel` not installed,
-installing them forbidden by the no-network constraint). No CI run, no
-Docker build/run (both remain as previously disclosed:
-`docs/roadmap-status.md`/`README.md`'s Limitations section already say
-these are "written, consistent with local commands, but never actually
-executed" — this subphase did not change that state and did not claim
-otherwise).
+**What has not been verified, anywhere in this project's history so far**:
+a genuinely dependency-isolated wheel install (only `--no-deps` alone, and
+separately `--system-site-packages`, both disclosed) on a truly separate
+target machine; Docker build/run (this host has no Docker executable or
+daemon).
 
-**No test was skipped, deleted, or weakened to make anything pass in this
-subphase.**
+**No test was ever skipped, deleted, weakened, or replaced with a mock to
+make anything pass, in any round of this work.**
 
 ## 8. Known Issues / Risks
 
-Confirmed problems (not speculation):
+Confirmed, not speculative:
 
-- **Packaging discovery was broken** for `evaluation`/`public_benchmarks`
-  until this subphase's fix. Anyone who had already built a wheel/sdist
-  from a pre-fix checkout has a broken artifact; they need to rebuild
-  after pulling this commit.
-- **`requirements.txt` and `pyproject.toml`'s `dependencies` list are two
-  separate, hand-maintained lists** that were not reconciled or
-  deduplication-checked in this subphase. They were not observed to
-  conflict, but no test enforces they stay in sync. Risk: they drift.
-- **A genuine isolated-install test has never been performed** for this
-  project (not in this subphase, and no earlier evidence of one in
-  `docs/roadmap-status.md` either). The packaging fix is verified at the
-  *discovery-configuration* level, which is strong evidence but not
-  proof that `pip install .` in a truly clean venv succeeds end-to-end
-  (e.g. it does not catch a missing `MANIFEST.in` entry for a non-Python
-  data file, if one were ever needed — `public_benchmarks/*/expected_
-  signals.json` and `scenario_manifest.json` and `policy.yaml` are
-  package data files; whether `setuptools`' default behavior includes
-  them in a built wheel without an explicit `package_data`/
-  `MANIFEST.in` entry was **not checked** in this subphase and is a real
-  open question for the next agent to verify before claiming the
-  packaging fix is fully complete).
+- `build/` and `qsmlops.egg-info/` are currently sitting in the repo root
+  on disk (gitignored, so safe, but not deleted — no task so far has been
+  authorized to delete files outside a temp directory it created itself).
+  A human should remove them manually if repo-root cleanliness matters.
+- `SAT-SA-with-PQC/`'s exact provenance (which session created it, for
+  exactly what purpose) is inferred from its git remote + matching commit
+  history, not from any explicit documentation predating this handoff.
+  Reasonably confident (it is a verification checkout of the same
+  `newrepo` used to confirm earlier pushes), not certain.
+- `gh` CLI is not installed in this environment. Every "verified against
+  GitHub" claim in this project's recent history has relied on
+  `git ls-remote`/`git fetch` against the real remote, which is a valid,
+  strong verification method, but is not the same as `gh repo view`'s
+  richer output (stars, description, visibility, etc. were never checked).
 
 Things that merely might be problems (not confirmed):
 
-- The full test suite was run to completion twice in this session with
-  exit code 0 both times, but exact counts were not captured due to a
-  tooling issue reading a background task's output file cross-shell —
-  this is a verification-tooling annoyance, not evidence of an actual
-  test problem.
-- `SAT-SA-with-PQC/`'s exact provenance (which session created it, for
-  what specific purpose) was inferred from its git remote + matching
-  commit hash, not from any explicit prior documentation found in this
-  session. Reasonably confident, not certain.
+- No test currently enforces that `public_benchmarks`' `package-data`
+  glob (`**/*.yaml`, `**/*.json`) stays correct if new resource files are
+  added in subdirectories that don't match those patterns (e.g. a future
+  `.csv` fixture). The wheel-inspection *procedure* is documented (section
+  5) but not automated into a repeatable test — a future agent adding new
+  package data should consider adding one.
 
 ## 9. Unfinished Work
 
-Everything below was explicitly, deliberately deferred — not overlooked:
+Everything below is deliberately, explicitly deferred — not overlooked:
 
-- **Real BOTS/CIC-IDS2017 file execution.** The adapters
-  (`public_benchmarks/cicids2017/ingest_adapter.py`,
-  `public_benchmarks/bots/ingest_adapter.py`) have never been run against
-  an actual downloaded dataset file. Blocked on: obtaining the files
-  (registration-gated for both; BOTS is a multi-gigabyte Splunk index
-  export, CIC-IDS2017 is a multi-gigabyte CSV set from UNB), which this
-  and prior sessions' environments cannot do without network/registration
-  access this agent does not have. **Next agent action**: if the user
-  supplies local copies of either dataset, run `convert_file`/
-  `convert_jsonl` against them, treat any parse failure as a real bug
-  (per `docs/PUBLIC_BENCHMARKS.md`'s own instructions), and only then
-  update the claims in `docs/PUBLIC_BENCHMARKS.md` to the "actually
-  validated" tier — never before that point.
+- **Real BOTS/CIC-IDS2017 file execution.** The adapters have never been
+  run against an actual downloaded dataset file (registration-gated,
+  multi-gigabyte, no network access in any session so far). If real files
+  ever become available: follow `docs/PUBLIC_BENCHMARKS.md`'s own "How to
+  actually run this against real data" section — it is already written,
+  step by step. Only update the claims in that document to the "actually
+  validated" tier after a real file has genuinely been processed in a
+  reproducible session — never before.
 - **Real practitioner review data.** `public_benchmarks/review_packet.py`
   is a built, tested instrument; zero real `ReviewResponse` records exist.
-  Needs actual humans (per the user's own suggestion: cybersecurity
-  faculty, SOC practitioners, CTF mentors, experienced students — never
-  NCIIPC-affiliated) to review real generated packets.
 - **Real NCIIPC/SOC expert validation** — permanently out of scope until
-  the user supplies real data. Do not attempt to simulate this.
-- **CI/Docker execution** — `.github/workflows/ci.yml` and `Dockerfile`
-  are written but have never actually run (no GitHub Actions run
-  triggered, no Docker daemon available in any session's environment so
-  far). This subphase did not attempt either — triggering a CI run would
-  require pushing (already done) and then watching Actions run remotely,
-  which was outside this subphase's verification scope; a follow-up
-  should check `https://github.com/PrathamKapoor/SAT-SA-with-PQC/actions`
-  after this push to see whether CI actually runs and passes now that
-  there is a real commit on `main` for it to trigger against.
-- **Package-data inclusion for `public_benchmarks/*.json`/`*.yaml`** — see
-  section 8's "known issue," not yet verified either way.
-- **`requirements.txt` vs. `pyproject.toml` reconciliation** — not
-  attempted.
+  the user supplies real data.
+- **CI** — executed for P29 and failed: Python 3.13 failed the full suite;
+  Python 3.11 failed CLI smoke. The test workflow omitted installation of
+  the project that supplies the `sat-sa` console script; the release
+  correction adds `pip install -e . --no-deps` after requirements.
+- **Docker** — not executed because this host has no Docker executable or
+  daemon.
+- **A genuinely dependency-isolated wheel install on a separate target
+  machine** — only same-machine smoke tests have been performed so far
+  (see section 7's "what has not been verified").
+- **Package-data drift protection** — see section 8's "might be a
+  problem" item.
 
 ## 10. Next Subphase
 
-Recommended order:
+No specific next subphase has been assigned as of this handoff. If one is
+requested, recommended order:
 
-1. **Check whether CI actually ran** on the just-pushed commit
-   (`https://github.com/PrathamKapoor/SAT-SA-with-PQC/actions`) — this is
-   now possible for the first time since there's a real commit history to
-   trigger against, and costs nothing to check.
-2. **Verify package-data inclusion** for `public_benchmarks/`'s non-`.py`
-   files (`*.json`, `policy.yaml`) — either confirm `setuptools` includes
-   them automatically for this project's layout, or add an explicit
-   `[tool.setuptools.package-data]` entry and a test proving it, following
-   the same "verify via the real discovery/build function, not a guess"
-   pattern `tests/test_phase86_packaging_discovery.py` already
-   established.
-3. **If real BOTS/CIC-IDS2017 files become available**: follow
-   `docs/PUBLIC_BENCHMARKS.md`'s own "How to actually run this against
-   real data" section (already written, step-by-step) — do not re-derive
-   this process from scratch.
-4. **Confirm with the user whether the concurrent UI work has landed**
-   before touching anything under `satsa/ui/`.
-5. Do **not** start the N9/N10 Fusion split, N17 calibration extension for
-   more workers, or any other net-new feature without a fresh, explicit
-   instruction — this handoff's scope was release-readiness correction and
-   publishing, not new feature work.
-
-Files likely involved in step 2: `pyproject.toml`, possibly a new
-`MANIFEST.in`, a new/extended test alongside
-`tests/test_phase86_packaging_discovery.py`.
-
-Expected outcome of the next subphase: either confirmation that the
-package is genuinely installable end-to-end (ideally via a real, network-
-permitted `pip install` test if that constraint is ever lifted), or a
-clearly documented, still-open gap if it is not.
+1. Confirm with the user whether the concurrent UI work is still in
+   progress before touching anything under `satsa/ui/`.
+2. Check the CI run triggered by the release-correction commit and inspect
+   any remaining failure before making a release-success claim.
+3. If real BOTS/CIC-IDS2017 files become available, follow
+   `docs/PUBLIC_BENCHMARKS.md`'s existing procedure rather than
+   re-deriving it.
+4. Do **not** start new feature work (N9/N10 Fusion extensions, N17
+   calibration for more workers, UI changes, etc.) without a fresh,
+   explicit instruction — this handoff's own scope was release integrity
+   and publishing, not new features.
 
 ## 11. Critical Context
 
-- **Two GitHub remotes exist and only one is safe.** `origin` →
-  `SAT-SA.git` is a **prior, abandoned, private repo** with a
-  history-contamination incident in it (a Claude co-author trailer the
-  user did not want). `newrepo` → `SAT-SA-with-PQC.git` is the correct,
-  current, public destination. **Never** assume `origin` is the right
-  remote just because it has the conventional name — check the URL every
-  time.
-- **`release-fresh` is an orphan branch** — its history starts from a
-  single "Initial commit" with no connection to the old `SAT-SA.git`
-  history. This was deliberate (see prior session's incident response).
-  Do not attempt to merge/rebase it onto `main` (the branch that tracks
-  the old `origin`) — they are intentionally disconnected histories.
-- **Why `public_benchmarks/` exists at all and what it can/cannot prove**
-  is fully explained in `docs/PUBLIC_BENCHMARKS.md` — read that file
-  before making ANY claim about BOTS/CIC-IDS2017 in a pitch, demo, or
-  further doc edit. It is the single source of truth for this, and this
-  subphase spent significant effort making sure every other doc actually
-  matches what it says.
-- **`evaluation/` and `public_benchmarks/` share one architectural rule**
-  with `satsa/analysis/synth.py`: ground truth / expected results must be
-  defined independently of, and before, the detector logic being tested
-  against them. This is why `policy.yaml`'s scenarios reference real
-  worker threshold constants (e.g. `FastClosureThresholds.
-  absolute_floor_seconds`) directly by import rather than guessing safe
-  numbers — the generator needs to know the real thresholds to construct
-  a scenario that reliably lands on the correct side of them, without
-  that knowledge leaking into what's asserted as the *ground truth*
-  (which stays the scenario's own declared intent in `policy.yaml`, not
-  a value copied from the detector's own output).
-- **The `.coverage` file and other caches were never actually committed**
-  — they were untracked-but-not-ignored before this subphase (now fixed).
-  If a future `git status` ever shows `.coverage` as untracked-and-
-  ignorable-looking but NOT actually ignored, the `.gitignore` regression
-  should be treated as a real bug, not cosmetic.
-- **This project's honesty discipline is not a suggestion.** Multiple
-  files (`docs/CLAIMS.md`, `docs/PUBLIC_BENCHMARKS.md`,
-  `docs/roadmap-status.md`) exist specifically to make every claim
-  traceable to a real test or an explicit "pending" label. A future agent
-  asked to "make the pitch sound stronger" should push back or, at
-  minimum, route the change through `docs/CLAIMS.md`'s own stated rule:
-  "When a new claim is added anywhere in this repository's documentation,
-  it must either get a row here with real evidence, or not be made."
+- **Two GitHub remotes, only one is safe.** `origin` → `SAT-SA.git` is
+  old/abandoned/history-contaminated. `newrepo` → `SAT-SA-with-PQC.git` is
+  correct. Check the URL every single time before pushing — never assume
+  based on the remote's name.
+- **`release-fresh` is an orphan branch** with no connection to the old
+  `SAT-SA.git` history. Do not attempt to merge/rebase it onto `main`
+  (which tracks the old `origin`) — they are intentionally disconnected.
+- **The wheel-packaging bug this session found (`policy.yaml` missing from
+  built wheels) was real and would have broken production use of
+  `public_benchmarks` from an installed distribution.** It was only caught
+  because someone actually built a wheel and inspected it with `zipfile` —
+  a `setuptools.find_packages()`-level check alone (which was the only
+  verification performed in an earlier round) is not sufficient to catch
+  missing `package-data`. Apply this lesson to any future packaging change.
+- **Why `public_benchmarks/` exists and what it can/cannot prove** is
+  fully explained in `docs/PUBLIC_BENCHMARKS.md` — read it before making
+  any claim about BOTS/CIC-IDS2017 in a pitch, demo, or doc edit.
+- **This project's honesty discipline is not a suggestion.**
+  `docs/CLAIMS.md`, `docs/PUBLIC_BENCHMARKS.md`, and
+  `docs/roadmap-status.md` exist specifically to make every claim
+  traceable to a real test or an explicit "pending" label. Multiple
+  separate tasks across this project's history have independently
+  re-verified and re-corrected claim wording — treat any request to "make
+  the pitch sound stronger" with the same skepticism those tasks applied.
 
 ## 12. Agent Instructions
 
-- **Current repository state**: clean working tree (except the
-  intentionally-untouched, intentionally-untracked `SAT-SA-with-PQC/`
-  nested directory). Branch `release-fresh`, up to date with
-  `newrepo/main`. Latest commit `f6a515289414c688598bb5a2327761fceb6be851`,
-  pushed and verified on GitHub at
-  `https://github.com/PrathamKapoor/SAT-SA-with-PQC`.
-- **Inspect first**: `git log -5 --oneline`, `git remote -v`, `git status`,
-  and this file, in that order, before making any change. Then
-  `docs/roadmap-status.md`'s most recent entries (P26/P27 and this
-  subphase's correction-pass note, if one gets added there) for the
-  detailed technical record this file intentionally does not duplicate.
-- **Do not unnecessarily rewrite**: the P26/P27 feature code (section 2A)
-  — it is tested and working; the claims-boundary documents (section 2B)
-  — they were carefully worded against this task's exact rules, re-check
-  `docs/PUBLIC_BENCHMARKS.md`'s rules before changing any claim elsewhere;
-  the git remote configuration (section 4/11) — it encodes a real
-  incident's resolution, not an arbitrary choice.
-- **Must be preserved**: the no-AI-attribution commit convention for this
-  project (section 5); the "no UI touch while concurrent UI work is in
-  progress" constraint (re-confirm with the user whether it still
-  applies); the historical-report preservation rule (don't "fix" old
-  numbers in self-dated retrospective docs); zero destructive git
-  operations without fresh explicit instruction.
-- **Next objective**: see section 10. Do not begin new feature work
-  without a fresh, explicit instruction — this handoff's own scope was
-  strictly release-readiness correction and publishing.
+- **Current repository state**: branch `release-fresh`, with the P29
+  release commit `9885373a58699097695a9f30183a968816055f5c` pushed to
+  `newrepo/main`. Inspect `git status` before acting; do not treat prior
+  CI/Docker claims as current evidence.
+- **Inspect first**: `git log -5 --oneline`, `git remote -v`,
+  `git status`, and this file, in that order. Then
+  `docs/roadmap-status.md`'s most recent entries for the detailed
+  technical record this file intentionally does not duplicate.
+- **Do not unnecessarily rewrite**: the P26/P27/P28 feature code — it is
+  tested and working; the claims-boundary documents — they were carefully
+  worded against explicit rules across multiple tasks; the git remote
+  configuration — it encodes a real incident's resolution.
+- **Must be preserved**: the no-AI-attribution commit convention; the "no
+  UI touch while concurrent UI work may be in progress" constraint
+  (re-confirm with the user); zero destructive git operations without
+  fresh explicit instruction; explicit-path staging only, never
+  `git add .`/`-A`.
+- **Next objective**: none currently assigned — see section 10. Do not
+  begin new feature work without a fresh, explicit instruction.

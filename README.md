@@ -155,6 +155,7 @@ tamper-proofness**.
 python -m venv .venv
 # Windows: .venv\Scripts\activate   |   Linux/Mac: source .venv/bin/activate
 pip install -r requirements.txt
+pip install .
 python -m compileall satsa qsmlops
 python -m pytest tests/ -q
 ```
