@@ -1,0 +1,15 @@
+# Testing settings: quiet logs, ephemeral-friendly defaults.
+env: testing
+
+log_level: WARNING
+json_logs: false
+debug: false
+
+api:
+  host: "127.0.0.1"
+  port: 8000
+
+crypto:
+  default_signature_algorithm: "ML-DSA-65"
+  default_key_encryption_algorithm: "ML-KEM-768"
+  default_key_lifetime_days: 90.0

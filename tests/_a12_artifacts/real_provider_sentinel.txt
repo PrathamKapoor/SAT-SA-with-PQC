@@ -1,0 +1,24 @@
+# A1.2 real-provider execution evidence
+REAL_PROVIDER_EXECUTED = YES
+Total recorded events: 10
+Executed-real events:  4
+Skipped events:        6
+Failed events:         0
+
+Library path: C:\Projects\SIH26\TRUST-SAT\.devtools\softhsm2\lib\softhsm2-x64.dll
+Token label:  qsmlops-a12-dev
+Config file:  C:\Users\LENOVO\AppData\Local\Temp\qsmlops-a12-softhsm2.conf
+Prereq ready: NO
+Prereq note:  PKCS#11 library not found at C:\Projects\SIH26\TRUST-SAT\.devtools\softhsm2\lib\softhsm2-x64.dll
+
+## Events
+- [skipped] R1: PKCS#11 library not found at C:\Projects\SIH26\TRUST-SAT\.devtools\softhsm2\lib\softhsm2-x64.dll
+- [skipped] R2: PKCS#11 library not found at C:\Projects\SIH26\TRUST-SAT\.devtools\softhsm2\lib\softhsm2-x64.dll
+- [skipped] R2.slot: PKCS#11 library not found at C:\Projects\SIH26\TRUST-SAT\.devtools\softhsm2\lib\softhsm2-x64.dll
+- [skipped] R3.wrong: PKCS#11 library not found at C:\Projects\SIH26\TRUST-SAT\.devtools\softhsm2\lib\softhsm2-x64.dll
+- [skipped] R4: PKCS#11 library not found at C:\Projects\SIH26\TRUST-SAT\.devtools\softhsm2\lib\softhsm2-x64.dll
+- [skipped] R8.process: PKCS#11 library not found at C:\Projects\SIH26\TRUST-SAT\.devtools\softhsm2\lib\softhsm2-x64.dll
+- [executed_real] F2: invalid library path → HSMUnavailableError
+- [executed_real] F1: missing library → HSMUnavailableError
+- [executed_real] F4: unknown token label → HSMUnavailableError
+- [executed_real] F5: login failure → HSMUnavailableError

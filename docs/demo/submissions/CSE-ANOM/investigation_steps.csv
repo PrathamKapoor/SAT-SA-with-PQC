@@ -1,0 +1,8 @@
+case_id,action_type,performed_at,sequence,analyst,note,evidence_ids
+C1,triage,1735689800.0,1,alice,reviewed,EV-1
+C2,triage,1735689900.0,1,alice,reviewed,EV-2
+C3,triage,1735690000.0,1,alice,reviewed,EV-3
+C4,triage,1735690100.0,1,alice,reviewed,EV-4
+C5,triage,1735690200.0,1,alice,reviewed,EV-5
+C6,triage,1735690400.0,1,alice,started,EV-6
+C6,deep-dive,1735696800.0,2,alice,investigating,EV-7

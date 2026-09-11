@@ -1,0 +1,2 @@
+native_id,created_at,severity,acknowledged_at,closed_at,case_ids,asset_ids
+A1,1735690200.0,medium,1735690800.0,1735696800.0,C1,edge-02

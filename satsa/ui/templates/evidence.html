@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Evidence{% endblock %}
+{% block content %}
+
+<section class="section">
+  <div class="section-num">01 / Evidence</div>
+  <h2>Source records</h2>
+  <p class="section-sub">Every accepted source record. The file digest hashes the exact bytes submitted; the record digest hashes the canonicalized record.</p>
+  {% if rows %}
+  <table class="data">
+    <thead>
+      <tr><th>ID</th><th>Submission</th><th>Format</th><th>File</th>
+        <th>File digest</th><th>Record digest</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        <tr>
+          <td><code>{{ r.id[:24] }}…</code></td>
+          <td><code>{{ r.submission_id[:16] }}…</code></td>
+          <td>{{ r.format }}</td>
+          <td>{{ r.locator }}</td>
+          <td><code>{{ r.file_digest[:16] }}…</code></td>
+          <td><code>{{ r.original_record_digest[:16] }}…</code></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No source records yet.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

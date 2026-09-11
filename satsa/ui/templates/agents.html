@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Agents{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 4em 0 3em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">Agent Explorer</div>
+    <h1 class="hero-title">{{ total }} agents<br><em>one supervisory fabric.</em></h1>
+    <p class="hero-lede">Every agent — retained MLOps and new SAT-SA supervisory — implements the same contract: observe a typed context, emit an Observation, never act. The human supervisor decides.</p>
+  </div>
+  <div class="hero-status">
+    <div class="stat"><div class="stat-value">9</div><div class="stat-label">MLOps</div></div>
+    <div class="stat"><div class="stat-value">17</div><div class="stat-label">SAT-SA</div></div>
+    <div class="stat"><div class="stat-value">{{ total }}</div><div class="stat-label">Total</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / Roster</div>
+  <h2>Every agent</h2>
+  <p class="section-sub">Each agent declares its inputs, outputs, evidence types, implementation reference, and version. No fabricated live metrics; static declarations only.</p>
+
+  <ol class="roster-list">
+    {% for a in agents %}
+      <li class="roster-row agent-row">
+        <div class="roster-rank">{{ "%02d" % loop.index }}</div>
+        <div class="roster-name">
+          <code class="agent-id agent-{{ a.family }}">{{ a.agent_id }}</code>
+          <div class="roster-concern"><strong>{{ a.name }}</strong> · {{ a.purpose }}</div>
+          <div class="agent-meta">
+            <span class="agent-meta-tag">inputs: {{ a.inputs|join(', ') }}</span>
+            <span class="agent-meta-tag">outputs: {{ a.outputs|join(', ') }}</span>
+            <span class="agent-meta-tag">evidence: {{ a.evidence_types|join(', ') }}</span>
+            <span class="agent-meta-tag">impl: {{ a.implementation_ref }}</span>
+            <span class="agent-meta-tag">v{{ a.version }}</span>
+          </div>
+        </div>
+        <div class="roster-confidence {{ 'satsa' if a.family == 'satsa' else 'mlops' }}">{{ a.family }}</div>
+        <div></div>
+        <div></div>
+      </li>
+    {% endfor %}
+  </ol>
+</section>
+
+{% endblock %}

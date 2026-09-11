@@ -1,0 +1,4 @@
+native_id,created_at,severity,acknowledged_at,closed_at,case_ids,asset_ids
+A1,1735689700.0,critical,1735689800.0,1735689900.0,C1,peer-01
+A2,1735689800.0,critical,1735689900.0,1735690000.0,C2,peer-01
+A3,1735689900.0,critical,1735690000.0,1735690100.0,C3,peer-01

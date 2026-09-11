@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Review Queue{% endblock %}
+{% block content %}
+
+<section class="section">
+  <div class="section-num">01 / Review queue</div>
+  <h2>What should the examiner inspect first?</h2>
+  <p class="section-sub">Findings ordered by severity × confidence. Each item is a hint — the examiner makes the final supervisory determination.</p>
+  {% if rows %}
+  <ol class="roster-list">
+    {% for r in rows %}
+      <li class="roster-row">
+        <div class="roster-rank">{{ "%02d" % loop.index }}</div>
+        <div class="roster-name">
+          <a href="/findings/{{ r.finding.finding_id }}">{{ r.finding.rule_or_category }}</a>
+          <div class="roster-concern">{{ r.entity.display_name }}</div>
+          <div class="roster-concern">{{ r.finding.rationale }}</div>
+        </div>
+        <div class="roster-score">{{ "%.1f" % r.finding.priority_score }}</div>
+        <div class="roster-confidence">{{ r.finding.severity }} · {{ "%.0f" % (r.finding.confidence_overall * 100) }}%</div>
+        <div><a class="btn" href="/findings/{{ r.finding.finding_id }}">Open</a></div>
+      </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="empty">No findings to review.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

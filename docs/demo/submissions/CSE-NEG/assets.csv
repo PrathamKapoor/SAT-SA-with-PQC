@@ -1,0 +1,5 @@
+native_id,criticality,environment,controls
+core-01,critical,prod,AV;EDR
+core-02,critical,prod,AV;EDR
+edge-01,critical,prod,FW
+edge-02,high,prod,FW

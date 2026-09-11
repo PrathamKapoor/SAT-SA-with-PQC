@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}System{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 3em 0 2em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">System</div>
+    <h1 class="hero-title">Platform status &amp; trust</h1>
+    <p class="hero-lede">Internal counts, trust verification status, and cryptographic posture of the deployment.</p>
+  </div>
+  <div class="hero-status">
+    <div class="stat">
+      <div class="stat-value">{{ counts.runs }}</div>
+      <div class="stat-label">Analysis runs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ counts.findings }}</div>
+      <div class="stat-label">Findings</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ counts.receipts }}</div>
+      <div class="stat-label">Trust receipts</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ counts.reviews }}</div>
+      <div class="stat-label">Review decisions</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / Trust</div>
+  <h2>Is the evidence verified?</h2>
+  <p class="section-sub">Every persisted finding is signed with ML-DSA-65. Verification re-derives the digest from the live row and checks the signature.</p>
+  {% if latest and trust_report %}
+    <p>Latest run: <code>{{ latest.id[:16] }}…</code></p>
+    <div style="border-left: 2px solid var(--accent); padding: 1.5em 1.8em; margin: 1.5em 0; background: linear-gradient(90deg, rgba(74,140,255,0.05) 0%, transparent 100%);">
+      {% if trust_report.run.ok %}
+        <div class="trust" style="margin-bottom: 0.5em;">
+          <span class="dot"></span> Run signature verified
+        </div>
+      {% else %}
+        <div class="trust failed" style="margin-bottom: 0.5em;">
+          <span class="dot"></span> Run signature unverified: {{ trust_report.run.reason }}
+        </div>
+      {% endif %}
+      <div class="meta">Findings verified: {{ trust_report.findings|selectattr('ok')|list|length }} / {{ trust_report.findings|length }}</div>
+    </div>
+  {% else %}
+    <p class="empty">Trust verification unavailable (no trust_key_dir configured, or no runs).</p>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-num">02 / Configuration</div>
+  <h2>How is the system configured?</h2>
+  <table class="data">
+    <tr><td>Version</td><td><code>{{ sat_version }}</code></td></tr>
+    <tr><td>Mode</td><td>Air-gapped (no network dependencies)</td></tr>
+    <tr><td>Trust</td><td>ML-DSA-65 + ML-KEM-768</td></tr>
+    <tr><td>Storage</td><td>SQLite (local)</td></tr>
+    <tr><td>UI</td><td>FastAPI + Jinja2 + vanilla JS (no webfonts, no CDN)</td></tr>
+  </table>
+</section>
+
+{% endblock %}

@@ -1,0 +1,21 @@
+# A1.3 ML-DSA provider certification evidence
+MLDSA_PROVIDER_EXECUTED: YES
+Total events: 14
+Executed-real: 14
+Failed: 0
+
+## Events
+- [executed_real] R1.44: ML-DSA-44 provider available, pk_len=1312
+- [executed_real] R1.65: ML-DSA-65 provider available, pk_len=1952
+- [executed_real] R1.87: ML-DSA-87 provider available, pk_len=2592
+- [executed_real] R4/R5: ML-DSA-44/65/87 sign+verify+tamper all pass
+- [executed_real] R2: ML-DSA-65 key generated via KeyStore, hsm_backed=False
+- [executed_real] R3: ML-DSA-87 HSM key: private material not exported
+- [executed_real] R4/R5.ML-DSA-44: ML-DSA-44 passport: sign+verify+tamper PASS
+- [executed_real] R4/R5.ML-DSA-65: ML-DSA-65 passport: sign+verify+tamper PASS
+- [executed_real] R4/R5.ML-DSA-87: ML-DSA-87 passport: sign+verify+tamper PASS
+- [executed_real] R7.roundtrip: passport serialize+reload+verify PASS
+- [executed_real] R6: ML-DSA-65 key persisted across KeyStore recreation (key_id=alice-ML-DSA-65-be10...)
+- [executed_real] R6.process: ML-DSA-65 passport verified in fresh process (key_id=alice-ML-DSA-65-4569...)
+- [executed_real] R1.capability: ML-DSA provider is dilithium_py.ml_dsa (FIPS 204 reference impl)
+- [executed_real] R1.sizes: All ML-DSA key/sig sizes match FIPS 204

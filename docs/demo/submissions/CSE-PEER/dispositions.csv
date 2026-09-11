@@ -1,0 +1,4 @@
+alert_id,case_id,occurred_at,outcome,reason,approver_role
+A1,C1,1735689880.0,false_positive,ok,alice
+A2,C2,1735689980.0,false_positive,ok,alice
+A3,C3,1735690080.0,false_positive,ok,alice

@@ -1,0 +1,2 @@
+native_id,opened_at,status,closed_at,owner,alert_ids,closure_reason
+C1,1735690100.0,closed,1735696800.0,alice,A1,resolved

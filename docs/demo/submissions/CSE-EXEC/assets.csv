@@ -1,0 +1,2 @@
+native_id,criticality,environment,controls
+srv-01,critical,prod,AV

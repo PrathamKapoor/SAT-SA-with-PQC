@@ -1,0 +1,102 @@
+[
+  {
+    "layer": "execution_gap",
+    "is_signal": true,
+    "finding_category": "execution_gap.ack_without_investigation",
+    "severity": "high",
+    "expected_action": "SATSA_INSPECT",
+    "rationale": "Acknowledged alert with no recorded investigation step is a textbook execution gap; matches the committed demo dataset (CSE-NEG).",
+    "confidence": 0.85,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "execution_gap",
+    "is_signal": true,
+    "finding_category": "execution_gap.fast_closure",
+    "severity": "high",
+    "expected_action": "SATSA_INSPECT",
+    "rationale": "Sub-60-second closure of critical alerts warrants inspection; matches CSE-EXEC in the committed demo dataset.",
+    "confidence": 0.85,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "negative_space",
+    "is_signal": true,
+    "finding_category": "negative_space.missing_investigation",
+    "severity": "high",
+    "expected_action": "SATSA_INSPECT",
+    "rationale": "A case with zero investigation steps is either a data-quality problem or a genuine process gap; either way it needs a human look.",
+    "confidence": 0.8,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "negative_space",
+    "is_signal": true,
+    "finding_category": "negative_space.missing_disposition",
+    "severity": "medium",
+    "expected_action": "SATSA_REQUEST_EVIDENCE",
+    "rationale": "Closed alert with no disposition record leaves the closure decision unverifiable.",
+    "confidence": 0.75,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "negative_space",
+    "is_signal": true,
+    "finding_category": "negative_space.missing_monitoring",
+    "severity": "critical",
+    "expected_action": "SATSA_ESCALATE_FOR_REVIEW",
+    "rationale": "A critical/high asset producing zero alerts in the period is a plausible sensor-coverage failure, not evidence of safety.",
+    "confidence": 0.7,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "coverage_gap",
+    "is_signal": true,
+    "finding_category": "coverage_gap.missing_monitoring",
+    "severity": "high",
+    "expected_action": "SATSA_ESCALATE_FOR_REVIEW",
+    "rationale": "Critical assets with sub-threshold alert volume should be checked for monitoring pipeline health.",
+    "confidence": 0.75,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "evidence_completeness",
+    "is_signal": true,
+    "finding_category": "evidence_completeness.missing_categories",
+    "severity": "medium",
+    "expected_action": "SATSA_REQUEST_EVIDENCE",
+    "rationale": "Missing evidence categories block downstream analysis; request re-ingestion before drawing conclusions.",
+    "confidence": 0.9,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "peer_benchmark",
+    "is_signal": true,
+    "finding_category": "peer_benchmark.investigation_depth_median.deviation",
+    "severity": "medium",
+    "expected_action": "SATSA_SURFACE",
+    "rationale": "Investigation depth well below peer median is worth surfacing, though cohort size (n=3) limits confidence.",
+    "confidence": 0.55,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "anomaly",
+    "is_signal": true,
+    "finding_category": "anomaly.investigation_duration.high",
+    "severity": "medium",
+    "expected_action": "SATSA_SURFACE",
+    "rationale": "Robust-statistics outlier on investigation duration; surface for context, not an automatic verdict.",
+    "confidence": 0.6,
+    "reviewer": "sample-template"
+  },
+  {
+    "layer": "case_similarity",
+    "is_signal": false,
+    "finding_category": "case_similarity.template_cluster",
+    "severity": "low",
+    "expected_action": "",
+    "rationale": "Template-cluster similarity is a supervisory signal requiring context, not inherent wrongdoing; this reviewer does not treat it as a standalone finding worth surfacing on its own in the demo dataset.",
+    "confidence": 0.5,
+    "reviewer": "sample-template"
+  }
+]
