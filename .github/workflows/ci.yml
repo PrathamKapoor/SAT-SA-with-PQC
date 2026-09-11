@@ -1,0 +1,90 @@
+name: CI
+
+# Runs the full SAT-SA verification suite on GitHub's hosted runners.
+#
+# Package installation here needs network access to PyPI — that is a
+# CI/build-time requirement, not a claim about SAT-SA's own runtime.
+# SAT-SA's air-gapped guarantee is about the deployed application
+# making zero network calls once installed (proven by
+# tests/test_phase18_satsa_offline_hardening.py, which this workflow
+# runs), the same distinction the project already draws for local
+# `pip install` during deployment (docs/deployment.md).
+#
+# This workflow file is committed locally only. Per this repository's
+# standing instruction, nothing in this session pushes it (or
+# anything else) to GitHub — it will not actually execute until a
+# human explicitly pushes the branch.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Byte-compile the whole tree (import/syntax integrity)
+        run: python -m compileall -q satsa qsmlops scripts tests
+
+      - name: Full test suite
+        run: python -m pytest tests/ -q
+
+      - name: Offline-hardening guarantee (explicit, not just bundled in the suite above)
+        run: python -m pytest tests/test_phase18_satsa_offline_hardening.py -q -v
+
+      - name: Deterministic trust behavior (explicit)
+        run: |
+          python -m pytest tests/test_phase44_satsa_trust_stress.py -q -v
+          python -m pytest tests/test_phase66_satsa_tamper_matrix.py -q -v
+
+      - name: Authentication / RBAC adversarial suite (explicit)
+        run: python -m pytest tests/test_phase63_satsa_auth_rbac.py -q -v
+
+      - name: CLI smoke test
+        run: |
+          sat-sa --version
+          sat-sa --db ./ci-smoke.db --trust-key-dir ./ci-smoke-keys agents
+          sat-sa --db ./ci-smoke.db --trust-key-dir ./ci-smoke-keys demo
+          sat-sa --db ./ci-smoke.db --trust-key-dir ./ci-smoke-keys validate
+
+      - name: Demo (SAT-SA-first entry point)
+        run: python demo.py --db ./ci-demo.db --keys ./ci-demo-keys
+
+  package-integrity:
+    name: package + import integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install in editable mode and import every public module
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          python -c "import satsa, qsmlops; import satsa.cli, satsa.ui, satsa.service; print('import ok:', satsa.__version__)"

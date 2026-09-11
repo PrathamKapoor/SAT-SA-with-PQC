@@ -1,0 +1,7 @@
+case_id,action_type,performed_at,sequence,analyst,note,evidence_ids
+C1,triage,1735690300.0,1,alice,initial triage per runbook,EV-1
+C1,containment,1735691600.0,2,alice,host isolated,EV-2
+C1,recovery,1735694600.0,3,alice,restored from backup,EV-3
+C2,triage,1735690900.0,1,bob,reviewed indicators,bob-EV-1
+C2,containment,1735693600.0,2,bob,patched,EV-2
+C2,recovery,1735698600.0,3,bob,monitored,bob-EV-3

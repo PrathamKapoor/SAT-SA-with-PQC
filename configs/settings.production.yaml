@@ -1,0 +1,15 @@
+# Production settings: JSON logs, fail-closed debug, explicit key lifetime.
+env: production
+
+log_level: INFO
+json_logs: true
+debug: false
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+
+crypto:
+  default_signature_algorithm: "ML-DSA-65"
+  default_key_encryption_algorithm: "ML-KEM-768"
+  default_key_lifetime_days: 90.0

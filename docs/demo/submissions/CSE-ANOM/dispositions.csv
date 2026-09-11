@@ -1,0 +1,7 @@
+alert_id,case_id,occurred_at,outcome,reason,approver_role
+A1,C1,1735693100.0,true_positive,resolved,alice
+A2,C2,1735693200.0,true_positive,resolved,alice
+A3,C3,1735693300.0,true_positive,resolved,alice
+A4,C4,1735693400.0,true_positive,resolved,alice
+A5,C5,1735693500.0,true_positive,resolved,alice
+OUT,C6,1735948800.0,true_positive,confirmed,alice

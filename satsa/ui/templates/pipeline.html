@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Analytics Pipeline{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 4em 0 3em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">ML / ANALYTICS layer</div>
+    <h1 class="hero-title">Detect → Correlate<br>→ Assess → <em>Reason</em></h1>
+    <p class="hero-lede">The 17 SAT-SA agents are organised into the four analytical stages. Each stage is a typed boundary with its own evidence, its own confidence, and its own validation surface.</p>
+  </div>
+</section>
+
+{% for stage, agents in stage_agents.items() %}
+<section class="section">
+  <div class="section-num">{{ "%02d" % loop.index }} / {{ stage }}</div>
+  <h2>{{ stage }}</h2>
+  <p class="section-sub">
+    {% if stage == 'Detect' %}execution gaps, negative space, anomalies, peer divergence, coverage gaps.
+    {% elif stage == 'Correlate' %}drift, cross-entity intelligence, investigation similarity, evidence completeness.
+    {% elif stage == 'Assess' %}risk fusion, prioritization, recommendation.
+    {% else %}human review, trust / provenance, validation.{% endif %}
+  </p>
+
+  <ol class="roster-list">
+    {% for a in agents %}
+      <li class="roster-row">
+        <div class="roster-rank">{{ "%02d" % loop.index }}</div>
+        <div class="roster-name">
+          <code class="agent-id agent-satsa">{{ a.agent_id }}</code>
+          <div class="roster-concern"><strong>{{ a.name }}</strong> — {{ a.purpose }}</div>
+          <div class="agent-meta">
+            <span class="agent-meta-tag">outputs: {{ a.outputs|join(', ') }}</span>
+            <span class="agent-meta-tag">evidence: {{ a.evidence_types|join(', ') }}</span>
+            <span class="agent-meta-tag">v{{ a.version }}</span>
+          </div>
+        </div>
+        <div class="roster-score">agent</div>
+        <div class="roster-confidence satsa">satsa</div>
+        <div></div>
+      </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endfor %}
+
+<p style="margin: 3em 0;"><a href="/agents">→ Open the agent explorer</a></p>
+
+{% endblock %}

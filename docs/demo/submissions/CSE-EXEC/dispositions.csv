@@ -1,0 +1,11 @@
+alert_id,case_id,occurred_at,outcome,reason,approver_role
+A1,C1,1735690100.0,false_positive,ok,alice
+A2,C1,1735690100.0,false_positive,ok,alice
+A3,C2,1735690200.0,true_positive,ok,bob
+A4,C3,1735690400.0,false_positive,ok,alice
+A5,C3,1735690400.0,false_positive,ok,alice
+A6,C4,1735690800.0,benign,ok,bob
+A7,C4,1735690800.0,benign,ok,bob
+A8,C4,1735690800.0,benign,ok,bob
+A9,C4,1735690800.0,benign,ok,bob
+A10,C4,1735690800.0,benign,ok,bob

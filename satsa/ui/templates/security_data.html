@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Security Data{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 4em 0 3em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">SECURITY DATA layer</div>
+    <h1 class="hero-title">Six categories.<br><em>One frozen snapshot.</em></h1>
+    <p class="hero-lede">Every CSE submission lands in the six-category security data layer. Ingestion is offline, deterministic, and provenance-anchored. Completeness is a first-class signal.</p>
+  </div>
+  <div class="hero-status">
+    <div class="stat"><div class="stat-value">{{ counts.submissions }}</div><div class="stat-label">Submissions</div></div>
+    <div class="stat"><div class="stat-value">{{ counts.alerts }}</div><div class="stat-label">Alerts</div></div>
+    <div class="stat"><div class="stat-value">{{ counts.cases }}</div><div class="stat-label">Cases</div></div>
+    <div class="stat"><div class="stat-value">{{ counts.investigation_steps }}</div><div class="stat-label">Steps</div></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / Coverage</div>
+  <h2>Six evidence categories</h2>
+  <p class="section-sub">Each CSE submission must populate the six categories. Missing categories are first-class supervisory signals (Evidence Completeness Agent).</p>
+
+  <table class="data">
+    <thead><tr><th>Category</th><th>Records</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>alerts</td><td>{{ counts.alerts }}</td><td>Security alerts as submitted by the CSE</td></tr>
+      <tr><td>cases</td><td>{{ counts.cases }}</td><td>Investigation cases</td></tr>
+      <tr><td>investigation_steps</td><td>{{ counts.investigation_steps }}</td><td>Recorded analyst actions within a case</td></tr>
+      <tr><td>escalations</td><td>{{ counts.escalations }}</td><td>Escalation events with destination and outcome</td></tr>
+      <tr><td>dispositions</td><td>{{ counts.dispositions }}</td><td>Closure classifications (benign/duplicate/test/...)</td></tr>
+      <tr><td>assets</td><td>{{ counts.assets }}</td><td>Asset inventory with criticality / environment</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-num">02 / Submissions</div>
+  <h2>Recent submissions</h2>
+  {% if submissions %}
+  <table class="data">
+    <thead><tr><th>Submission</th><th>Entity</th><th>Source system</th><th>Period</th><th>Status</th><th>Snapshot digest</th></tr></thead>
+    <tbody>
+      {% for s in submissions %}
+        <tr>
+          <td><code>{{ s.id[:16] }}…</code></td>
+          <td>{{ s.display_name }}</td>
+          <td>{{ s.source_system or '—' }}</td>
+          <td>{{ s.declared_period_start|round(0) }} → {{ s.declared_period_end|round(0) }}</td>
+          <td><span class="chip {{ 'ok' if s.ingest_status == 'accepted' else '' }}">{{ s.ingest_status }}</span></td>
+          <td><code>{{ (s.snapshot_digest or '')[:16] }}…</code></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No submissions yet. Load the demo dataset.</p>
+  {% endif %}
+</section>
+
+<p style="margin: 3em 0;"><a href="/evidence">→ Inspect raw evidence records</a></p>
+
+{% endblock %}

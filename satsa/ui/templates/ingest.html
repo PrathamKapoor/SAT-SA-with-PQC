@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Ingest{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 4em 0 3em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">SECURITY DATA layer</div>
+    <h1 class="hero-title">Submit a CSE<br><em>evidence package.</em></h1>
+    <p class="hero-lede">Upload the six evidence categories for one entity and one
+      assessment period. This calls the exact same <code>SatsaService.submit()</code> +
+      <code>run_analysis()</code> path as <code>sat-sa ingest</code> / <code>sat-sa analyze</code> —
+      no separate logic, no canned output. Only <strong>alerts.csv</strong> is required;
+      the rest are optional (their absence becomes a real negative-space /
+      evidence-completeness signal, not a silent gap).</p>
+  </div>
+</section>
+
+{% if error %}
+<section class="section">
+  <p class="error">{{ error }}</p>
+</section>
+{% endif %}
+
+{% if not can_ingest %}
+<section class="section">
+  <p class="muted">Submitting requires a <code>satsa_analyst</code>,
+    <code>satsa_supervisor</code>, or <code>satsa_admin</code> credential.
+    <a href="/login">Sign in</a> to enable the form below.</p>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="section-num">01 / Scope</div>
+  <h2>Entity and assessment period</h2>
+  <form method="post" action="/ingest" enctype="multipart/form-data">
+    <label for="entity_name">Entity name (CSE identifier)</label>
+    <input type="text" id="entity_name" name="entity_name" placeholder="ACME-BANK" required {{ 'disabled' if not can_ingest }}>
+
+    <label for="sector">Sector</label>
+    <input type="text" id="sector" name="sector" placeholder="banking" {{ 'disabled' if not can_ingest }}>
+
+    <label for="environment">Environment</label>
+    <input type="text" id="environment" name="environment" placeholder="prod" {{ 'disabled' if not can_ingest }}>
+
+    <label for="period_start">Period start (ISO 8601 or unix timestamp)</label>
+    <input type="text" id="period_start" name="period_start" placeholder="2026-08-01T00:00:00Z" required {{ 'disabled' if not can_ingest }}>
+
+    <label for="period_end">Period end (ISO 8601 or unix timestamp)</label>
+    <input type="text" id="period_end" name="period_end" placeholder="2026-09-01T00:00:00Z" required {{ 'disabled' if not can_ingest }}>
+
+    <label for="source_system">Source system (free text, for provenance)</label>
+    <input type="text" id="source_system" name="source_system" placeholder="soc-export" {{ 'disabled' if not can_ingest }}>
+
+    <h3 style="margin-top:2em;">Evidence files (CSV or JSON)</h3>
+    <label for="alerts">alerts <span class="muted">(required)</span></label>
+    <input type="file" id="alerts" name="alerts" accept=".csv,.json,.jsonl" required {{ 'disabled' if not can_ingest }}>
+
+    <label for="cases">cases</label>
+    <input type="file" id="cases" name="cases" accept=".csv,.json,.jsonl" {{ 'disabled' if not can_ingest }}>
+
+    <label for="investigation_steps">investigation_steps</label>
+    <input type="file" id="investigation_steps" name="investigation_steps" accept=".csv,.json,.jsonl" {{ 'disabled' if not can_ingest }}>
+
+    <label for="escalations">escalations</label>
+    <input type="file" id="escalations" name="escalations" accept=".csv,.json,.jsonl" {{ 'disabled' if not can_ingest }}>
+
+    <label for="dispositions">dispositions</label>
+    <input type="file" id="dispositions" name="dispositions" accept=".csv,.json,.jsonl" {{ 'disabled' if not can_ingest }}>
+
+    <label for="assets">assets</label>
+    <input type="file" id="assets" name="assets" accept=".csv,.json,.jsonl" {{ 'disabled' if not can_ingest }}>
+
+    <button type="submit" style="margin-top:1.5em;" {{ 'disabled' if not can_ingest }}>Ingest and analyze</button>
+  </form>
+</section>
+
+<section class="section">
+  <div class="section-num">02 / What happens next</div>
+  <p class="section-sub">
+    Submitting registers the entity (or reuses it if the name already exists),
+    opens an assessment for the given period, ingests every provided file
+    through the real normalization pipeline (column-alias-tolerant — e.g.
+    <code>AlertID</code>/<code>priority</code>/<code>host</code> resolve the
+    same as <code>native_id</code>/<code>severity</code>/<code>asset_id</code>),
+    and immediately runs the full 14-worker analysis. You'll land on the new
+    entity's risk page with real, evidence-cited findings — not a template.
+  </p>
+</section>
+
+{% endblock %}

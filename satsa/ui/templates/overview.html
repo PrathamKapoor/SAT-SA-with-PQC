@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-text">
+    <div class="hero-eyebrow">Supervisory Analytics · SIH 26157</div>
+    <h1 class="hero-title">Periodic SOC assessments<br>become <em>supervisory intelligence.</em></h1>
+    <p class="hero-lede">
+      SAT-SA turns structured CSE submissions into evidence-backed
+      supervisory intelligence. Post-quantum trust. Cryptographically
+      verifiable evidence. Air-gapped by design. Built for SIH 26157.
+    </p>
+    <div class="hero-actions">
+      <form method="post" action="/demo/load" style="display:inline">
+        <button type="submit" class="cta">Run Demonstration Assessment →</button>
+      </form>
+      <a href="/architecture" class="cta-secondary">Architecture</a>
+      <a href="/trust" class="cta-secondary">TRUST-SAT</a>
+      <a href="/agents" class="cta-secondary">Agents</a>
+    </div>
+  </div>
+  <div class="hero-status">
+    <div class="stat">
+      <div class="stat-value">{{ totals.entities }}</div>
+      <div class="stat-label">Entities</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ totals.runs }}</div>
+      <div class="stat-label">Analysis runs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ totals.signals }}</div>
+      <div class="stat-label">Signal findings</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">
+        <span class="trust {{ 'failed' if not trust_ok else '' }}">
+          <span class="dot"></span>
+          {{ 'Verified' if trust_ok else 'Unverified' }}
+        </span>
+      </div>
+      <div class="stat-label">Trust</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / Roster</div>
+  <h2>Who needs attention?</h2>
+  <p class="section-sub">Entities ranked by current supervisory risk. Click an entity for the full intelligence profile.</p>
+  {% if ranked %}
+  <ol class="roster-list">
+    {% for r in ranked[:10] %}
+      {% set entity = entities|selectattr("id","equalto",r.entity_id)|first %}
+      {% set leader = loop.first %}
+      <li class="roster-row">
+        <div class="roster-rank {{ 'leader' if leader else '' }}">{{ "%02d" % loop.index }}</div>
+        <div class="roster-name"><a href="/entities/{{ r.entity_id }}">{{ entity.display_name if entity else r.entity_id }}</a>
+          <div class="roster-concern">
+            {% for d in r.dimensions %}{% if loop.first %}{{ d.name }} · {{ d.rationale }}{% endif %}{% endfor %}
+          </div>
+        </div>
+        <div class="roster-score">{{ "%.0f" % r.total_score }}<span class="scale">/ 100</span></div>
+        <div class="roster-confidence {{ r.confidence_bucket }}">{{ r.confidence_bucket }}</div>
+        <div></div>
+      </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="empty">No analysis runs yet. Click <strong>Run Demonstration Assessment</strong> above to populate the platform with the demo dataset.</p>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-num">02 / Trust</div>
+  <h2>Is the evidence verified?</h2>
+  <p class="section-sub">Every persisted finding is signed with ML-DSA-65. Verification re-derives the digest from the live row and checks the signature. A mismatch means the evidence was modified after signing.</p>
+  <p>
+    <a href="/system" class="cta-secondary">View trust status →</a>
+  </p>
+</section>
+
+{% endblock %}

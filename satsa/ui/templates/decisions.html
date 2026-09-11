@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Human Decisions{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 4em 0 3em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">Human supervisory authority</div>
+    <h1 class="hero-title">AI / Analytics<br>→ <em>Recommendation</em><br>→ <span class="decision-tag">HUMAN DECISION</span><br>→ <em>Recorded Action</em></h1>
+    <p class="hero-lede">Every supervisory decision is attributable, timestamped, and auditable. Agents observe and recommend — they never act. The human examiner is the terminal authority.</p>
+  </div>
+  <div class="hero-status">
+    <div class="stat">
+      <div class="stat-value">{{ review_count }}</div>
+      <div class="stat-label">Decisions</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">append-only</div>
+      <div class="stat-label">Audit trail</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">ML-DSA-65</div>
+      <div class="stat-label">Integrity</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / Decision vocabulary</div>
+  <h2>What the supervisor can decide</h2>
+  <p class="section-sub">Two pluggable vocabularies share one generalized engine. SAT-SA decisions all require human authority.</p>
+
+  <table class="data">
+    <thead><tr><th>Vocabulary</th><th>Action</th><th>Meaning</th><th>Human authority?</th></tr></thead>
+    <tbody>
+      <tr><td>SAT-SA</td><td><code>SATSA_SURFACE</code></td><td>Bring to the supervisor's attention, no specific action</td><td>yes</td></tr>
+      <tr><td>SAT-SA</td><td><code>SATSA_INSPECT</code></td><td>Human inspects the underlying case / investigation</td><td>yes</td></tr>
+      <tr><td>SAT-SA</td><td><code>SATSA_REQUEST_EVIDENCE</code></td><td>Ask the CSE for the missing evidence category</td><td>yes</td></tr>
+      <tr><td>SAT-SA</td><td><code>SATSA_ESCALATE_FOR_REVIEW</code></td><td>Hand the case to a senior examiner</td><td>yes</td></tr>
+      <tr><td>SAT-SA</td><td><code>SATSA_DEFER</code></td><td>Defer the decision pending more context</td><td>yes</td></tr>
+      <tr><td>SAT-SA</td><td><code>SATSA_ACCEPT</code></td><td>Accept the finding as substantiated</td><td>yes</td></tr>
+      <tr><td>SAT-SA</td><td><code>SATSA_CLOSE_REVIEW</code></td><td>Close the review; no further action</td><td>yes</td></tr>
+      <tr><td>MLOps</td><td><code>ACCEPT</code> / <code>DEPLOY</code> / <code>RETRAIN</code> / <code>QUARANTINE</code> / <code>ROTATE_KEYS</code> / <code>BLOCK_DEPLOYMENT</code> / <code>ESCALATE</code> / <code>ROLLBACK</code></td><td>Model-lifecycle decisions, autonomous against policy</td><td>no (policy-driven)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-num">02 / Audit trail</div>
+  <h2>Recorded decisions</h2>
+  <p class="section-sub">Every decision is recorded with the principal, the finding, the action, the rationale, and the finding's content digest at decision time. Corrections create a new decision that references the previous one — history is never rewritten.</p>
+
+  {% if reviews %}
+  <table class="data">
+    <thead><tr><th>When</th><th>Action</th><th>Finding</th><th>Principal</th><th>Reason</th></tr></thead>
+    <tbody>
+      {% for r in reviews %}
+        <tr>
+          <td><code>{{ r.occurred_at }}</code></td>
+          <td><span class="chip {{ 'sig' if r.action == 'confirm' else '' }}">{{ r.action }}</span></td>
+          <td>{% if r.rule_or_category %}<code>{{ r.rule_or_category }}</code>{% else %}—{% endif %}</td>
+          <td><code>{{ r.principal_identity_id }}</code></td>
+          <td>{{ r.reason or '—' }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No decisions recorded yet. Open a finding detail page and record a review decision.</p>
+  {% endif %}
+</section>
+
+<p style="margin: 3em 0;"><a href="/findings">→ Browse findings</a></p>
+
+{% endblock %}

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}SAT-SA{% endblock %} · SAT-SA v{{ sat_version }}</title>
+<meta name="theme-color" content="#0a0a0c">
+<meta name="color-scheme" content="dark">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="app">
+<div class="app-frame">
+  <header class="topbar">
+    <a href="/" class="brand">
+      <span class="brand-mark">SAT<span class="brand-mark-sep">·</span>SA</span>
+      <span class="brand-sub">Supervisory Analytics · SIH 26157</span>
+    </a>
+    <nav>
+      <a href="/">Overview</a>
+      <a href="/ingest">Ingest</a>
+      <a href="/entities">Entities</a>
+      <a href="/findings">Findings</a>
+      <a href="/queue">Review Queue</a>
+      <a href="/benchmarks">Benchmarks</a>
+      <a href="/pipeline">Analytics</a>
+      <a href="/security-data">Security Data</a>
+      <a href="/decisions">Decisions</a>
+      <a href="/trust">TRUST-SAT</a>
+      <a href="/agents">Agents</a>
+      <a href="/architecture">Architecture</a>
+      <a href="/system">System</a>
+    </nav>
+    <a href="/demo/result" class="demo-link" id="demo-link">Demo</a>
+    <a href="/login" class="demo-link">Sign in</a>
+  </header>
+  <main>
+{% block content %}{% endblock %}
+  </main>
+  <footer>
+    <span class="footer-line">SAT-SA v{{ sat_version }} · air-gapped · ML-DSA-65 + ML-KEM-768</span>
+    <span class="footer-line">National-security-grade supervisory analytics</span>
+  </footer>
+</div>
+</body>
+</html>

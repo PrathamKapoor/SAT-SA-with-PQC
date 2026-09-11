@@ -1,0 +1,7 @@
+native_id,opened_at,status,closed_at,owner,alert_ids,closure_reason
+C1,1735689650.0,closed,1735693200.0,alice,A1,resolved
+C2,1735689750.0,closed,1735693300.0,alice,A2,resolved
+C3,1735689850.0,closed,1735693400.0,alice,A3,resolved
+C4,1735689950.0,closed,1735693500.0,alice,A4,resolved
+C5,1735690050.0,closed,1735693600.0,alice,A5,resolved
+C6,1735690150.0,closed,1735948800.0,alice,OUT,long-running

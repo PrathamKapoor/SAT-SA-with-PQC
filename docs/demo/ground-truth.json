@@ -1,0 +1,51 @@
+{
+  "CSE-HEALTHY": {
+    "expected_signal_rules": [],
+    "expected_dimensions_with_score": [],
+    "notes": "all metrics healthy; no signals"
+  },
+  "CSE-EXEC": {
+    "expected_signal_rules": [
+      "execution_gap.fast_closure",
+      "execution_gap.critical_without_escalation",
+      "execution_gap.recurring_without_remediation",
+      "execution_gap.potential_metric_gaming"
+    ],
+    "expected_dimensions_with_score": [
+      "execution_gap",
+      "peer_deviation"
+    ],
+    "notes": "fast closures, no escalation on A3, recurring C4, gaming shape"
+  },
+  "CSE-NEG": {
+    "expected_signal_rules": [
+      "negative_space.missing_monitoring",
+      "negative_space.missing_investigation",
+      "negative_space.missing_disposition"
+    ],
+    "expected_dimensions_with_score": [
+      "negative_space",
+      "detection_gap"
+    ],
+    "notes": "no escalations file \u2192 no escalation; missing monitoring/investigation/disposition"
+  },
+  "CSE-ANOM": {
+    "expected_signal_rules": [
+      "anomaly.investigation_duration.high"
+    ],
+    "expected_dimensions_with_score": [
+      "anomaly"
+    ],
+    "notes": "C6 takes 3 days \u2014 outlier"
+  },
+  "CSE-PEER": {
+    "expected_signal_rules": [
+      "peer_benchmark.escalation_rate.deviation",
+      "peer_benchmark.alerts_per_critical_asset.deviation"
+    ],
+    "expected_dimensions_with_score": [
+      "peer_deviation"
+    ],
+    "notes": "30s median closure vs 30 min peer median (fires as peer_benchmark.escalation_rate + alerts_per_critical_asset in the demo's small cohort; closure_median_seconds is masked by CSE-HEALTHY's long-closure outlier in the MAD)"
+  }
+}

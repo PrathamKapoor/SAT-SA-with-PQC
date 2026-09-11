@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}Finding · {{ finding.rule_or_category }}{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 3em 0 2em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">
+      <span class="chip {{ 'sig' if finding.state == 'signal' else '' }}">{{ finding.state }}</span>
+      · {{ finding.worker_name or '—' }}
+    </div>
+    <h1 class="hero-title"><code>{{ finding.rule_or_category }}</code></h1>
+    <p class="hero-lede">{{ finding.rationale }}</p>
+  </div>
+  <div class="hero-status">
+    {% if confidence.overall is defined or confidence.get is defined %}
+    {% set overall = confidence.get('overall', 0) if confidence.get else 0 %}
+    {% else %}
+    {% set overall = 0 %}
+    {% endif %}
+    <div class="stat">
+      <div class="stat-value">{{ "%.0f" % (overall * 100) }}<span class="scale">%</span></div>
+      <div class="stat-label">Confidence</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ evidence|length }}</div>
+      <div class="stat-label">Evidence</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ reviews|length }}</div>
+      <div class="stat-label">Reviews</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">ML-DSA-65</div>
+      <div class="stat-label">Trust</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / Why</div>
+  <h2>Why was this finding emitted?</h2>
+  <p class="section-sub">The analytical rule that fired, the thresholds it compared against, and the observed value.</p>
+  <table class="data">
+    <thead><tr><th>Field</th><th>Value</th></tr></thead>
+    <tbody>
+      {% if finding.statistic is not none %}
+      <tr><td>Observed statistic</td><td>{{ "%.4f" % finding.statistic }}</td></tr>
+      {% endif %}
+      {% if finding.effect is not none %}
+      <tr><td>Effect (deviation)</td><td>{{ "%.4f" % finding.effect }}</td></tr>
+      {% endif %}
+      {% if finding.threshold is not none %}
+      <tr><td>Threshold</td><td>{{ "%.4f" % finding.threshold }}</td></tr>
+      {% endif %}
+      {% for k, v in confidence.items() %}
+        <tr><td>Confidence · {{ k }}</td><td>{{ "%.3f" % v if v is not none else '—' }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-num">02 / Evidence</div>
+  <h2>What evidence supports this finding?</h2>
+  <p class="section-sub">Source-record pointers that the finding was built from. Click an ID to inspect the full record.</p>
+  {% if evidence %}
+  <table class="data">
+    <thead><tr><th>Source record</th><th>Submission</th><th>Format</th><th>Locator</th><th>File digest</th></tr></thead>
+    <tbody>
+      {% for e in evidence %}
+        <tr>
+          <td><code>{{ e.id[:24] }}…</code></td>
+          <td><code>{{ e.submission_id[:16] }}…</code></td>
+          <td>{{ e.format }}</td>
+          <td>{{ e.locator }}</td>
+          <td><code>{{ e.file_digest[:16] }}…</code></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No source records attached.</p>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-num">03 / What to inspect next</div>
+  <h2>Recommendation</h2>
+  <p class="section-sub">A SAT-SA recommendation is a hint, not a supervisory decision. The examiner remains responsible for the final determination.</p>
+  {% if recommendation %}
+  <div class="recommendation">
+    <div class="rec-action">{{ recommendation.action.replace('_', ' ') }}</div>
+    <p>{{ recommendation.reason }}</p>
+    <p class="rec-limitations">{{ recommendation.limitations }}</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-num">04 / Trust</div>
+  <h2>Is this evidence verified?</h2>
+  <p class="section-sub">Cryptographic integrity of the finding's evidence and review history. The signature covers the canonical content digest.</p>
+  <div class="trust">
+    <span class="dot"></span>
+    ML-DSA-65 signed
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">05 / Human review</div>
+  <h2>Review history</h2>
+  {% if reviews %}
+  <ol class="roster-list">
+    {% for r in reviews %}
+    <li class="roster-row">
+      <div class="roster-rank">{{ "%02d" % loop.index }}</div>
+      <div class="roster-name">
+        <strong>{{ r.action }}</strong> by <code>{{ r.principal_identity_id }}</code>
+        {% if r.previous_revision_id %}<div class="roster-concern">replaces <code>{{ r.previous_revision_id[:16] }}…</code></div>{% endif %}
+        {% if r.reason %}<div class="roster-concern">{{ r.reason }}</div>{% endif %}
+      </div>
+      <div class="roster-score"></div>
+      <div class="roster-confidence">{{ r.occurred_at }}</div>
+      <div></div>
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="empty">No human review recorded yet.</p>
+  {% endif %}
+
+  <div style="margin-top: 2em; border-top: 1px solid var(--line); padding-top: 2em;">
+    <h4>Record a review decision</h4>
+    <form method="post" action="/findings/{{ finding.id }}/review" style="display: flex; gap: 1em; align-items: end; flex-wrap: wrap;">
+      <label style="display: flex; flex-direction: column; font-size: 0.78em; color: var(--fg-3); letter-spacing: 0.08em; text-transform: uppercase;">
+        Action
+        <select name="action" style="margin-top: 0.4em; padding: 0.6em 0.8em; background: var(--bg-2); color: var(--fg); border: 1px solid var(--line-2); font-family: var(--font);">
+          <option value="confirm">confirm</option>
+          <option value="dismiss">dismiss</option>
+          <option value="escalate">escalate</option>
+          <option value="annotate">annotate</option>
+          <option value="request_review">request_review</option>
+        </select>
+      </label>
+      <label style="display: flex; flex-direction: column; font-size: 0.78em; color: var(--fg-3); letter-spacing: 0.08em; text-transform: uppercase; flex: 1; min-width: 240px;">
+        Reason
+        <input type="text" name="reason" placeholder="justification / context" style="margin-top: 0.4em; padding: 0.6em 0.8em; background: var(--bg-2); color: var(--fg); border: 1px solid var(--line-2); font-family: var(--font);">
+      </label>
+      <button type="submit" class="cta">Record</button>
+    </form>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">06 / Limitations</div>
+  <h2>What this finding cannot tell you</h2>
+  <p>{{ finding.limitations or '—' }}</p>
+</section>
+
+<p style="margin: 3em 0;"><a href="/findings">← back to findings</a></p>
+
+{% endblock %}

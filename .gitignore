@@ -1,0 +1,27 @@
+.venv/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local runtime artifacts (e.g. scripts/serve_ui.py's default db/keys) —
+# generated data, never source.
+satsa_ui.db
+satsa_ui.db-shm
+satsa_ui.db-wal
+satsa_ui_keys/
+.satsa_identity/
+ci-smoke.db
+ci-smoke-keys/
+ci-demo.db
+ci-demo-keys/
+
+# A1.2: SoftHSM2 development provider binaries
+# These are downloaded once for A1.2 real-provider certification and must
+# not be committed to the repository.  Bootstrap them via:
+#   powershell -ExecutionPolicy Bypass -File scripts/bootstrap_softhsm2.ps1
+.devtools/softhsm2/bin/
+.devtools/softhsm2/lib/
+.devtools/softhsm2/share/
+.devtools/softhsm2/etc/
+.devtools/softhsm2/README.txt

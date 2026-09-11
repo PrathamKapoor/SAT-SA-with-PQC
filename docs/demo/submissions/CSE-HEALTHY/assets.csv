@@ -1,0 +1,3 @@
+native_id,criticality,environment,controls
+web-01,critical,prod,AV;EDR
+db-01,high,prod,DB-FW

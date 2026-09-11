@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Architecture{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 4em 0 3em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">Target architecture</div>
+    <h1 class="hero-title">From submission to<br><em>supervisory intelligence.</em></h1>
+    <p class="hero-lede">Every SAT-SA workflow terminates at the human supervisor's recorded decision — and at the cryptographic integrity layer that proves the evidence was not tampered with. The diagram below is the product.</p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / The flow</div>
+  <h2>How a CSE submission becomes a supervisory finding</h2>
+  <p class="section-sub">Click any layer to see which agents participate, what data they consume, and what they produce.</p>
+
+  <div class="arch-diagram">
+    <div class="arch-layer arch-source">
+      <div class="arch-layer-label">SAT-SA</div>
+      <div class="arch-layer-sub">Supervisory Analytics · SIH 26157</div>
+    </div>
+
+    <div class="arch-arrow"></div>
+
+    <div class="arch-row">
+      <div class="arch-half">
+        <div class="arch-half-label">SECURITY DATA</div>
+        <div class="arch-half-items">
+          alerts · cases · investigation steps · dispositions · escalations · assets
+        </div>
+      </div>
+      <div class="arch-half">
+        <div class="arch-half-label">ML / ANALYTICS</div>
+        <div class="arch-half-items">
+          execution gap · negative space · anomaly · peer benchmark · drift · similarity
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-arrow"></div>
+
+    <div class="arch-layer arch-agents">
+      <div class="arch-layer-label">SUPERVISORY AGENT FABRIC</div>
+      <div class="arch-layer-sub">26 agents · 9 retained MLOps + 17 SAT-SA supervisory</div>
+    </div>
+
+    <div class="arch-arrow"></div>
+
+    <div class="arch-row arch-equal">
+      <div class="arch-quad"><div class="arch-quad-label">Detect</div><div class="arch-quad-sub">execution gap, negative space, anomaly, peer, coverage</div></div>
+      <div class="arch-quad"><div class="arch-quad-label">Correlate</div><div class="arch-quad-sub">drift, cross-entity, similarity, evidence completeness</div></div>
+      <div class="arch-quad"><div class="arch-quad-label">Assess / Reason</div><div class="arch-quad-sub">risk fusion, prioritization, recommendation</div></div>
+    </div>
+
+    <div class="arch-arrow"></div>
+
+    <div class="arch-layer arch-risk">
+      <div class="arch-layer-label">RISK FINDING</div>
+      <div class="arch-layer-sub">7-dimension decomposable entity risk</div>
+    </div>
+
+    <div class="arch-arrow"></div>
+
+    <div class="arch-layer arch-recommendation">
+      <div class="arch-layer-label">RECOMMENDATION</div>
+      <div class="arch-layer-sub">bounded human-action hint · INSPECT / REQUEST_EVIDENCE / DEFER …</div>
+    </div>
+
+    <div class="arch-arrow arch-arrow-strong"></div>
+
+    <div class="arch-layer arch-human">
+      <div class="arch-layer-label">HUMAN SUPERVISOR</div>
+      <div class="arch-layer-sub">terminal authority · append-only decision record</div>
+    </div>
+
+    <div class="arch-arrow arch-arrow-strong"></div>
+
+    <div class="arch-layer arch-action">
+      <div class="arch-layer-label">ACTION / DECISION</div>
+      <div class="arch-layer-sub">attributable · timestamped · auditable</div>
+    </div>
+
+    <div class="arch-arrow arch-arrow-strong"></div>
+
+    <div class="arch-trust">
+      <div class="arch-trust-head">TRUST-SAT</div>
+      <div class="arch-trust-row">
+        <div class="arch-trust-cell"><strong>PQC</strong><br>ML-DSA-65 signatures</div>
+        <div class="arch-trust-cell"><strong>Provenance</strong><br>source → record → finding → risk → decision</div>
+        <div class="arch-trust-cell"><strong>Hash-chain</strong><br>evidence integrity ledger</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">02 / Agent roster</div>
+  <h2>26 agents — 9 retained MLOps + 17 SAT-SA supervisory</h2>
+  <p class="section-sub">The roadmap defines 26 agents as a consequence of responsibility separation. The MLOps agents are retained unchanged; the SAT-SA agents are the new supervisory layer.</p>
+
+  <div class="arch-grid">
+    <div>
+      <h3 class="arch-fam">9 retained MLOps</h3>
+      <ul class="arch-agent-list">
+        {% for a in mlops_agents %}
+          <li><code>{{ a.agent_id }}</code><br>{{ a.name }} — {{ a.purpose }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div>
+      <h3 class="arch-fam">17 SAT-SA supervisory</h3>
+      <ul class="arch-agent-list">
+        {% for a in satsa_agents %}
+          <li><code>{{ a.agent_id }}</code><br>{{ a.name }} — {{ a.purpose }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<p style="margin: 3em 0;"><a href="/agents">→ Open the agent explorer</a></p>
+
+{% endblock %}

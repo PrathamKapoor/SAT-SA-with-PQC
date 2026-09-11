@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Benchmarks{% endblock %}
+{% block content %}
+
+<section class="section">
+  <div class="section-num">01 / Peer benchmarks</div>
+  <h2>How does each entity compare to its cohort?</h2>
+  <p class="section-sub">Cohort: <code>defence</code> · <code>on-prem</code> · thresholds: 2 MADs, ≥3 peers. Each finding compares the entity's value to the trimmed peer median; peer confidence scales with cohort size.</p>
+  {% if rows %}
+  <table class="data">
+    <thead>
+      <tr><th>Entity</th><th>Metric</th><th>Observed</th><th>Peer median</th>
+        <th>Deviation</th><th>Peer confidence</th><th>Rationale</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+        {% set conf = (r.get('confidence_json') or '{}')|loadjson %}
+        <tr>
+          <td>{{ r.display_name }}</td>
+          <td><code>{{ r.rule_or_category|replace('peer_benchmark.','')|replace('.deviation','') }}</code></td>
+          <td>{{ "%.3f"|format(r.statistic) if r.statistic is not none else '—' }}</td>
+          <td>{{ "%.3f"|format(r.threshold) if r.threshold is not none else '—' }}</td>
+          <td>{{ "%.2f"|format(r.effect) }} MADs</td>
+          <td>{{ "%.2f"|format(conf.get('peer_confidence') or 0) if conf.get('peer_confidence') is not none else 'n/a' }}</td>
+          <td class="rationale">{{ r.rationale }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No peer benchmark findings in the latest run.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

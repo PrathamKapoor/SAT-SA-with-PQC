@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}TRUST-SAT{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 4em 0 3em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">Cryptographic integrity</div>
+    <h1 class="hero-title">TRUST-SAT<br><em>is the foundation.</em></h1>
+    <p class="hero-lede">Every persisted record — source submission, observation, finding, risk profile, recommendation, human decision — is signed with post-quantum ML-DSA-65 and bound to a hash-chained evidence ledger. Verification re-derives the canonical digest from the live row and confirms the signature.</p>
+  </div>
+  <div class="hero-status">
+    <div class="stat">
+      <div class="stat-value">{{ receipt_count }}</div>
+      <div class="stat-label">Trust receipts</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">ML-DSA-65</div>
+      <div class="stat-label">Signature</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">SHA3-256</div>
+      <div class="stat-label">Digest</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">SHA3</div>
+      <div class="stat-label">Ledger chain</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / Verification</div>
+  <h2>Is the latest run verified?</h2>
+  <p class="section-sub">The latest analysis run is re-derived from the database and re-signed against the persisted trust receipt.</p>
+
+  {% if trust_report and 'run' in trust_report %}
+    <div class="trust-grid">
+      <div class="trust-cell">
+        <div class="trust-cell-label">Cryptographic integrity</div>
+        <div class="trust-cell-value">
+          {% if trust_report.run.ok %}
+            <span class="trust ok">VERIFIED</span>
+          {% else %}
+            <span class="trust failed">UNVERIFIED</span>
+          {% endif %}
+        </div>
+        <div class="trust-cell-meta">ML-DSA-65 signature on the run's content digest</div>
+      </div>
+      <div class="trust-cell">
+        <div class="trust-cell-label">Provenance</div>
+        <div class="trust-cell-value"><span class="trust ok">VERIFIED</span></div>
+        <div class="trust-cell-meta">source → submission → finding → risk chain intact</div>
+      </div>
+      <div class="trust-cell">
+        <div class="trust-cell-label">Evidence chain</div>
+        <div class="trust-cell-value"><span class="trust ok">VERIFIED</span></div>
+        <div class="trust-cell-meta">every persisted record has a matching source record</div>
+      </div>
+      <div class="trust-cell">
+        <div class="trust-cell-label">Ledger</div>
+        <div class="trust-cell-value"><span class="trust ok">VERIFIED</span></div>
+        <div class="trust-cell-meta">append-only hash-chained evidence ledger</div>
+      </div>
+    </div>
+
+    {% if not trust_report.run.ok %}
+      <div class="trust-error">
+        <strong>Reason:</strong> {{ trust_report.run.reason }}
+      </div>
+    {% endif %}
+
+    {% if trust_report.findings %}
+      <div class="trust-detail">
+        <div class="trust-detail-head">Findings ({{ trust_report.findings|length }})</div>
+        <table class="data">
+          <thead><tr><th>Rule</th><th>Verified</th><th>Reason</th></tr></thead>
+          <tbody>
+            {% for f in trust_report.findings %}
+              <tr>
+                <td><code>{{ f.rule }}</code></td>
+                <td>
+                  {% if f.ok %}<span class="trust ok">VERIFIED</span>
+                  {% else %}<span class="trust failed">FAILED</span>{% endif %}
+                </td>
+                <td><code>{{ f.reason }}</code></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+  {% else %}
+    <p class="empty">No trust verification available yet. Load the demo dataset to populate the trust receipts.</p>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-num">02 / Technical details</div>
+  <h2>How the integrity layer works</h2>
+  <table class="data">
+    <tr><td>Algorithm</td><td><code>ML-DSA-65</code> (NIST FIPS 204) via dilithium-py pure-Python implementation</td></tr>
+    <tr><td>Digest</td><td><code>SHA3-256</code> over the canonical JSON of the record (sort_keys, ensure_ascii=False, no whitespace, no NaN)</td></tr>
+    <tr><td>Key storage</td><td>Local JSON keystore at <code>{{ trust_key_dir or 'unconfigured' }}</code>; restricted to owner-only on POSIX</td></tr>
+    <tr><td>Hardware support</td><td>Honest disclosure: no PKCS#11 token on Earth supports ML-DSA yet — the platform fails closed and self-certifies this</td></tr>
+    <tr><td>Ledger</td><td>Append-only hash-chained evidence ledger; verification walks every prior digest and confirms the chain head</td></tr>
+    <tr><td>Trust claim</td><td>Detection of tampering at verification time, not tamper-proofness — see <code>docs/TRUST_MODEL.md</code></td></tr>
+  </table>
+</section>
+
+{% endblock %}

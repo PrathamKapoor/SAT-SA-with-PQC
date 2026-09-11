@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ entity.display_name }}{% endblock %}
+{% block content %}
+
+<section class="hero" style="padding: 4em 0 3em;">
+  <div class="hero-text">
+    <div class="hero-eyebrow">{{ entity.sector or '—' }} · {{ entity.environment_class or '—' }}</div>
+    <h1 class="hero-title">{{ entity.display_name }}</h1>
+    <p class="hero-lede">Entity intelligence profile — risk decomposition, assessment history, and signal findings.</p>
+    <div class="hero-actions">
+      <a href="/reports/{{ entity.id }}" class="cta-secondary">Full report</a>
+      <a href="/findings?entity={{ entity.id }}" class="cta-secondary">All findings</a>
+    </div>
+  </div>
+  <div class="hero-status">
+    <div class="stat">
+      <div class="stat-value">{{ "%.0f" % (risk.total_score if risk and risk.run_id else 0) }}<span class="scale">/100</span></div>
+      <div class="stat-label">Risk</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ risk.confidence_bucket if risk and risk.run_id else '—' }}</div>
+      <div class="stat-label">Confidence</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ findings|length }}</div>
+      <div class="stat-label">Findings</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value">{{ assessments|length }}</div>
+      <div class="stat-label">Assessments</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-num">01 / Risk decomposition</div>
+  <h2>Why is this entity at this risk level?</h2>
+  <p class="section-sub">Risk is the sum of dimension scores, each bounded by its documented weight. Click a dimension to see its supporting findings.</p>
+  {% if risk and risk.run_id %}
+  <ol class="roster-list">
+    {% for d in risk.dimensions %}
+      {% if d.score > 0 %}
+      <li class="roster-row">
+        <div class="roster-rank">{{ "%02d" % loop.index }}</div>
+        <div class="roster-name">
+          <strong>{{ d.name }}</strong>
+          <div class="roster-concern">{{ d.rationale }}</div>
+        </div>
+        <div class="roster-score">{{ "%.1f" % d.score }}<span class="scale">/ {{ d.weight }}</span></div>
+        <div class="roster-confidence">{{ d.finding_ids|length }} findings</div>
+        <div></div>
+      </li>
+      {% endif %}
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p class="empty">No analysis run yet.</p>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-num">02 / Assessments</div>
+  <h2>Period coverage</h2>
+  <table class="data">
+    <thead>
+      <tr><th>ID</th><th>Period</th><th>Status</th><th>Policy</th><th>Supersedes</th></tr>
+    </thead>
+    <tbody>
+      {% for a in assessments %}
+        <tr>
+          <td><code>{{ a.id[:16] }}…</code></td>
+          <td>{{ a.period_start }} → {{ a.period_end }}</td>
+          <td>{{ a.status }}</td>
+          <td>{{ a.policy_version or '—' }}</td>
+          <td>{{ a.supersedes_id or '—' }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <div class="section-num">03 / Signal findings</div>
+  <h2>What evidence supports this risk level?</h2>
+  {% if findings %}
+  <table class="data">
+    <thead>
+      <tr><th>Rule</th><th>State</th><th>Worker</th><th>Rationale</th><th>Effect</th><th>Threshold</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for f in findings %}
+        <tr>
+          <td><code>{{ f.rule_or_category }}</code></td>
+          <td><span class="state state-{{ f.state }}">{{ f.state }}</span></td>
+          <td>{{ f.worker_name }}</td>
+          <td class="rationale">{{ f.rationale }}</td>
+          <td>{{ "%.2f"|format(f.effect) if f.effect is not none else '—' }}</td>
+          <td>{{ "%.2f"|format(f.threshold) if f.threshold is not none else '—' }}</td>
+          <td><a class="btn" href="/findings/{{ f.id }}">Inspect</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No findings recorded yet.</p>
+  {% endif %}
+</section>
+
+{% endblock %}

@@ -1,0 +1,2 @@
+alert_id,case_id,occurred_at,destination_role,trigger,outcome
+OUT,C6,1735690800.0,soc-l2,long-running,acknowledged

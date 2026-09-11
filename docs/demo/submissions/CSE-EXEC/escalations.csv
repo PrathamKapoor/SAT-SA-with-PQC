@@ -1,0 +1,2 @@
+alert_id,case_id,occurred_at,destination_role,trigger,outcome
+A3,C2,1735690100.0,soc-l2,severity critical,acknowledged

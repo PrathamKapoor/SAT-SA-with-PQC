@@ -1,0 +1,17 @@
+# Default development settings for the qsmlops platform.
+# Layered resolution: built-in defaults < this file < QSMLOPS_* env vars
+# < explicit overrides passed to load_settings().
+env: development
+
+log_level: DEBUG
+json_logs: false
+debug: true
+
+api:
+  host: "127.0.0.1"
+  port: 8000
+
+crypto:
+  default_signature_algorithm: "ML-DSA-65"
+  default_key_encryption_algorithm: "ML-KEM-768"
+  default_key_lifetime_days: 90.0
