@@ -1,3 +1,8 @@
+# Runtime dependencies — mirrors [project].dependencies in
+# pyproject.toml exactly (same package, same version specifier).
+# pyproject.toml is the authoritative runtime contract; this file
+# mirrors it so `pip install -r requirements.txt` works as a plain,
+# offline-install path without needing `pip install .`.
 kyber-py>=1.2.0
 dilithium-py>=1.4.0
 numpy>=1.24
@@ -12,5 +17,11 @@ click>=8.1
 scikit-learn>=1.3
 pydantic>=2.0
 python-pkcs11>=0.9.0
+
+# Development / test dependencies — mirrors
+# [project.optional-dependencies].dev in pyproject.toml. NOT required
+# to run the application; required to run this repository's own test
+# suite (`python -m pytest tests/ -q`), which README.md's documented
+# install flow does immediately after this file's install step.
 pytest>=8.0
 httpx>=0.27

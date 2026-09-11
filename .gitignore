@@ -10,6 +10,13 @@ __pycache__/
 .coverage.*
 htmlcov/
 
+# P28: setuptools/pip build byproducts (created in the repo root by
+# `pip wheel .` / `python -m build` even when the output wheel itself
+# is directed elsewhere) — never source, never intended to be tracked.
+build/
+*.egg-info/
+dist/
+
 # Environment / secrets — this project has none committed today, but
 # any local override belongs here, never in git.
 .env
@@ -55,3 +62,13 @@ Thumbs.db
 .devtools/softhsm2/share/
 .devtools/softhsm2/etc/
 .devtools/softhsm2/README.txt
+
+# P28 release: SAT-SA-with-PQC/ is a separate, complete nested git clone
+# of this project's own GitHub repository (has its own .git/), used for
+# local push verification. It is not a submodule, not a dependency, and
+# not source belonging to this repository. This single, narrow rule only
+# prevents an accidental future `git add`/`git add -A` from attempting to
+# track it as nested content — it does not remove, move, or otherwise
+# touch the existing clone on disk. Its disposition (keep, relocate
+# outside the project root, or delete) is the repository owner's call.
+SAT-SA-with-PQC/
