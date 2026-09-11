@@ -25,6 +25,9 @@ a credential is ever verified.
 """
 from __future__ import annotations
 
+import hmac
+import secrets
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -37,6 +40,7 @@ from qsmlops.security.identity.auth import AuthenticatedPrincipal
 from qsmlops.security.identity.service import IdentityService
 
 COOKIE_NAME = "satsa_credential"
+CSRF_COOKIE_NAME = "satsa_csrf"
 
 
 def build_identity_service(db, *, ledger_dir: Path) -> IdentityService:
@@ -116,3 +120,91 @@ def require(
             detail=f"principal {principal.name!r} lacks permission {permission!r}",
         )
     return principal
+
+
+def generate_csrf_token() -> str:
+    """A fresh, unguessable token — issued once per login, stored in
+    its own HttpOnly cookie."""
+    return secrets.token_urlsafe(32)
+
+
+def verify_csrf(request: Request, submitted_token: str) -> bool:
+    """Double-submit-cookie CSRF check: the token a same-origin page
+    embeds as a hidden form field (read server-side from the
+    ``satsa_csrf`` cookie at render time) must match the token that
+    cookie carries on the POST. A cross-site forged request rides the
+    browser's automatic cookie attachment (that is the CSRF threat)
+    but the attacker's page has no way to read an HttpOnly cookie's
+    value, so it cannot produce a matching hidden field — the request
+    fails this check even though the credential cookie itself is
+    valid and present. ``hmac.compare_digest`` avoids a timing
+    side-channel on the comparison.
+
+    CSRF is a cookie-auth threat only: a request authenticated via an
+    explicit ``Authorization: Bearer`` header (the API/CLI path — see
+    ``bearer_token``) cannot be forged cross-site, because a forged
+    cross-origin form/script cannot set a custom request header the
+    way it can silently ride an auto-attached cookie. Such requests
+    are exempt here so this check never blocks the CLI or a direct
+    API client authenticating the way it is documented to — only a
+    request that relied on the cookie fallback needs the token.
+
+    Scope (see satsa/ui/__init__.py's routes): applied to the two
+    authenticated, state-mutating POST routes an attacker would
+    actually want to forge — recording a review decision and
+    submitting new CSE data. Not applied to ``/login`` (no session
+    exists yet to anchor a token to — a real fix needs a pre-session
+    token, deferred) or ``/logout``/``/demo/load`` (forcing a logout
+    or a canned-demo reload is not a meaningful attack) — a
+    deliberate, disclosed scoping decision, not a gap discovered
+    later.
+    """
+    header = request.headers.get("authorization", "")
+    if header.lower().startswith("bearer ") and header[len("bearer "):].strip():
+        return True  # header-authenticated: not cookie-riding, CSRF-immune
+    cookie_token = request.cookies.get(CSRF_COOKIE_NAME, "")
+    if not cookie_token or not submitted_token:
+        return False
+    return hmac.compare_digest(cookie_token, submitted_token)
+
+
+class LoginRateLimiter:
+    """Simple in-memory fixed-window rate limiter for ``/login``
+    attempts, keyed by client address — mitigates credential
+    brute-forcing without inventing new infrastructure for a
+    single-process, air-gapped deployment.
+
+    Deliberately in-memory, matching the SQLite single-writer boundary
+    already documented for this deployment shape: state does not
+    survive a process restart and is not shared across multiple
+    worker processes if the app were ever run with more than one.
+    Both are disclosed limitations, not silently assumed away — a
+    multi-process/multi-node deployment needs a shared store (e.g.
+    the database itself) instead, which this class intentionally does
+    not attempt to be.
+    """
+
+    def __init__(self, *, max_attempts: int = 5, window_seconds: float = 60.0) -> None:
+        self.max_attempts = max_attempts
+        self.window_seconds = window_seconds
+        self._attempts: dict = {}
+
+    def check(self, key: str) -> bool:
+        """Records an attempt for ``key`` and returns whether it is
+        allowed (True) or the window's attempt limit is already
+        exceeded (False)."""
+        now = time.time()
+        window_start = now - self.window_seconds
+        attempts = [t for t in self._attempts.get(key, []) if t > window_start]
+        if len(attempts) >= self.max_attempts:
+            self._attempts[key] = attempts
+            return False
+        attempts.append(now)
+        self._attempts[key] = attempts
+        return True
+
+    def reset(self, key: str) -> None:
+        """Clear a key's attempt history — called on a successful
+        login so a legitimate user who mistyped a credential once
+        isn't stuck waiting out the window after they get it right."""
+        self._attempts.pop(key, None)

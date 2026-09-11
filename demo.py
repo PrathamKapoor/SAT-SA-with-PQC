@@ -12,7 +12,7 @@ One coherent story, mirroring the target architecture:
 7. Show TRUST-SAT verification (run + findings VERIFIED)
 8. Human supervisor reviews (record a decision)
 9. Decision becomes auditable (review history)
-10. Show the architecture / agent layer (26 agents, supervisor decision)
+10. Show the architecture / agent layer (32 agents, supervisor decision)
 
 Usage:
     python demo.py [--db ./demo-satsa.db] [--keys ./demo-keys]
@@ -126,7 +126,7 @@ def main() -> int:
                 print(f"  [{h.action}] by={h.principal_identity_id} "
                       f"at={h.occurred_at:.0f} reason={h.reason!r}")
 
-        _banner(10, "Architecture / agent layer — 26 agents, one engine")
+        _banner(10, "Architecture / agent layer — 32 agents, one engine")
         from satsa.supervisor import list_agents
         agents = list_agents()
         print(f"  {len(agents)} agents "

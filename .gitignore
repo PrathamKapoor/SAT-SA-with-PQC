@@ -1,11 +1,30 @@
 .venv/
+venv/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 __pycache__/
 *.pyc
 *.pyo
+.coverage
+.coverage.*
+htmlcov/
+
+# Environment / secrets — this project has none committed today, but
+# any local override belongs here, never in git.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+service-account.json
+secrets.json
 
 # Local runtime artifacts (e.g. scripts/serve_ui.py's default db/keys) —
-# generated data, never source.
+# generated data, never source. Any other *.db/*.sqlite* file is also
+# always a local run's output (fixtures use pytest's tmp_path, never a
+# committed file) — ignored generally rather than named one at a time.
 satsa_ui.db
 satsa_ui.db-shm
 satsa_ui.db-wal
@@ -15,6 +34,17 @@ ci-smoke.db
 ci-smoke-keys/
 ci-demo.db
 ci-demo-keys/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Editor / OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
 
 # A1.2: SoftHSM2 development provider binaries
 # These are downloaded once for A1.2 real-provider certification and must

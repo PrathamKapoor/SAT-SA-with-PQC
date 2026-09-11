@@ -16,7 +16,7 @@ Core: `kyber-py`, `dilithium-py`, `numpy`, `scipy`, `cryptography`,
 
 ```bash
 python -m compileall satsa qsmlops scripts tests
-python -m pytest tests/ -q        # ~850 tests, ~8 min, 0 failed expected
+python -m pytest tests/ -q        # release acceptance requires 0 failed
 ```
 
 ## 3. Key setup (TRUST-SAT)
@@ -57,7 +57,7 @@ python demo.py --db ./demo.db --keys ./demo-keys
 # or: sat-sa --db ./demo.db --trust-key-dir ./demo-keys demo
 ```
 
-Expected: 5 CSEs ingested, 14 workers × 5 runs, top-risk entity
+Expected: 5 CSEs ingested, 16 workers × 5 runs, top-risk entity
 surfaced, run + findings VERIFIED, a review decision recorded, and a
 supervisor decision (`SATSA_INSPECT`) emitted.
 

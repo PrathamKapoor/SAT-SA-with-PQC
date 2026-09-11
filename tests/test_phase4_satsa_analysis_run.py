@@ -304,27 +304,30 @@ def test_run_service_persists_run_observation_finding_and_job(service, engine):
 
     result = service.run_analysis(entity.id, a.id)
     assert result.status == "completed"
-    # The default worker set has 14 workers (Phase 5 + Phase 6 +
+    # The default worker set has 16 workers (Phase 5 + Phase 6 +
     # Phase 7 + Phase 8 + the five Phase P14 supervisory workers:
     # coverage-gap, drift, cross-entity-insights, case-similarity,
-    # evidence-completeness). A1 is a critical alert that closed in
-    # 120s with no escalation, no cases, no steps → fast-closure
-    # (5.2) and critical-without-escalation (5.3) fire; the
-    # negative-space worker adds missing-investigation,
-    # missing-escalation, and missing-disposition findings for the
-    # same scope; the anomaly worker may flag the slow closure
-    # as well; the peer-benchmark worker is silent (no peers).
-    assert len(result.observation_ids) == 14
+    # evidence-completeness + the two P25 agent-expansion workers:
+    # workflow-reconstruction, entity-asset-resolution). A1 is a
+    # critical alert that closed in 120s with no escalation, no
+    # cases, no steps → fast-closure (5.2) and
+    # critical-without-escalation (5.3) fire; the negative-space
+    # worker adds missing-investigation, missing-escalation, and
+    # missing-disposition findings for the same scope; the anomaly
+    # worker may flag the slow closure as well; the peer-benchmark
+    # worker is silent (no peers); entity-asset-resolution abstains
+    # (no prior period to compare against).
+    assert len(result.observation_ids) == 16
     assert len(result.finding_ids) >= 4
     assert result.error == ""
-    assert len(result.jobs) == 14
+    assert len(result.jobs) == 16
     assert all(j.status == "completed" for j in result.jobs)
 
     run = RunStore(engine).get(result.run_id)
     assert run is not None
     assert run["status"] == "completed"
     obs = ObservationStore(engine).list_for_run(run["id"])
-    assert len(obs) == 14
+    assert len(obs) == 16
     fc_obs = next(o for o in obs if o["worker_name"] == "fast-closure")
     assert fc_obs["state"] == "signal"
     findings = FindingStore(engine).list_for_run(run["id"])
@@ -336,7 +339,7 @@ def test_run_service_persists_run_observation_finding_and_job(service, engine):
     # than missing-investigation for the cases category
     assert "negative_space.missing_file.cases" in rules
     jobs = JobStore(engine).list_for_run(run["id"])
-    assert len(jobs) == 14
+    assert len(jobs) == 16
     assert all(j["status"] == "completed" for j in jobs)
 
 

@@ -173,15 +173,17 @@ def test_drift_and_cross_entity_abstain_without_context():
         import shutil; shutil.rmtree(td, ignore_errors=True)
 
 
-def test_default_run_now_has_14_workers():
+def test_default_run_now_has_16_workers():
     eng, td = _setup()
     try:
         from satsa.analysis.run import RunService
         eid, aid = _seed_alerts_cases(eng)
         result = RunService(eng).run(eid, aid)
         assert result.status in ("completed", "partial")
-        # 14 observations — one per default worker.
-        assert len(result.observation_ids) == 14
+        # 16 observations — one per default worker (14 + the P25
+        # agent-expansion additions: workflow-reconstruction,
+        # entity-asset-resolution).
+        assert len(result.observation_ids) == 16
         # No finding was silently dropped: every persisted signal
         # finding cites evidence and carries confidence.
         rows = eng.query_all(

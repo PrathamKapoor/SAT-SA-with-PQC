@@ -34,16 +34,50 @@ What this module does NOT do
   finding is later tampered with, the digest in the decision
   no longer matches the live digest and the verifier will
   notice.
+
+Deletion / reordering (Phase P26 addendum, checklist item 8)
+--------------------------------------------------------------
+
+``verify_binding`` (below) has always caught a decision row whose
+*content* was edited in place. Until this phase it could not catch a
+decision row being deleted outright, or a forged row being inserted
+directly via SQL (bypassing ``record()``) — ``docs/TRUST_MODEL.md``
+disclosed this honestly as "⚠️ not detected... genuine gap for future
+work." This phase closes it by optionally mirroring every recorded
+decision into an independent, append-only, hash-chained
+``qsmlops.evidence.ledger.EvidenceLedger`` (the exact same class
+already used for the identity/credential audit trail — reused, not
+reinvented). ``verify_ledger_integrity`` then cross-checks the DB
+table against the ledger in both directions: a DB row with no matching
+ledger entry was inserted outside ``record()``; a ledger entry with no
+matching DB row was deleted from the DB after being recorded. Neither
+direction alone is sufficient — this is why both checks exist.
 """
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
 from qsmlops.crypto.hashing import digest_document
+from qsmlops.evidence.ledger import EvidenceLedger
 from satsa.domain.evidence import ReviewDecision
 from satsa.domain.base import new_id
+
+
+def build_review_decision_ledger(ledger_dir: Path) -> EvidenceLedger:
+    """The review-decision hash-chain ledger, co-located with (but a
+    separate file/chain from) the identity audit ledger
+    ``satsa.security.build_identity_service`` already creates at the
+    same directory. Kept as its own ledger rather than folded into
+    the identity one — an identity lifecycle event and a review
+    decision are different evidence classes with different
+    consumers, and conflating them would make ``verify_chain()``
+    harder to reason about for either."""
+    ledger_dir = Path(ledger_dir)
+    ledger_dir.mkdir(parents=True, exist_ok=True)
+    return EvidenceLedger(ledger_dir / "review_decision_ledger.jsonl")
 
 
 @dataclass
@@ -75,12 +109,19 @@ class ReviewAuditEntry:
 class ReviewService:
     """Persist human review decisions and query the audit log."""
 
-    def __init__(self, database) -> None:
+    def __init__(self, database, *,
+                decision_ledger: Optional[EvidenceLedger] = None) -> None:
         if hasattr(database, "ensure_ready"):
             database.ensure_ready()
             self._db = database.engine
         else:
             self._db = database
+        # Optional: when provided, every recorded decision is also
+        # mirrored into this independent hash-chained ledger — see
+        # this module's docstring ("Deletion / reordering"). None by
+        # default so existing callers/tests that construct
+        # ReviewService(db) directly are unaffected.
+        self._decision_ledger = decision_ledger
 
     def record(self, *, finding_id: str, principal_identity_id: str,
                action: str, reason: str = "",
@@ -111,6 +152,13 @@ class ReviewService:
             (rid, finding_id, principal_identity_id, action, reason,
              occurred, previous_revision_id,
              finding_content_digest, digest, occurred))
+        if self._decision_ledger is not None:
+            self._decision_ledger.append({
+                "type": "review_decision", "id": rid,
+                "finding_id": finding_id,
+                "principal_identity_id": principal_identity_id,
+                "action": action, "content_digest": digest,
+            })
         return ReviewAuditEntry(
             id=rid, finding_id=finding_id,
             principal_identity_id=principal_identity_id, action=action,
@@ -170,6 +218,43 @@ class ReviewService:
                 "occurred_at": entry.occurred_at, "ok": ok, "reason": reason,
             })
         return out
+
+    def verify_ledger_integrity(self) -> dict:
+        """Cross-check ``satsa_review_decisions`` against the
+        independent decision ledger in both directions — see this
+        module's docstring ("Deletion / reordering") for why both
+        directions are required. Requires this instance to have been
+        constructed with a ``decision_ledger``; raises ``ValueError``
+        otherwise rather than silently reporting a false "clean"
+        result for a check that never ran.
+        """
+        if self._decision_ledger is None:
+            raise ValueError(
+                "verify_ledger_integrity requires ReviewService to have "
+                "been constructed with a decision_ledger")
+        chain_ok, chain_error = self._decision_ledger.verify_chain()
+        ledger_ids = {
+            e["record"]["id"] for e in self._decision_ledger._entries()
+            if e.get("record", {}).get("type") == "review_decision"
+        }
+        db_rows = self._db.query_all(
+            "SELECT id FROM satsa_review_decisions")
+        db_ids = {r["id"] for r in db_rows}
+        # In the ledger, absent from the DB: deleted after recording.
+        missing_from_db = sorted(ledger_ids - db_ids)
+        # In the DB, absent from the ledger: inserted outside record()
+        # (forged, or recorded before a decision_ledger was configured).
+        missing_from_ledger = sorted(db_ids - ledger_ids)
+        return {
+            "chain_ok": chain_ok,
+            "chain_error": chain_error if not chain_ok else "",
+            "ledger_entries": len(ledger_ids),
+            "db_rows": len(db_ids),
+            "missing_from_db": missing_from_db,
+            "missing_from_ledger": missing_from_ledger,
+            "fully_consistent": (
+                chain_ok and not missing_from_db and not missing_from_ledger),
+        }
 
     def aggregate_stats(self) -> dict:
         """Aggregate review statistics across the entire database.

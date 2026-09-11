@@ -1,0 +1,33 @@
+{
+  "_meta": {
+    "purpose": "Maps a BOTS export's known attack timeline/storyline to the SAT-SA benchmark scenarios it should be paired with in workflow_augmentation, once a real BOTS export is available to fill this in.",
+    "status": "TEMPLATE -- not filled in against a real dataset",
+    "why_not_filled_in": "This development environment has no practical way to download an actual Splunk BOTS dataset export (registration-gated, multi-gigabyte, distributed as a Splunk index snapshot, not a simple file). Filling in real event counts, timelines, or storyline-specific detail here without ever having seen the actual data would itself be a fabrication -- exactly what public_benchmarks/__init__.py's honesty boundary forbids. This file instead documents the SCHEMA a real mapping should have, so a user with local BOTS access can populate it directly against the actual dataset rather than needing to design the format themselves.",
+    "how_to_fill_in": "For each BOTS dataset version you have local access to: run public_benchmarks.bots.ingest_adapter.convert_jsonl against your exported notable events, inspect the resulting alert categories/severities/timeline, and record one 'bots_source' entry below naming which real storyline segment (by your own inspection of the actual data) you are pairing with which workflow_augmentation scenario_id."
+  },
+  "supported_source_datasets": [
+    {
+      "name": "Splunk BOTS v1",
+      "public_reference": "https://github.com/splunk/botsv1 (dataset access via Splunk's BOTS program, not this repository)",
+      "notes": "Publicly known to be the smallest/oldest of the three BOTS releases; exact event counts and storyline detail intentionally not asserted here -- see _meta.why_not_filled_in."
+    },
+    {
+      "name": "Splunk BOTS v2",
+      "public_reference": "https://github.com/splunk/botsv2",
+      "notes": "Same disclosure as BOTS v1."
+    },
+    {
+      "name": "Splunk BOTS v3",
+      "public_reference": "https://github.com/splunk/botsv3",
+      "notes": "Publicly documented to include cloud (AWS) infrastructure telemetry alongside traditional host/network sources; exact event counts and storyline detail intentionally not asserted here -- see _meta.why_not_filled_in."
+    }
+  ],
+  "bots_source_to_scenario_mapping": [],
+  "mapping_entry_schema": {
+    "bots_source_dataset": "string, e.g. 'Splunk BOTS v3'",
+    "bots_storyline_segment": "string -- your own description of which real events you selected, e.g. 'notable events tagged search_name=Suspicious AWS Login Activity, timeframe <start>-<end>'",
+    "paired_scenario_id": "string -- must match a scenario_id in workflow_augmentation/policy.yaml",
+    "filled_in_by": "string -- who verified this against the real dataset",
+    "filled_in_at": "ISO-8601 timestamp"
+  }
+}

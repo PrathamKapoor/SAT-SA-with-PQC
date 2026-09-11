@@ -156,12 +156,23 @@ class SatsaService:
         return RunService(self._db).verify_run(run_id, trust_key_dir)
 
     # -------------------- human review --------------------
-    def record_review(self, **kwargs):
+    def record_review(self, *, trust_key_dir=None, **kwargs):
         """Record a human review decision on a finding. See
         ``satsa.analysis.review.ReviewService.record`` for the
-        accepted kwargs."""
-        from satsa.analysis.review import ReviewService
-        return ReviewService(self._db).record(**kwargs)
+        accepted kwargs.
+
+        When ``trust_key_dir`` is given, the decision is also
+        mirrored into the independent, hash-chained decision ledger
+        (``satsa.analysis.review.build_review_decision_ledger``) so
+        later deletion/reordering is detectable via
+        ``verify_review_ledger_integrity`` — see that module's
+        docstring. Omitting ``trust_key_dir`` (e.g. an in-memory-DB
+        smoke test with no key directory) records the decision
+        exactly as before, without the ledger mirror.
+        """
+        from satsa.analysis.review import ReviewService, build_review_decision_ledger
+        ledger = build_review_decision_ledger(trust_key_dir) if trust_key_dir else None
+        return ReviewService(self._db, decision_ledger=ledger).record(**kwargs)
 
     def review_history(self, finding_id: str):
         """The full chronological decision history for a finding."""
@@ -179,6 +190,16 @@ class SatsaService:
         if finding_row is None:
             return []
         return ReviewService(self._db).verify_binding(finding_id, dict(finding_row))
+
+    def verify_review_ledger_integrity(self, trust_key_dir) -> dict:
+        """Cross-check the entire ``satsa_review_decisions`` table
+        against the independent decision ledger — detects deletion or
+        out-of-band insertion, not just in-place content tampering
+        (which ``verify_review_binding`` already covers). See
+        ``ReviewService.verify_ledger_integrity``."""
+        from satsa.analysis.review import ReviewService, build_review_decision_ledger
+        ledger = build_review_decision_ledger(trust_key_dir)
+        return ReviewService(self._db, decision_ledger=ledger).verify_ledger_integrity()
 
 
 def _json(text, default):
