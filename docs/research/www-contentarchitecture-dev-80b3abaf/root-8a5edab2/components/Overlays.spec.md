@@ -53,3 +53,42 @@
 - Types:
   - paragraph = `Array<string | { image: { src: string; alt: string } } | { text: string; href: string }>`
   - section = `{ id; number; title; paragraphs: Paragraph[] }`
+
+## FloatingCapture (newsletter popup): added in the 2026-09-12 recon
+- **Target files:**
+  - `…/root-8a5edab2/FloatingCapture.tsx`: exports `FloatingCaptureContent` and `FloatingCapture({ content })`
+  - `…/root-8a5edab2/content/floating-capture.ts`: exports `floatingCaptureContent`
+- **Screenshot:** none saved. It is a 520px black card at the bottom-left of the desktop viewport, above everything.
+- **Interaction model:** time-driven, then click and keyboard.
+  - It appears once per browser session, **12s after load** (`delaySeconds: 12`).
+  - It is skipped if the session cookie `tca-prompt-site=1` or `tca-captured=1` exists. Set `tca-prompt-site=1; path=/; SameSite=Lax` at the moment it shows.
+  - Exit-intent is off on CA (`exitIntent: false`). Keep an `exitIntent?: boolean` prop that, when true, also opens it on `document.documentElement` `mouseleave`.
+  - Esc, or the X button, closes it. After a successful subscribe it closes itself 4s later.
+- **Exact DOM:**
+  ```
+  <div role="dialog" aria-label={title} class="fixed inset-x-16 bottom-16 z-50 lg:inset-x-auto lg:bottom-48 lg:w-520 lg:left-48">   ← side "left" (right: lg:right-48)
+    <section aria-labelledby={id} class="flex flex-col gap-16 rounded-8 p-16 lg:gap-24 lg:p-32 border border-white/20 bg-black text-white shadow-2xl">
+      <div class="grid gap-16">
+        <div class="flex flex-col gap-8">
+          <div class="flex items-start justify-between gap-16">
+            <p id={id} class="text-balance font-medium text-body-30">{title}</p>
+            CLOSE BUTTON
+          </div>
+          <p class="text-pretty text-body-10 text-ghost-grey">{text}</p>
+        </div>
+        <EmailCapture copy={content.form} buttonVariant="light" onSuccess={…close after 4000ms…} />
+  ```
+- **CLOSE BUTTON** (CA "IconButton", small, label hidden): `<button type="button" aria-label="Close">` with classes, verbatim:
+  `inline-flex w-fit min-w-0 shrink-0 cursor-pointer items-end whitespace-nowrap font-mono text-caption-10 uppercase [--odometer-progress:0] motion-safe:hover:[--odometer-progress:1] disabled:pointer-events-none disabled:opacity-50 disabled:grayscale *:data-label:inline-flex *:data-label:items-center *:data-label:justify-center *:data-label:rounded-4 *:data-icon:inline-flex *:data-icon:items-center *:data-icon:justify-center *:data-icon:rounded-4 *:data-connector:transition-colors *:data-icon:transition-colors *:data-label:transition-colors *:data-icon:size-32 *:data-label:h-18 *:data-connector:w-32 *:data-label:px-6 *:data-icon:bg-ghost-grey *:data-label:bg-ghost-grey *:data-connector:text-ghost-grey *:data-icon:text-black *:data-label:text-black [&:hover_[data-connector]]:text-white [&:hover_[data-icon]]:bg-white [&:hover_[data-label]]:bg-white flex-col-reverse -mt-4 -mr-4`
+  It has a single child, `<span data-icon="true">X</span>`.
+  - The same hover recipe (`[&:hover_[data-icon]]:bg-white`, `[&:hover_[data-label]]:bg-white`, `[&:hover_[data-connector]]:text-white`, plus the three `transition-colors`) also applies to the **LearnMore** widget and the drawer **Close** button above. The condensed DOM files omit these hover classes, so add them.
+- **Motion** (render only after mount; `AnimatePresence`-like, implemented with CSS transitions and a mounted/visible state pair):
+  - enter from `opacity:0; translateY(24px)` → `opacity:1; translateY(0)`, 500ms ease-out
+  - exit to `opacity:0; translateY(24px)`, 350ms ease-in-out, then unmount
+  - Reduced motion: 10ms.
+- **Content (CA, verbatim):**
+  - `title: "Not buying today? Stay close."`
+  - `text: "One short email when the repo changes or a discount goes live. Nothing else, unsubscribe anytime."`
+  - `delaySeconds: 12`, `side: "left"`, `exitIntent: false`, `closeLabel: "Close"`
+  - `form: { label: "Email", placeholder: "your@email.com", ctaText: "Subscribe", successMessage: "You're on the list.", errorMessage: "Enter a valid email address." }` (type `EmailCaptureCopy` from `shared/EmailCapture`)
+- **Responsive:** mobile is full-width with 16px insets at the bottom. On lg it is 520px wide, 48px from the left and bottom.

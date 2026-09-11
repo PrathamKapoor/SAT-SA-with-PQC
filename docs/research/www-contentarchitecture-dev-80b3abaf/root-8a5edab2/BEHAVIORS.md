@@ -119,3 +119,31 @@ Source of truth for exact class strings: `dom/*.html` (condensed live DOM). Toke
   - Clicking opens the **README drawer**: a right-side dialog (`lg:max-w-960`, mid-grey) over a dimmed backdrop.
   - The drawer holds a sticky TOC ("001 / WHY THIS EXISTS", "002 / WHY I KEEP SHIPPING IT", "003 / WHO AM I") with odometer hover, scrollable essay content, and an X / CLOSE button.
   - Esc or clicking the backdrop closes it.
+
+## Recon addendum (2026-09-12)
+- **Complete IDE data:** the RSC payload holds both editions' full trees (every file's one-line content), repo stats (branch, "Updated today", commits, and 52 weekly commit counts) and the CTA. See `source/ide-rsc.json`, merged with the README texts into `src/components/…/root-8a5edab2/data/ide.json`.
+- **IDE editor:**
+  - A transparent editable textarea over a highlighted `<pre>`, with a line gutter and a code minimap. Rows are `min(4, avail/lines)` tall; bars are 0.5px per char, capped at 52px.
+  - The highlight palette:
+    - md heading `#9fb6d6`
+    - list marker `white/35`
+    - inline code `#d6a878`
+    - bold `white/90`
+    - links `white/75`
+    - fences `white/40`
+    - code comments `white/30 italic`
+- **IDE search palette** (Ctrl K): an overlay inside the IDE window listing every file with its path. Ranking is prefix, then includes, then path. Arrows, Enter and Esc work.
+- **IDE terminal toggle** (Ctrl J): hides the terminal pane and its resizers. The footer "162 COMMITS" button shows the terminal and runs `git`.
+- **Resizable panes:**
+  - the explorer width (240px, max 60%)
+  - the terminal height (200px, max 70%)
+  - a corner handle for both
+- **Terminal:** full command set verified (see `source/terminal-commands.json` and `RepoTerminal.spec.md`).
+  - `plop` scaffolds a section file and opens it.
+  - `sudo rm -rf /` + `y` plays a ~7s timed "deletion" log, then shows a full-screen AMIBIOS overlay; any key reloads (`40-crash-screen-1440.jpeg`).
+- **Newsletter popup "Not buying today? Stay close."** (FloatingCapture):
+  - appears after 12s, once per session (cookie `tca-prompt-site`), bottom-left, z-50
+  - enters with opacity + 24px rise over 0.5s
+  - Esc or X closes it
+  - it uses the same EmailCapture as the footer: error "Enter a valid email address." (#dc2626), success "You're on the list."
+- **Buttons:** every CA pill button has hover colours. Light pills go to white; dark pills go to black-deep. The condensed DOM files had dropped these, so they are now baked into `CaButton`.
