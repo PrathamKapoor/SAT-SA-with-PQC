@@ -1,47 +1,69 @@
 import { Reveal } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/shared/Reveal";
+import {
+  AnalyzeIcon,
+  CorrelateIcon,
+  IngestIcon,
+  RecommendIcon,
+  ReviewIcon,
+  VerifyIcon,
+} from "@/components/sites/sat-sa-with-pqc/shared/icons";
 import type { pipelineContent } from "./content/site";
+
+const ICONS = {
+  ingest: IngestIcon,
+  analyze: AnalyzeIcon,
+  correlate: CorrelateIcon,
+  recommend: RecommendIcon,
+  review: ReviewIcon,
+  verify: VerifyIcon,
+} as const;
 
 export function PipelineSection({ content }: { content: typeof pipelineContent }) {
   return (
-    <section id="pipeline" className="border-white/10 border-t px-16 py-72 lg:px-80 lg:py-120">
-      <div className="grid grid-cols-1 gap-48 lg:grid-cols-12">
+    <section id="pipeline" className="border-white/10 border-t px-16 py-64 lg:px-80 lg:py-96">
+      <div className="mb-40 grid grid-cols-1 gap-24 lg:grid-cols-12 lg:gap-48">
         <div className="lg:col-span-5">
           <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
             {content.eyebrow}
           </Reveal>
-          <Reveal as="h2" className="mb-24 text-balance font-medium text-headline-10">
+          <Reveal as="h2" className="text-balance font-medium text-headline-10">
             {content.title}
           </Reveal>
-          <Reveal className="mb-48 text-body-20 text-ghost-grey">{content.intro}</Reveal>
-
-          <ol className="flex flex-col">
-            {content.stages.map((stage, i) => (
-              <Reveal key={stage.num} as="li" delay={i * 60} className="relative flex gap-16 pb-32 pl-4 last:pb-0">
-                {i < content.stages.length - 1 ? (
-                  <span aria-hidden="true" className="absolute top-24 bottom-0 left-15 w-1 bg-white/10" />
-                ) : null}
-                <span className="relative z-1 flex size-30 shrink-0 items-center justify-center rounded-full border border-[#34d399]/40 bg-black font-mono text-caption-10 text-[#34d399]">
-                  {stage.num}
-                </span>
-                <div className="pt-4">
-                  <h3 className="mb-4 font-mono text-caption-20 text-white uppercase">{stage.title}</h3>
-                  <p className="text-body-10 text-dark-grey">{stage.body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </ol>
         </div>
-
-        <Reveal delay={150} className="lg:col-span-7">
-          <figure className="overflow-hidden rounded-8 border border-white/10 bg-black-deep">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={content.screenshot.src} alt={content.screenshot.alt} className="w-full" loading="lazy" />
-            <figcaption className="border-white/10 border-t px-16 py-12 font-mono text-ui text-dark-grey">
-              {content.screenshot.caption}
-            </figcaption>
-          </figure>
+        <Reveal delay={80} className="lg:col-span-7">
+          <p className="text-body-20 text-ghost-grey">{content.intro}</p>
         </Reveal>
       </div>
+
+      {/* Connected step flow — a horizontal row on desktop, joined by a line; stacks on mobile. */}
+      <div className="relative mb-40 grid grid-cols-2 gap-x-16 gap-y-32 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-8">
+        <div aria-hidden="true" className="absolute inset-x-0 top-19 hidden h-px bg-white/10 lg:block" />
+        {content.stages.map((stage, i) => {
+          const Icon = ICONS[stage.icon];
+          return (
+            <Reveal key={stage.num} delay={i * 60} className="relative flex flex-col gap-12">
+              <span className="relative z-1 flex size-38 items-center justify-center rounded-full border border-[#34d399]/30 bg-[#0a0a0a] text-[#34d399]">
+                <Icon className="size-16" />
+              </span>
+              <div>
+                <p className="mb-4 font-mono text-ui text-dark-grey">{stage.num}</p>
+                <h3 className="mb-4 font-mono text-caption-10 text-white uppercase">{stage.title}</h3>
+                <p className="text-ui text-dark-grey">{stage.body}</p>
+              </div>
+            </Reveal>
+          );
+        })}
+      </div>
+
+      <Reveal delay={150}>
+        <figure className="overflow-hidden rounded-8 border border-white/10 bg-black-deep">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={content.screenshot.src} alt={content.screenshot.alt} className="w-full" loading="lazy" />
+          <figcaption className="border-white/10 border-t px-16 py-12 font-mono text-ui text-dark-grey">
+            {content.screenshot.caption}
+          </figcaption>
+        </figure>
+      </Reveal>
     </section>
   );
 }

@@ -3,7 +3,10 @@ import type { screenshotsContent } from "./content/screenshots";
 
 export function ScreenshotsSection({ content }: { content: typeof screenshotsContent }) {
   return (
-    <section id="screenshots" className="border-white/10 border-t bg-white/[0.02] px-16 py-72 lg:px-80 lg:py-120">
+    <section
+      id="screenshots"
+      className="border-white/10 border-t bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0)_60%)] px-16 py-56 lg:px-80 lg:py-80"
+    >
       <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
         {content.eyebrow}
       </Reveal>
