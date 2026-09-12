@@ -26,6 +26,7 @@ export interface GrainientProps {
   contrast?: number;
   gamma?: number;
   saturation?: number;
+  lightMode?: boolean;
   centerX?: number;
   centerY?: number;
   zoom?: number;
@@ -86,6 +87,7 @@ uniform float uGrainScale;
 uniform float uContrast;
 uniform float uGamma;
 uniform float uSaturation;
+uniform float uLightMode;
 uniform vec2 uCenter;
 uniform float uZoom;
 
@@ -135,6 +137,14 @@ void main() {
   float luma = dot(color, vec3(0.299, 0.587, 0.114));
   color = mix(vec3(luma), color, uSaturation);
 
+  if (uLightMode > 0.5) {
+    float energy = max(max(color.r, color.g), color.b);
+    vec3 hue = color / max(energy, 0.001);
+    float chroma = length(color - vec3(dot(color, vec3(0.333333))));
+    float coverage = clamp(0.12 + chroma * 1.15 + energy * 0.18, 0.0, 0.88);
+    color = mix(vec3(1.0), clamp(hue * 0.58 + color * 0.18, 0.0, 1.0), coverage);
+  }
+
   gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
 }
 `;
@@ -161,6 +171,7 @@ export const Grainient: React.FC<GrainientProps> = ({
   contrast = 1.08,
   gamma = 1.0,
   saturation = 0.72,
+  lightMode = false,
   centerX = 0.0,
   centerY = 0.0,
   zoom = 1.05,
@@ -219,6 +230,7 @@ export const Grainient: React.FC<GrainientProps> = ({
           uContrast: { value: contrast },
           uGamma: { value: gamma },
           uSaturation: { value: saturation },
+          uLightMode: { value: lightMode ? 1.0 : 0.0 },
           uCenter: { value: [centerX, centerY] },
           uZoom: { value: zoom },
         },
@@ -322,6 +334,7 @@ export const Grainient: React.FC<GrainientProps> = ({
     contrast,
     gamma,
     saturation,
+    lightMode,
     centerX,
     centerY,
     zoom,
@@ -337,6 +350,7 @@ export const Grainient: React.FC<GrainientProps> = ({
     <div
       ref={containerRef}
       aria-hidden="true"
+      data-grainient-mode={lightMode ? "light" : "dark"}
       className={className}
       style={staticFallbackStyle}
     />
