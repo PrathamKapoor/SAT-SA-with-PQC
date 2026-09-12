@@ -12,6 +12,7 @@ export const navContent = {
   homeHref: "#",
   logoLabel: "SAT-SA home",
   links: [
+    { label: "Supervisory Workbench", href: "/workbench" },
     { label: "Mission", href: "#mission" },
     { label: "See it work", href: "#see-it-work" },
     { label: "Pipeline", href: "#pipeline" },
