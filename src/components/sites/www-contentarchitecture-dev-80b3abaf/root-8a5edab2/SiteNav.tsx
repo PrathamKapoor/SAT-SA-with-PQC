@@ -93,7 +93,8 @@ export function SiteNav({ content }: { content: SiteNavContent }) {
   const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
   const menuId = useId();
 
-  // Scroll-spy: last section whose top is at or above 40% of the viewport (rAF-throttled).
+  // Scroll-spy: the linked section spanning the 40% viewport line (rAF-throttled). Sections that
+  // are not in the nav (Reviews, the banner) clear the tab, as on the live site.
   useEffect(() => {
     let frame = 0;
 
@@ -103,8 +104,8 @@ export function SiteNav({ content }: { content: SiteNavContent }) {
       let index = -1;
       links.forEach((link, i) => {
         if (!link.sectionId) return;
-        const section = document.getElementById(link.sectionId);
-        if (section && section.getBoundingClientRect().top <= limit) index = i;
+        const rect = document.getElementById(link.sectionId)?.getBoundingClientRect();
+        if (rect && rect.top <= limit && rect.bottom > limit) index = i;
       });
       const item = index >= 0 ? itemRefs.current[index] : null;
       const geometry = item ? { x: item.offsetLeft, width: item.offsetWidth } : null;
