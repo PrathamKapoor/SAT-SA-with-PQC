@@ -145,7 +145,7 @@ export function RepoTerminal(props: RepoTerminalProps) {
   };
 
   const answerPlop = (name: string) => {
-    const plan = plopPlan(name);
+    const plan = plopPlan(name, tree);
     const folderExists = getNode(tree, plan.folderPath)?.type === "folder";
     const id = pushEntry({ prompt: PLOP_PROMPT, input: name, lines: plan.lines, spinner: plan.spinner });
     playTimeline(id, plan.steps, plan.doneAt, () => {
