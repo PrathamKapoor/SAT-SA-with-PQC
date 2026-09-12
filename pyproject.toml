@@ -28,7 +28,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "httpx>=0.27"]
+dev = ["pytest>=8.0", "httpx>=0.27", "setuptools>=68"]
 
 [project.scripts]
 qsmlops = "qsmlops.cli:cli"
