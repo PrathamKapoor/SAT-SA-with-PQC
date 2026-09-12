@@ -54,12 +54,12 @@ export default function OverviewPage() {
   });
 
   return (
-    <div data-workbench-overview="true" className="workbench-overview mx-auto w-full max-w-[1440px] space-y-8">
+    <div data-workbench-overview="true" className="workbench-overview mx-auto w-full max-w-[1480px] space-y-10">
       {/* 1. Action-Led Header & Assessment Status Banner */}
-      <section className="rounded-lg border border-[#1b2b48] bg-[#0c1628] p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-400">
+      <section className="workbench-overview__hero rounded-[20px] border border-[#1b2b48] bg-[#0c1628] p-6 sm:p-8">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2.5">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
               <span className="size-2 rounded-full bg-blue-400" />
               <span>Supervisory assessment</span>
               <span>&middot;</span>
@@ -67,11 +67,11 @@ export default function OverviewPage() {
               <span>&middot;</span>
               <span className="text-slate-300">{selectedCohort}</span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-sans">
+            <h1 className="text-2xl font-bold tracking-[-0.035em] text-white sm:text-[32px] sm:leading-tight">
               Supervisory Assessment Overview
             </h1>
             {/* Status Summary Banner */}
-            <div className="flex flex-wrap items-center gap-2 pt-1 font-mono text-xs">
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-sm">
               <span className="text-slate-400 font-medium">Assessment status:</span>
               <span className="inline-flex items-center gap-1 rounded bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-amber-300 font-semibold">
                 <AlertTriangle className="size-3" />
@@ -94,11 +94,11 @@ export default function OverviewPage() {
           <div className="flex items-center gap-3 shrink-0">
             <Link
               href="/workbench/review-queue"
-              className="inline-flex items-center gap-2 rounded bg-blue-600 px-4 py-2.5 font-mono text-xs font-semibold text-white shadow-md hover:bg-blue-500 active:bg-blue-700 transition-all"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_30px_rgba(37,99,235,0.26)] transition-[background-color,box-shadow,transform] hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-[0_16px_34px_rgba(37,99,235,0.32)] active:translate-y-0"
             >
               <FileSearch className="size-4" />
               <span>Open Review Queue</span>
-              <span className="rounded bg-blue-800 px-1.5 py-0.5 text-[10px]">23 due</span>
+              <span className="rounded-md bg-blue-800 px-2 py-0.5 text-xs">23 due</span>
               <ArrowRight className="size-3.5" />
             </Link>
           </div>
@@ -106,18 +106,18 @@ export default function OverviewPage() {
       </section>
 
       {/* 2. Four KPI Cards with Clean Semantic Hierarchy */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="workbench-overview__metrics grid grid-cols-1 gap-px sm:grid-cols-2 xl:grid-cols-4">
         {/* Card 1: Assessed Entities (Neutral Slate) */}
         <Link
           href="/workbench/entities"
-          className="group rounded-lg border border-slate-800 bg-[#0a1222] p-4 transition-all hover:border-slate-700 hover:bg-[#0e192f] focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="workbench-metric group border border-slate-800 bg-[#0a1222] p-5 focus-visible:ring-2 focus-visible:ring-blue-500 sm:p-6"
         >
           <div className="flex items-center justify-between text-sm text-slate-400">
             <span className="font-semibold">Assessed entities</span>
             <Building2 className="size-4 text-slate-400" />
           </div>
           <div className="mt-2.5">
-            <div className="text-3xl font-bold font-mono text-slate-100">
+            <div className="text-4xl font-bold tracking-[-0.05em] text-slate-100">
               {filteredEntities.length}
             </div>
             <div className="mt-1 text-sm font-medium text-slate-200">
@@ -127,7 +127,7 @@ export default function OverviewPage() {
               +4 vs previous cycle
             </div>
           </div>
-          <div className="mt-3 pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-blue-400 group-hover:text-blue-300">
+          <div className="mt-4 flex items-center justify-between border-t border-slate-800/80 pt-3 text-xs font-semibold text-blue-600">
             <span>View entity roster</span>
             <span>&rarr;</span>
           </div>
@@ -136,14 +136,14 @@ export default function OverviewPage() {
         {/* Card 2: Attention Required (Amber Warning) */}
         <Link
           href="/workbench/entities?filter=attention"
-          className="group rounded-lg border border-amber-500/30 bg-[#14151e] p-4 transition-all hover:border-amber-500/60 hover:bg-[#181a26] focus:outline-none focus:ring-2 focus:ring-amber-500"
+          className="workbench-metric workbench-metric--attention group border border-amber-500/30 bg-[#14151e] p-5 focus-visible:ring-2 focus-visible:ring-amber-500 sm:p-6"
         >
           <div className="flex items-center justify-between text-sm text-amber-400">
             <span className="font-semibold">Attention required</span>
             <AlertTriangle className="size-4 text-amber-400" />
           </div>
           <div className="mt-2.5">
-            <div className="text-3xl font-bold font-mono text-amber-300">
+            <div className="text-4xl font-bold tracking-[-0.05em] text-amber-300">
               8
             </div>
             <div className="mt-1 text-sm font-medium text-amber-200">
@@ -153,7 +153,7 @@ export default function OverviewPage() {
               5 execution gaps &middot; 3 peer outliers
             </div>
           </div>
-          <div className="mt-3 pt-2 border-t border-amber-500/20 flex items-center justify-between text-[11px] font-mono text-amber-300 group-hover:underline">
+          <div className="mt-4 flex items-center justify-between border-t border-amber-500/20 pt-3 text-xs font-semibold text-amber-700">
             <span>Inspect flagged CSEs</span>
             <span>&rarr;</span>
           </div>
@@ -162,14 +162,14 @@ export default function OverviewPage() {
         {/* Card 3: Review Samples Due (Blue Action) */}
         <Link
           href="/workbench/review-queue"
-          className="group rounded-lg border border-blue-500/30 bg-[#0c172a] p-4 transition-all hover:border-blue-500/60 hover:bg-[#101f38] focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="workbench-metric workbench-metric--review group border border-blue-500/30 bg-[#0c172a] p-5 focus-visible:ring-2 focus-visible:ring-blue-500 sm:p-6"
         >
           <div className="flex items-center justify-between text-sm text-blue-300">
             <span className="font-semibold">Review samples due</span>
             <FileSearch className="size-4 text-blue-400" />
           </div>
           <div className="mt-2.5">
-            <div className="text-3xl font-bold font-mono text-blue-300">
+            <div className="text-4xl font-bold tracking-[-0.05em] text-blue-300">
               23
             </div>
             <div className="mt-1 text-sm font-medium text-blue-200">
@@ -179,7 +179,7 @@ export default function OverviewPage() {
               Ranked by priority reason & evidence count
             </div>
           </div>
-          <div className="mt-3 pt-2 border-t border-blue-500/20 flex items-center justify-between text-[11px] font-mono text-blue-400 group-hover:underline">
+          <div className="mt-4 flex items-center justify-between border-t border-blue-500/20 pt-3 text-xs font-semibold text-blue-700">
             <span>Open review queue</span>
             <span>&rarr;</span>
           </div>
@@ -188,14 +188,14 @@ export default function OverviewPage() {
         {/* Card 4: Data-Quality Gaps (Red Critical Issue) */}
         <Link
           href="/workbench/submissions"
-          className="group rounded-lg border border-red-500/30 bg-[#191118] p-4 transition-all hover:border-red-500/60 hover:bg-[#20141f] focus:outline-none focus:ring-2 focus:ring-red-500"
+          className="workbench-metric workbench-metric--data group border border-red-500/30 bg-[#191118] p-5 focus-visible:ring-2 focus-visible:ring-red-500 sm:p-6"
         >
           <div className="flex items-center justify-between text-sm text-red-300">
             <span className="font-semibold">Data-quality gaps</span>
             <ShieldAlert className="size-4 text-red-400" />
           </div>
           <div className="mt-2.5">
-            <div className="text-3xl font-bold font-mono text-red-300">
+            <div className="text-4xl font-bold tracking-[-0.05em] text-red-300">
               3
             </div>
             <div className="mt-1 text-sm font-medium text-red-200">
@@ -205,7 +205,7 @@ export default function OverviewPage() {
               1 quarantined file &middot; 2 stale inventories
             </div>
           </div>
-          <div className="mt-3 pt-2 border-t border-red-500/20 flex items-center justify-between text-[11px] font-mono text-red-400 group-hover:underline">
+          <div className="mt-4 flex items-center justify-between border-t border-red-500/20 pt-3 text-xs font-semibold text-red-700">
             <span>Inspect submission gaps</span>
             <span>&rarr;</span>
           </div>
@@ -213,15 +213,15 @@ export default function OverviewPage() {
       </section>
 
       {/* 3. Entity Priority Ranking & Capability Overview */}
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
+      <div className="workbench-overview__split grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
         {/* Left: Entity Priority Ranking (Action List, 6 cols) */}
-        <section className="space-y-4 rounded-lg border border-slate-800 bg-[#0c1424] p-5 xl:col-span-7">
+        <section className="workbench-panel space-y-5 rounded-[20px] border border-slate-800 bg-[#0c1424] p-6 sm:p-7 xl:col-span-7">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-white">
                 Entity Priority Ranking
               </h2>
-              <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+              <p className="mt-1 text-xs text-slate-500">
                 Prioritized supervisory action list &middot; Cycle {selectedPeriod}
               </p>
             </div>
@@ -243,23 +243,23 @@ export default function OverviewPage() {
               return (
                 <div
                   key={entity.slug}
-                  className="py-3.5 flex flex-col gap-3 transition-colors hover:bg-slate-800/30 px-2 rounded sm:flex-row sm:items-center sm:justify-between"
+                  className="workbench-entity-row flex flex-col gap-4 rounded-xl px-3 py-5 transition-colors hover:bg-blue-50/70 sm:flex-row sm:items-center sm:justify-between"
                 >
                   {/* Entity Metadata & Name */}
                   <div className="flex items-start gap-3 min-w-0">
-                    <span className="w-6 font-mono text-xs font-bold text-amber-400 pt-0.5 shrink-0">
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-slate-100 font-mono text-xs font-bold text-slate-500">
                       {rankStr}
                     </span>
                     <div className="min-w-0 space-y-1">
                       <Link
                         href={`/workbench/entities/${entity.slug}`}
-                        className="flex items-center gap-1.5 text-base font-semibold text-slate-100 transition-colors hover:text-blue-400"
+                        className="flex items-center gap-1.5 text-[17px] font-semibold tracking-[-0.015em] text-slate-100 transition-colors hover:text-blue-600"
                       >
                         <span className="truncate">{entity.name}</span>
                         <ArrowUpRight className="size-3 text-slate-500 shrink-0" />
                       </Link>
 
-                      <div className="text-[11px] font-mono text-slate-400">
+                      <div className="text-xs text-slate-500">
                         {entity.sector} &middot; <span className="text-slate-500">{entity.cohort}</span>
                       </div>
 
@@ -286,7 +286,7 @@ export default function OverviewPage() {
                       </div>
 
                       {/* Trend & Corroborated Evidence Counts */}
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] font-mono text-slate-400">
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
                         <span className="flex items-center gap-1">
                           {entity.trend === "deteriorating" && (
                             <>
@@ -319,7 +319,7 @@ export default function OverviewPage() {
                   <div className="self-end sm:self-center shrink-0">
                     <Link
                       href={`/workbench/entities/${entity.slug}`}
-                      className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-800/80 px-3 py-1.5 font-mono text-xs font-medium text-slate-200 hover:border-blue-500 hover:bg-blue-600/20 hover:text-blue-300 transition-all"
+                      className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition-[border-color,background-color,color] hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
                     >
                       <span>Review entity</span>
                       <ArrowRight className="size-3" />
@@ -332,17 +332,17 @@ export default function OverviewPage() {
         </section>
 
         {/* Right: Capability Overview (Option B: Clean Ranked/Bar Summary) */}
-        <section className="space-y-4 rounded-lg border border-slate-800 bg-[#0c1424] p-5 xl:col-span-5">
+        <section className="workbench-panel space-y-5 rounded-[20px] border border-slate-800 bg-[#0c1424] p-6 sm:p-7 xl:col-span-5">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-white">
                 Capability overview
               </h2>
-              <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+              <p className="mt-1 text-xs text-slate-500">
                 Cross-entity performance across 8 NCIIPC statutory dimensions
               </p>
             </div>
-            <span className="rounded bg-blue-500/10 border border-blue-500/30 px-2 py-0.5 font-mono text-[10px] text-blue-300 uppercase">
+            <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">
               Ranked Summary
             </span>
           </div>
@@ -352,22 +352,22 @@ export default function OverviewPage() {
       </div>
 
       {/* 4. WHY ATTENTION IS NEEDED (Evidence-Backed Supervisory Explanation) */}
-      <section className="rounded-lg border border-amber-500/30 bg-[#0f1726] p-5 space-y-4">
+      <section className="workbench-panel workbench-findings space-y-6 rounded-[20px] border border-amber-500/30 bg-[#0f1726] p-6 sm:p-7">
         <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-amber-400" />
-            <h2 className="text-xl font-semibold text-white">
+            <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-white">
               Why attention is needed
             </h2>
           </div>
-          <span className="font-mono text-xs text-amber-300">
+          <span className="text-xs font-semibold text-amber-700">
             Top corroborated supervisory signals
           </span>
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Finding 1: Execution Gap */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/90 p-4 flex flex-col justify-between space-y-3">
+          <div className="workbench-finding workbench-finding--attention flex flex-col justify-between space-y-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-6">
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <StatusBadge variant="attention" label="EXECUTION GAP" size="sm" />
@@ -379,7 +379,7 @@ export default function OverviewPage() {
 
               {/* Observed Record Facts */}
               <div className="space-y-1 pt-1">
-                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400 block">
+                <span className="block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Evidence
                 </span>
                 <ul className="list-inside list-disc space-y-1 text-sm leading-6 text-slate-300">
@@ -391,7 +391,7 @@ export default function OverviewPage() {
 
               {/* Supervisory Inference */}
               <div className="pt-1">
-                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-amber-400 block">
+                <span className="block font-mono text-xs font-semibold uppercase tracking-wider text-amber-600">
                   Why it matters
                 </span>
                 <p className="mt-1 text-sm leading-6 text-slate-300">
@@ -413,7 +413,7 @@ export default function OverviewPage() {
           </div>
 
           {/* Finding 2: Missing Evidence (formerly Negative Space) */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/90 p-4 flex flex-col justify-between space-y-3">
+          <div className="workbench-finding workbench-finding--critical flex flex-col justify-between space-y-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-6">
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <StatusBadge variant="confirmed_concern" label="MISSING EVIDENCE" size="sm" />
@@ -425,7 +425,7 @@ export default function OverviewPage() {
 
               {/* Observed Record Facts */}
               <div className="space-y-1 pt-1">
-                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400 block">
+                <span className="block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Evidence
                 </span>
                 <ul className="list-inside list-disc space-y-1 text-sm leading-6 text-slate-300">
@@ -437,7 +437,7 @@ export default function OverviewPage() {
 
               {/* Supervisory Inference */}
               <div className="pt-1">
-                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-red-400 block">
+                <span className="block font-mono text-xs font-semibold uppercase tracking-wider text-red-600">
                   Why it matters
                 </span>
                 <p className="mt-1 text-sm leading-6 text-slate-300">
@@ -459,7 +459,7 @@ export default function OverviewPage() {
           </div>
 
           {/* Finding 3: Peer Deviation (Explained clearly) */}
-          <div className="rounded-lg border border-slate-800 bg-slate-900/90 p-4 flex flex-col justify-between space-y-3">
+          <div className="workbench-finding workbench-finding--peer flex flex-col justify-between space-y-4 rounded-2xl border border-slate-800 bg-slate-900/90 p-5 sm:p-6">
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <StatusBadge variant="attention" label="PEER DEVIATION" size="sm" />
@@ -471,7 +471,7 @@ export default function OverviewPage() {
 
               {/* Observed Record Facts */}
               <div className="space-y-1 pt-1">
-                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400 block">
+                <span className="block font-mono text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Evidence
                 </span>
                 <ul className="list-inside list-disc space-y-1 text-sm leading-6 text-slate-300">
@@ -483,7 +483,7 @@ export default function OverviewPage() {
 
               {/* Supervisory Inference */}
               <div className="pt-1">
-                <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-amber-400 block">
+                <span className="block font-mono text-xs font-semibold uppercase tracking-wider text-amber-600">
                   Why it matters
                 </span>
                 <p className="mt-1 text-sm leading-6 text-slate-300">
@@ -507,16 +507,16 @@ export default function OverviewPage() {
       </section>
 
       {/* 5. DATA AND EVIDENCE HEALTH (Dedicated Trust & Provenance Section) */}
-      <section className="rounded-lg border border-slate-800 bg-[#0c1424] p-5 space-y-4">
+      <section className="workbench-panel workbench-evidence space-y-6 rounded-[20px] border border-slate-800 bg-[#0c1424] p-6 sm:p-7">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
             <div className="flex items-center gap-2">
               <Database className="size-4 text-blue-400" />
-              <h2 className="text-xl font-semibold text-white">
+              <h2 className="text-[22px] font-semibold tracking-[-0.025em] text-white">
                 Data & evidence health
               </h2>
             </div>
-            <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+            <p className="mt-1 text-xs text-slate-500">
               Evidence pipeline integrity &middot; Air-gapped ingestion gate
             </p>
           </div>
@@ -526,52 +526,52 @@ export default function OverviewPage() {
         </div>
 
         {/* Health Metrics Strip */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded border border-slate-800/80 bg-slate-900/50 p-3">
-            <span className="text-slate-400 font-mono text-[10px] uppercase block font-medium">
+        <div className="workbench-health-grid grid grid-cols-1 gap-px overflow-hidden rounded-2xl sm:grid-cols-2 lg:grid-cols-4">
+          <div className="workbench-health-card bg-slate-900/50 p-5">
+            <span className="block text-xs font-semibold text-slate-500">
               Unlinked Feeds
             </span>
-            <div className="mt-1 font-mono text-xl font-bold text-amber-300">
+            <div className="mt-2 font-mono text-3xl font-bold tracking-tight text-amber-600">
               14
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="mt-1 text-xs leading-5 text-slate-500">
               Target hosts unmapped to known IP subnets
             </p>
           </div>
 
-          <div className="rounded border border-slate-800/80 bg-slate-900/50 p-3">
-            <span className="text-slate-400 font-mono text-[10px] uppercase block font-medium">
+          <div className="workbench-health-card bg-slate-900/50 p-5">
+            <span className="block text-xs font-semibold text-slate-500">
               Quarantined Files
             </span>
-            <div className="mt-1 font-mono text-xl font-bold text-red-400">
+            <div className="mt-2 font-mono text-3xl font-bold tracking-tight text-red-600">
               1
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="mt-1 text-xs leading-5 text-slate-500">
               CSE-NEG syslog truncated at day 12
             </p>
           </div>
 
-          <div className="rounded border border-slate-800/80 bg-slate-900/50 p-3">
-            <span className="text-slate-400 font-mono text-[10px] uppercase block font-medium">
+          <div className="workbench-health-card bg-slate-900/50 p-5">
+            <span className="block text-xs font-semibold text-slate-500">
               Stale Inventories
             </span>
-            <div className="mt-1 font-mono text-xl font-bold text-amber-300">
+            <div className="mt-2 font-mono text-3xl font-bold tracking-tight text-amber-600">
               2
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="mt-1 text-xs leading-5 text-slate-500">
               CSE-NEG (&gt;114d), CSE-018 (&gt;96d)
             </p>
           </div>
 
-          <div className="rounded border border-slate-800/80 bg-slate-900/50 p-3">
-            <span className="text-slate-400 font-mono text-[10px] uppercase block font-medium">
+          <div className="workbench-health-card bg-slate-900/50 p-5">
+            <span className="block text-xs font-semibold text-slate-500">
               Verified Submissions
             </span>
-            <div className="mt-1 font-mono text-xl font-bold text-emerald-400 flex items-center gap-1.5">
+            <div className="mt-2 flex items-center gap-1.5 font-mono text-3xl font-bold tracking-tight text-emerald-600">
               <CheckCircle2 className="size-4" />
               <span>41 / 42</span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+            <p className="mt-1 text-xs leading-5 text-slate-500">
               1 submission requires signature verification
             </p>
           </div>
@@ -610,7 +610,7 @@ export default function OverviewPage() {
           <div className="relative w-full max-w-lg rounded-lg border border-slate-700 bg-[#0c1628] p-6 shadow-2xl space-y-4">
             <div className="flex items-start justify-between border-b border-slate-800 pb-3">
               <div>
-                <span className="text-[10px] font-mono uppercase tracking-wider text-blue-400">
+                <span className="font-mono text-xs uppercase tracking-wider text-blue-500">
                   Transparent Risk Composition
                 </span>
                 <h3 className="text-base font-bold text-white">
@@ -640,7 +640,7 @@ export default function OverviewPage() {
                   <span>1. Signal Corroboration Worker</span>
                   <span className="text-amber-400">38.0 / 40 pts</span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-sans">
+                <p className="font-sans text-xs text-slate-500">
                   4 corroborating signals detected across log ingestion, triage records, and asset lists.
                 </p>
               </div>
@@ -650,7 +650,7 @@ export default function OverviewPage() {
                   <span>2. Execution Gap Analysis</span>
                   <span className="text-amber-400">24.4 / 30 pts</span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-sans">
+                <p className="font-sans text-xs text-slate-500">
                   18 critical alerts closed under 4 minutes with zero escalation records attached.
                 </p>
               </div>
@@ -660,7 +660,7 @@ export default function OverviewPage() {
                   <span>3. Peer Outlier Deviation</span>
                   <span className="text-amber-400">16.0 / 30 pts</span>
                 </div>
-                <p className="text-[11px] text-slate-400 font-sans">
+                <p className="font-sans text-xs text-slate-500">
                   Closure velocity 4.8× faster than peer cohort median (z = 3.82).
                 </p>
               </div>
