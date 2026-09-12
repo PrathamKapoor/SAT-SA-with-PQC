@@ -34,6 +34,7 @@ export const repoContent: RepoContent = {
     showTerminal: "Show terminal",
     search: "Search files",
     searchPlaceholder: "Search project files...",
+    searchInput: "Search project files",
     resizeExplorer: "Resize file explorer",
     resizeTerminal: "Resize terminal",
     resizeBoth: "Resize file explorer and terminal",

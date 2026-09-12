@@ -49,6 +49,8 @@ export interface RepoContent {
     showTerminal: string;
     search: string;
     searchPlaceholder: string;
+    /** aria-label of the palette input (CA: "Search project files"). */
+    searchInput: string;
     resizeExplorer: string;
     resizeTerminal: string;
     resizeBoth: string;
@@ -466,7 +468,7 @@ export function RepoSection({ content }: { content: RepoContent }) {
                 tree={tree}
                 rootName={tree.name}
                 placeholder={labels.searchPlaceholder}
-                label={labels.search}
+                label={labels.searchInput}
                 onSelect={onSearchSelect}
                 onClose={closeSearch}
               />
