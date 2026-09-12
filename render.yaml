@@ -1,0 +1,22 @@
+services:
+  # Public presentation environment using committed synthetic demo data only.
+  # This is not the air-gapped NCIIPC deployment configuration.
+  - type: web
+    name: SAT-SA-with-PQC
+    runtime: docker
+    region: singapore
+    plan: free
+    branch: main
+    autoDeployTrigger: checksPass
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    # Render supplies PORT at runtime. Demo state intentionally lives under
+    # /tmp, so it resets safely when the instance restarts or redeploys.
+    dockerCommand: >-
+      sh -c 'exec python scripts/serve_ui.py
+      --db /tmp/satsa-demo/satsa.db
+      --trust-key-dir /tmp/satsa-demo/keys
+      --host 0.0.0.0
+      --port "${PORT:-10000}"'
+    healthCheckPath: /
+    numInstances: 1
