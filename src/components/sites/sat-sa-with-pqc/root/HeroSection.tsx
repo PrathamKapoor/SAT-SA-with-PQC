@@ -1,6 +1,8 @@
 import { CaButton } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/shared/CaButton";
 import { Reveal } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/shared/Reveal";
 import { EntityRiskChart } from "@/components/sites/sat-sa-with-pqc/shared/EntityRiskChart";
+import MaskedHeading from "@/components/reactbits/MaskedHeading";
+import Prism from "@/components/reactbits/Prism";
 import type { heroContent } from "./content/site";
 import { entityRiskContent } from "./content/demo";
 
@@ -21,17 +23,57 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
       <Reveal as="p" className="mb-20 font-mono text-caption-20 uppercase text-[#34d399]">
         {content.eyebrow}
       </Reveal>
-      <h1 className="mb-32 max-w-1000 whitespace-pre-line text-balance font-medium text-headline-20">
-        <Reveal as="span" className="inline-block">
-          {content.title}
-        </Reveal>
-      </h1>
+
+      {/* Background Prism behind heading and MaskedHeading component from React Bits */}
+      <div className="relative mb-32 max-w-1000 min-h-[140px] sm:min-h-[180px]">
+        {/* Prism WebGL canvas */}
+        <div className="pointer-events-none absolute -inset-x-12 -inset-y-12 z-0 h-[280px] sm:h-[320px] opacity-40 overflow-hidden rounded-2xl">
+          <Prism
+            animationType="rotate"
+            timeScale={0.4}
+            height={3.5}
+            baseWidth={5.5}
+            scale={3.6}
+            hueShift={0.15}
+            colorFrequency={1.2}
+            noise={0.3}
+            glow={1.1}
+            bloom={1.2}
+            transparent={true}
+          />
+        </div>
+
+        {/* MaskedHeading component */}
+        <div className="relative z-10">
+          <MaskedHeading
+            text="Periodic SOC assessments become supervisory intelligence."
+            tag="h1"
+            src="/sites/sat-sa-with-pqc/root/screenshots/pipeline-diagram.jpeg"
+            fillScale={1.3}
+            parallax={26}
+            drift={16}
+            reveal="rise"
+            align="left"
+            weight={700}
+            textScale={0.062}
+            className="text-white font-medium"
+          />
+        </div>
+      </div>
+
       <div className="mb-40 max-w-600 text-body-20 text-ghost-grey">
         {content.body.map((paragraph, i) => (
           <Reveal key={i}>{paragraph}</Reveal>
         ))}
       </div>
       <Reveal rise delay={200} className="mb-56 flex flex-wrap items-center gap-16">
+        <a
+          href="/workbench"
+          className="inline-flex items-center gap-8 rounded-8 bg-[#34d399] px-24 py-12 font-mono text-caption-20 font-semibold uppercase tracking-wider text-black transition-all hover:bg-[#34d399]/90 shadow-[0_0_20px_rgba(52,211,153,0.3)]"
+        >
+          <span>Launch Supervisory Workbench</span>
+          <span>&rarr;</span>
+        </a>
         <CaButton
           leftText={content.cta.leftText}
           rightText={content.cta.rightText}
