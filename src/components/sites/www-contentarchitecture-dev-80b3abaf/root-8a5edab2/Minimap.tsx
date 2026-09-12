@@ -13,24 +13,56 @@ interface MinimapProps {
 }
 
 /** Cap on text line bars painted per section (keeps the snapshot cheap on long pages). */
-const MAX_TEXT_RECTS_PER_SECTION = 160;
-/** Heading lines paint near-opaque; other text is a faint texture. */
+const MAX_TEXT_RECTS_PER_SECTION = 400;
+/** Heading lines paint brighter; body text is a softer texture (sampled from the live canvas). */
 const HEADING_SELECTOR = "h1, h2, h3, h4";
+const TEXT_ALPHA = 0.45;
+const HEADING_ALPHA = 0.7;
+/** Media (screenshots, ASCII art, avatars) and filled panels are faint white boxes. */
+const MEDIA_ALPHA = 0.16;
+const PANEL_ALPHA = 0.07;
+
+interface Clip {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/** Intersection of every clipping ancestor (scroll areas, collapsed panels) below `stop`, or null. */
+function clipRectOf(el: Element, stop: Element): Clip | null {
+  let clip: Clip | null = null;
+  for (let node = el.parentElement; node && node !== stop; node = node.parentElement) {
+    const { overflowX, overflowY } = getComputedStyle(node);
+    if (overflowX === "visible" && overflowY === "visible") continue;
+    const r = node.getBoundingClientRect();
+    clip = clip
+      ? {
+          left: Math.max(clip.left, r.left),
+          top: Math.max(clip.top, r.top),
+          right: Math.min(clip.right, r.right),
+          bottom: Math.min(clip.bottom, r.bottom),
+        }
+      : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  }
+  return clip;
+}
 
 function isTransparent(color: string) {
   return color === "transparent" || /^rgba\(.*,\s*0\)$/.test(color) || /\/\s*0\)$/.test(color);
 }
 
 /**
- * Paints a scaled wireframe snapshot of the page into `canvas` (`width` CSS px wide): the body
- * ground, each `main > *` section in its background colour, text lines as 1px bars in their text
- * colour, and whatever follows `<main>` (footer). Returns the page→minimap scale.
+ * Paints the live site's minimap wireframe into `canvas`: a transparent layer of translucent white
+ * shapes (text lines as bars, media as boxes, filled panels as faint boxes) at the box-to-viewport
+ * scale (54/900 = 0.06 on desktop), so the blurred `bg-black/50` box shows through. Returns the
+ * page→minimap scale.
  */
-function paintPage(canvas: HTMLCanvasElement, width: number) {
+function paintPage(canvas: HTMLCanvasElement, width: number, boxHeight: number) {
   const docEl = document.documentElement;
-  const pageWidth = docEl.scrollWidth || window.innerWidth;
+  const pageWidth = docEl.clientWidth || window.innerWidth;
   const pageHeight = docEl.scrollHeight;
-  const scale = width / pageWidth;
+  const scale = boxHeight / window.innerHeight;
   const height = Math.max(1, Math.ceil(pageHeight * scale));
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
@@ -43,69 +75,75 @@ function paintPage(canvas: HTMLCanvasElement, width: number) {
   if (!ctx) return scale;
   ctx.setTransform(dpr * scale, 0, 0, dpr * scale, 0, 0);
   ctx.clearRect(0, 0, pageWidth, pageHeight);
-  ctx.fillStyle = getComputedStyle(document.body).backgroundColor;
-  ctx.fillRect(0, 0, pageWidth, pageHeight);
+  ctx.fillStyle = "#fff";
 
-  const main = document.querySelector("main");
-  if (!main) return scale;
   const scrollY = window.scrollY;
-  const mainRect = main.getBoundingClientRect();
-  const mainStyle = getComputedStyle(main);
-  if (!isTransparent(mainStyle.backgroundColor)) {
-    ctx.fillStyle = mainStyle.backgroundColor;
-    ctx.fillRect(mainRect.left, mainRect.top + scrollY, mainRect.width, mainRect.height);
-  }
-
-  const barHeight = 1 / scale;
+  const box = (rect: DOMRect, alpha: number) => {
+    ctx.globalAlpha = alpha;
+    ctx.fillRect(rect.left, rect.top + scrollY, rect.width, rect.height);
+  };
   const range = document.createRange();
+  const roots = [document.querySelector("main"), document.querySelector("footer")].filter(
+    (el): el is HTMLElement => el !== null,
+  );
 
-  for (const child of Array.from(main.children)) {
-    if (!(child instanceof HTMLElement)) continue;
-    const style = getComputedStyle(child);
-    if (style.position === "fixed" || style.display === "none") continue;
-    const rect = child.getBoundingClientRect();
-    if (rect.width <= 0 || rect.height <= 0) continue;
-    if (!isTransparent(style.backgroundColor)) {
-      ctx.fillStyle = style.backgroundColor;
-      ctx.fillRect(rect.left, rect.top + scrollY, rect.width, rect.height);
-    }
+  for (const root of roots) {
+    for (const section of Array.from(root.children)) {
+      if (!(section instanceof HTMLElement)) continue;
+      const sectionStyle = getComputedStyle(section);
+      if (sectionStyle.position === "fixed" || sectionStyle.display === "none") continue;
 
-    // Text lines: walk text nodes only (element boxes would add spurious bars).
-    const walker = document.createTreeWalker(child, NodeFilter.SHOW_TEXT);
-    let painted = 0;
-    for (let node = walker.nextNode(); node && painted < MAX_TEXT_RECTS_PER_SECTION; node = walker.nextNode()) {
-      const parent = node.parentElement;
-      if (!parent || !node.textContent?.trim()) continue;
-      const textStyle = getComputedStyle(parent);
-      if (textStyle.visibility === "hidden" || parent.closest("[aria-hidden='true']")) continue;
-      ctx.globalAlpha = parent.closest(HEADING_SELECTOR) ? 0.9 : 0.4;
-      ctx.fillStyle = textStyle.color;
-      range.selectNodeContents(node);
-      for (const line of Array.from(range.getClientRects())) {
-        if (line.width < 2 || line.height < 2) continue;
-        ctx.fillRect(line.left, line.top + scrollY + line.height / 2, line.width, barHeight);
-        if (++painted >= MAX_TEXT_RECTS_PER_SECTION) break;
+      // Media and filled panels (skip the section itself and full-bleed wrappers).
+      for (const el of Array.from(section.querySelectorAll<HTMLElement>("img, canvas, svg, video, [class*='bg-']"))) {
+        const rect = el.getBoundingClientRect();
+        if (rect.width < 8 || rect.height < 8) continue;
+        const tag = el.tagName;
+        // WebGL scenes (spiral, glyph fields) and their wrapper panels are left out, as live.
+        const sceneWidth = pageWidth * 0.46;
+        const scene =
+          tag === "CANVAS"
+            ? rect.width > sceneWidth
+            : Array.from(el.querySelectorAll("canvas")).some((c) => c.getBoundingClientRect().width > sceneWidth);
+        if (scene) continue;
+        if (tag === "IMG" || tag === "CANVAS" || tag === "VIDEO") {
+          if (getComputedStyle(el).opacity === "0") continue;
+          box(rect, MEDIA_ALPHA);
+        } else if (tag !== "svg" && rect.width < pageWidth * 0.95) {
+          const style = getComputedStyle(el);
+          if (!isTransparent(style.backgroundColor) && style.position !== "fixed") box(rect, PANEL_ALPHA);
+        }
+      }
+
+      // Text lines as bars spanning the line box's middle 60%.
+      const walker = document.createTreeWalker(section, NodeFilter.SHOW_TEXT);
+      let painted = 0;
+      for (let node = walker.nextNode(); node && painted < MAX_TEXT_RECTS_PER_SECTION; node = walker.nextNode()) {
+        const parent = node.parentElement;
+        if (!parent || !node.textContent?.trim()) continue;
+        const textStyle = getComputedStyle(parent);
+        if (textStyle.visibility === "hidden" || parent.closest(".sr-only, [aria-hidden='true']")) continue;
+        ctx.globalAlpha = parent.closest(HEADING_SELECTOR) ? HEADING_ALPHA : TEXT_ALPHA;
+        const clip = clipRectOf(parent, section);
+        range.selectNodeContents(node);
+        for (const line of Array.from(range.getClientRects())) {
+          if (line.width < 2 || line.height < 2) continue;
+          let { left, top } = line;
+          let right = line.right;
+          let bottom = line.bottom;
+          if (clip) {
+            left = Math.max(left, clip.left);
+            right = Math.min(right, clip.right);
+            top = Math.max(top, clip.top);
+            bottom = Math.min(bottom, clip.bottom);
+            if (right - left < 1 || bottom - top < line.height * 0.5) continue;
+          }
+          ctx.fillRect(left, top + scrollY + (bottom - top) * 0.2, right - left, (bottom - top) * 0.6);
+          if (++painted >= MAX_TEXT_RECTS_PER_SECTION) break;
+        }
       }
     }
-    ctx.globalAlpha = 1;
   }
-
-  // Footer (and anything else after <main>): stacked below main in its own ground colour.
-  let y = mainRect.bottom + scrollY;
-  let sibling = main.nextElementSibling;
-  while (sibling instanceof HTMLElement) {
-    const own = getComputedStyle(sibling).backgroundColor;
-    const first = sibling.firstElementChild;
-    const color = !isTransparent(own) ? own : first ? getComputedStyle(first).backgroundColor : own;
-    const h = sibling.offsetHeight;
-    if (!isTransparent(color) && h > 0) {
-      ctx.fillStyle = color;
-      ctx.fillRect(0, y, pageWidth, h);
-    }
-    y += h;
-    sibling = sibling.nextElementSibling;
-  }
-
+  ctx.globalAlpha = 1;
   return scale;
 }
 
@@ -141,7 +179,7 @@ export function Minimap({ label, tooltip = "Inspect ↗" }: MinimapProps) {
     const redraw = () => {
       if (cancelled) return;
       const width = box.clientWidth || 96;
-      scale = paintPage(baseCanvas, width);
+      scale = paintPage(baseCanvas, width, box.clientHeight || 54);
       scanCanvas.width = baseCanvas.width;
       scanCanvas.height = baseCanvas.height;
       scanCanvas.style.width = baseCanvas.style.width;
