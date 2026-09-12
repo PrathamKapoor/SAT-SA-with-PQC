@@ -48,7 +48,7 @@ export default function FindingsListPage() {
           >
             <option value="All">All Finding Families</option>
             <option value="execution_gap">Execution Gap</option>
-            <option value="negative_space">Negative Space</option>
+            <option value="negative_space">Missing Evidence (Negative Space)</option>
             <option value="peer_deviation">Peer Deviation</option>
             <option value="anomaly">Anomaly</option>
           </select>
