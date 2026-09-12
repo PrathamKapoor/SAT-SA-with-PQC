@@ -1,5 +1,43 @@
 # SAT-SA — Final Readiness Audit
 
+> **Current-state addendum (P32, September 2026).** The scorecard and
+> checklist below are a **dated historical record** of the session that
+> ended around phase P24 — they deliberately reflect that session's
+> evidence, not the current release state. Since it was written, the
+> release-engineering gaps it lists have been closed on the evidence
+> below; everything under "still missing external validation" remains
+> unclaimed. The four categories, kept separate per this project's
+> claims discipline:
+>
+> **(a) Internally verified release engineering** — GitHub Actions
+> release gate fully green at commit `a72f079` (P31, run
+> [34667939977](https://github.com/PrathamKapoor/SAT-SA-with-PQC/actions/runs/34667939977)):
+> Python 3.11 full suite, Python 3.13 full suite (the setuptools gap
+> was root-caused locally and fixed in `a72f079`), package/import
+> integrity, and a CLI smoke + demo, all on GitHub-hosted Ubuntu.
+> Details and evidence pointers: `docs/CLAIMS.md`.
+>
+> **(b) Offline-install evidence** — `pip install -r requirements.txt`
+> is the documented offline path; requirements↔pyproject manifest
+> equality is locked by `tests/test_phase87_dependency_manifest_consistency.py`;
+> the P29 wheelhouse exercise (commit `6cdbe97`) was performed on the
+> development host only — **not** on an independent air-gapped target
+> machine.
+>
+> **(c) Docker CI evidence** — image build plus a `sat-sa ... doctor`
+> smoke run verified on GitHub-hosted Ubuntu (the `docker-build-smoke`
+> job in the same green run). This proves the image builds and the
+> installed CLI diagnoses; it does **not** prove a completed target
+> deployment.
+>
+> **(d) External validation still missing:** no validation against real
+> BOTS/CIC-IDS2017 source files, real CSE/SOC/NCIIPC submissions, real
+> expert/manual review, or any operational NCIIPC environment has been
+> performed. SAT-SA must not be described as "fully production
+> deployed," "NCIIPC-approved," or "validated on real SOC operations."
+>
+> What follows is the original, unmodified P18–P24-era audit.
+
 Written at the end of a single extended session (phases P18–P24
 partial, P23) that started from a baseline of 887 passing tests and
 ended at 926. This audit is not independent — the same session that

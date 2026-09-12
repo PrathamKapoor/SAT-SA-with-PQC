@@ -1,15 +1,15 @@
 # SAT-SA — single-process container: the sat-sa CLI + the FastAPI/
 # Jinja2 UI, both backed by a SQLite file mounted as a volume.
 #
-# HONESTY NOTE (do not remove): this Dockerfile was authored but has
-# NOT been built or run in the session that wrote it — no Docker
-# daemon was available in that environment. It is consistent with
-# requirements.txt / pyproject.toml and the verified-working
-# scripts/serve_ui.py launcher, but "docker build" / "docker run"
-# have not actually been exercised. Build and test this image before
-# relying on it; do not treat its presence as proof it works. See
-# docs/deployment.md for the native (non-container) path, which HAS
-# been run and verified in-session.
+# Verification status (reconciled P32, September 2026): this image's
+# `docker build` and a `sat-sa ... doctor` smoke run were verified on
+# a GitHub-hosted Ubuntu runner by the repository's CI
+# (`docker-build-smoke` job in .github/workflows/ci.yml; latest green
+# run 34667939977 at commit a72f079). This is a build/smoke proof on
+# hosted CI infrastructure — NOT a completed deployment to a target
+# NCIIPC air-gapped host, which has not been performed. See
+# docs/deployment.md for the native (non-container) path and
+# docs/CLAIMS.md for the exact claims boundary.
 
 FROM python:3.13-slim AS base
 

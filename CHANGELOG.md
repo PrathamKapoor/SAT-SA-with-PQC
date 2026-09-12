@@ -2,13 +2,46 @@
 
 This project's phase-by-phase implementation history, evidence, and
 disclosed limitations live in `docs/roadmap-status.md` (P0 through the
-entries below) — that is the authoritative, detailed record. This file
-is the short, release-oriented summary of what changed and why,
-per checklist item 10 (release discipline).
+entries below) — that is the authoritative, detailed record for
+P0–P27. This file is the short, release-oriented summary of what
+changed and why, per checklist item 10 (release discipline). The
+P28–P31 release-gate phases below are documented in commit history
+and `docs/CLAIMS.md` rather than `docs/roadmap-status.md`.
 
 Dates are approximate to the working session in which each phase
 landed, not calendar-precise release dates (this project has not yet
 made a tagged release).
+
+## Unreleased — Phases P28–P31: release-gate verification, green
+
+No new product features. Release engineering and verification only:
+
+- **CI release gate green on both supported Pythons.** GitHub Actions
+  run [34667939977](https://github.com/PrathamKapoor/SAT-SA-with-PQC/actions/runs/34667939977)
+  at commit `a72f079`: Python 3.11 and Python 3.13 full suites,
+  package + import integrity, and Docker build/smoke all `success`
+  on GitHub-hosted Ubuntu. The workflow installs dependencies from
+  `requirements.txt`, then installs the project editable (`pip install
+  -e . --no-deps`) so the `sat-sa` console entry point exists in CI.
+- **Python 3.13 failure root-caused and fixed** (`a72f079`): fresh
+  Python 3.12+ environments no longer bundle setuptools, so the
+  packaging-discovery test (which intentionally calls the real
+  `setuptools.find_packages`) failed with `ModuleNotFoundError` in a
+  clean 3.13 environment. Fix: `setuptools>=68` added to the dev/test
+  dependency set in `pyproject.toml` and `requirements.txt`. Reproduced
+  locally under Python 3.13 before the fix (exactly one failing test);
+  full suite exit 0 after.
+- **Docker image build + `sat-sa doctor` smoke verified** in the same
+  green run (`docker-build-smoke` job). Hosted-CI build/smoke scope
+  only — no target air-gapped deployment has been performed.
+- **Offline packaging checks added earlier in this window**
+  (`6cdbe97`): dependency-manifest consistency test
+  (`tests/test_phase87_dependency_manifest_consistency.py`), wheel
+  package-data fix for `public_benchmarks` resources, and the
+  documented offline-install path (`docs/deployment.md` §8). The
+  wheelhouse exercise was performed on the development host only.
+- Exact claims boundary for all of the above (what is and is not
+  proven): `docs/CLAIMS.md`.
 
 ## Unreleased — Phase P27: public-dataset benchmark framework, honestly
 
