@@ -412,43 +412,80 @@ html.lenis body {
   color: #fff;
 }
 
-/* Overview presentation layer: depth and hierarchy without changing dashboard behavior. */
-.workbench-overview {
-  padding-bottom: 32px;
-}
-
-.workbench-overview > section:first-child {
-  border-color: rgba(147, 197, 253, 0.7);
+/* Overview presentation layer: a calm supervisory command surface. */
+.satsa-workbench main {
   background:
-    radial-gradient(circle at 82% 0%, rgba(125, 211, 252, 0.18), transparent 32%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.92));
-  box-shadow: 0 18px 55px rgba(37, 99, 235, 0.09);
+    radial-gradient(circle at 72% 0%, rgba(37, 99, 235, 0.07), transparent 28rem),
+    #f6f8fb;
 }
 
-.workbench-overview > section:nth-child(2) > a,
-.workbench-overview > div > section,
-.workbench-overview > section:nth-child(n + 3) {
-  border-radius: 14px;
-  box-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.04),
-    0 14px 36px rgba(51, 65, 85, 0.065);
+.workbench-overview { padding-bottom: 40px; }
+
+.workbench-overview__hero {
+  border-color: rgba(30, 64, 175, 0.3) !important;
+  background:
+    radial-gradient(circle at 84% 12%, rgba(34, 211, 238, 0.18), transparent 28%),
+    linear-gradient(132deg, #0b1930 0%, #102c4d 62%, #103c5d 100%) !important;
+  box-shadow: 0 24px 60px rgba(15, 42, 77, 0.2);
+}
+
+.satsa-light .workbench-overview__hero :is(h1, .text-white, .text-slate-100) { color: #fff; }
+.satsa-light .workbench-overview__hero :is(.text-slate-300, .text-slate-400) { color: #c7d5e6; }
+.satsa-light .workbench-overview__hero .text-amber-300 { color: #fde68a; }
+.satsa-light .workbench-overview__hero .text-emerald-300 { color: #a7f3d0; }
+.satsa-light .workbench-overview__hero .border-amber-500\/30 { border-color: rgba(251, 191, 36, 0.38); }
+.satsa-light .workbench-overview__hero .border-emerald-500\/30 { border-color: rgba(52, 211, 153, 0.34); }
+
+.workbench-overview__metrics {
+  overflow: hidden;
+  border: 1px solid #dfe6ef;
+  border-radius: 20px;
+  background: #dfe6ef;
+  box-shadow: 0 18px 42px rgba(51, 65, 85, 0.08);
+}
+
+.satsa-light .workbench-metric {
+  min-height: 184px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.97);
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.satsa-light .workbench-metric--attention { background: linear-gradient(145deg, #fff, #fffbeb); }
+.satsa-light .workbench-metric--review { background: linear-gradient(145deg, #fff, #eff6ff); }
+.satsa-light .workbench-metric--data { background: linear-gradient(145deg, #fff, #fff7f7); }
+.workbench-metric:hover { transform: translateY(-2px); }
+
+.satsa-light .workbench-panel {
+  border-color: #dfe6ef;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 16px 44px rgba(51, 65, 85, 0.075);
   backdrop-filter: blur(14px);
 }
 
-.workbench-overview > section:nth-child(2) > a {
-  background-color: rgba(255, 255, 255, 0.92);
-  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
-}
-
-.workbench-overview > section:nth-child(2) > a:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.11);
-}
-
-.workbench-overview h1,
 .workbench-overview h2,
-.workbench-overview h3 {
-  color: #0b1f3a;
+.workbench-overview h3 { color: #10223b; }
+
+.workbench-entity-row { border-bottom: 1px solid #e8edf3; }
+.workbench-entity-row:last-child { border-bottom: 0; }
+
+.satsa-light .workbench-finding {
+  position: relative;
+  border-color: #e5eaf1;
+  border-left-width: 3px;
+  background: linear-gradient(145deg, #fff, #f8fafc);
+  box-shadow: 0 8px 24px rgba(51, 65, 85, 0.055);
+}
+
+.satsa-light .workbench-finding--attention { border-left-color: #d97706; }
+.satsa-light .workbench-finding--critical { border-left-color: #dc2626; }
+.satsa-light .workbench-finding--peer { border-left-color: #2563eb; }
+
+.workbench-health-grid { background: #e2e8f0; }
+.satsa-light .workbench-health-card { background: #f8fafc; }
+
+.satsa-workbench aside {
+  box-shadow: 10px 0 36px rgba(15, 23, 42, 0.04);
 }
 
 .workbench-overview :is(a, button, select):focus-visible {
@@ -456,12 +493,25 @@ html.lenis body {
   outline-offset: 3px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .workbench-overview > section:nth-child(2) > a {
-    transition: none;
+@media (max-width: 639px) {
+  .satsa-workbench,
+  .satsa-workbench > div,
+  .satsa-workbench main,
+  .workbench-overview { min-width: 0; max-width: 100%; }
+  .workbench-overview { padding-bottom: 24px; }
+  .workbench-overview__hero { border-radius: 16px; }
+  .workbench-overview__hero > div,
+  .workbench-overview__hero > div > div { min-width: 0; }
+  .workbench-overview__hero h1 {
+    max-width: 100%;
+    font-size: 24px;
+    overflow-wrap: anywhere;
   }
+  .workbench-overview__hero a { max-width: 100%; justify-content: center; }
+  .workbench-overview__metrics { border-radius: 16px; }
+}
 
-  .workbench-overview > section:nth-child(2) > a:hover {
-    transform: none;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .satsa-light .workbench-metric { transition: none; }
+  .workbench-metric:hover { transform: none; }
 }

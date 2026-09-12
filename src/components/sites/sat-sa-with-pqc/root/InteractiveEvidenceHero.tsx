@@ -59,8 +59,13 @@ export function InteractiveEvidenceHero() {
     >
       <div className="interactive-evidence-hero__glow" />
       <div className="interactive-evidence-hero__grid" />
+      <div className="interactive-evidence-hero__legend">
+        <span><i /> Interactive evidence graph</span>
+        <small>Move to trace the flow</small>
+      </div>
 
       <div className="interactive-evidence-hero__scene">
+        <div className="interactive-evidence-hero__frame" />
         <svg viewBox="0 0 680 480" fill="none" className="interactive-evidence-hero__map">
           <path className="interactive-evidence-hero__path interactive-evidence-hero__path--one" d="M58 246C155 246 188 116 310 116S448 240 620 240" />
           <path className="interactive-evidence-hero__path interactive-evidence-hero__path--two" d="M58 246C168 246 212 372 352 372S480 240 620 240" />
@@ -77,6 +82,7 @@ export function InteractiveEvidenceHero() {
         </svg>
 
         <div className="interactive-evidence-hero__core">
+          <i className="interactive-evidence-hero__scanner" />
           <span>Corroborated</span>
           <strong>Supervisory intelligence</strong>
           <small>Traceable evidence chain</small>

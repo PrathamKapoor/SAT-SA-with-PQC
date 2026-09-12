@@ -81,7 +81,7 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
           weight={700}
           tracking={-0.035}
           lineHeight={0.98}
-          textScale={0.112}
+          textScale={0.15}
           className="text-white"
         />
       </div>
