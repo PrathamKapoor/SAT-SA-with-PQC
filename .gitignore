@@ -40,6 +40,11 @@ next-env.d.ts
 
 # Local settings (not project config)
 .claude/settings.local.json
+.mcp.json
+
+# Local visual-prototyping scratch files
+src/components/sites/www-contentarchitecture-dev-80b3abaf/shared/spiral-model.mjs
+tests/spiral-model.test.mjs
 
 # User-specific skills (not part of the template)
 .claude/skills/customize/
