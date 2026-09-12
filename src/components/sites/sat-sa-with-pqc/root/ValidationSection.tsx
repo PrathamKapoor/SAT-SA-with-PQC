@@ -11,7 +11,7 @@ const STATUS_STYLE: Record<string, string> = {
 
 export function ValidationSection({ content }: { content: typeof validationContent }) {
   return (
-    <section id="validation" className="border-white/10 border-t px-16 py-72 lg:px-80 lg:py-120">
+    <section id="validation" className="border-white/10 border-t px-16 py-56 lg:px-80 lg:py-80">
       <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
         {content.eyebrow}
       </Reveal>

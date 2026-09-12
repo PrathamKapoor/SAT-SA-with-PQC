@@ -3,8 +3,12 @@ import type { trustContent } from "./content/site";
 
 export function TrustSection({ content }: { content: typeof trustContent }) {
   return (
-    <section id="trust" className="border-white/10 border-t px-16 py-72 lg:px-80 lg:py-120">
-      <div className="grid grid-cols-1 gap-48 lg:grid-cols-12">
+    <section id="trust" className="relative border-white/10 border-t px-16 py-64 lg:px-80 lg:py-96">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute top-0 left-1/2 -z-1 size-500 -translate-x-1/2 rounded-full bg-[#34d399]/[0.05] blur-[130px]"
+      />
+      <div className="grid grid-cols-1 gap-32 lg:grid-cols-12 lg:gap-48">
         <div className="lg:col-span-5">
           <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
             {content.eyebrow}
@@ -19,15 +23,15 @@ export function TrustSection({ content }: { content: typeof trustContent }) {
         </div>
 
         <div className="lg:col-span-7">
-          <div className="mb-32 grid grid-cols-2 gap-16">
-            {content.pillars.map((pillar, i) => (
-              <Reveal key={pillar.label} delay={i * 60} className="rounded-8 border border-white/10 p-16 lg:p-24">
+          <Reveal delay={60} className="mb-24 grid grid-cols-2 gap-1 overflow-hidden rounded-8 border border-white/10 bg-white/10">
+            {content.pillars.map((pillar) => (
+              <div key={pillar.label} className="bg-[#0a0a0a] p-16 lg:p-24">
                 <div className="mb-4 font-mono text-caption-10 text-dark-grey uppercase">{pillar.label}</div>
                 <div className="mb-8 font-mono text-caption-20 text-[#34d399]">{pillar.value}</div>
                 <p className="text-ui text-dark-grey">{pillar.detail}</p>
-              </Reveal>
+              </div>
             ))}
-          </div>
+          </Reveal>
           <Reveal delay={200}>
             <figure className="overflow-hidden rounded-8 border border-white/10 bg-black-deep">
               {/* eslint-disable-next-line @next/next/no-img-element */}

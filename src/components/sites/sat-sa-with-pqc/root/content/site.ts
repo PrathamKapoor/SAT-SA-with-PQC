@@ -13,6 +13,7 @@ export const navContent = {
   logoLabel: "SAT-SA home",
   links: [
     { label: "Mission", href: "#mission" },
+    { label: "See it work", href: "#see-it-work" },
     { label: "Pipeline", href: "#pipeline" },
     { label: "Agents", href: "#agents" },
     { label: "Trust", href: "#trust" },
@@ -81,35 +82,41 @@ export const pipelineContent = {
   stages: [
     {
       num: "01",
+      icon: "ingest",
       title: "Ingest & normalize",
       body: "CSV, JSON, JSONL, or SQLite CSE submissions become canonical evidence records — alerts, cases, investigation steps, escalations, dispositions, assets.",
     },
     {
       num: "02",
+      icon: "analyze",
       title: "Analyze",
       body: "16 analytical workers run execution-gap, negative-space, anomaly, peer-benchmark, coverage-gap, drift, cross-entity, and case-similarity detection.",
     },
     {
       num: "03",
+      icon: "correlate",
       title: "Correlate & score risk",
       body: "Cross-detector signal fusion, then a 7-dimension decomposable risk profile: execution_gap, peer_deviation, detection_gap, negative_space, anomaly, investigation_quality, escalation_discipline.",
     },
     {
       num: "04",
+      icon: "recommend",
       title: "Prioritize & recommend",
       body: "Lexicographic prioritization and a bounded recommendation vocabulary (INSPECT_INVESTIGATION, REQUEST_MISSING_EVIDENCE, REVIEW, …) — hints, never decisions.",
     },
     {
       num: "05",
+      icon: "review",
       title: "Human review",
       body: "An examiner confirms, rejects, defers, requests evidence, or escalates — with a recorded rationale, bound to the finding's content digest at decision time.",
     },
     {
       num: "06",
+      icon: "verify",
       title: "TRUST-SAT verification",
       body: "ML-DSA-65 signatures over SHA3-256 digests, an append-only hash-chain ledger, and live-row re-derivation catch any tamper — including of the stored digest column itself.",
     },
-  ],
+  ] as const,
   screenshot: {
     src: "/sites/sat-sa-with-pqc/root/screenshots/pipeline-diagram.jpeg",
     alt: "SAT-SA architecture page: an interactive diagram showing the flow from CSE submissions through the supervisory agent fabric to the human supervisor and the TRUST-SAT ledger",
