@@ -32,4 +32,8 @@ test("landing hero keeps an accessible headline and decorative evidence flow", a
   assert.match(html, /data-grainient-mode="light"/);
   assert.match(html, /<h1[^>]*>[\s\S]*Supervision, backed by evidence\./);
   assert.match(html, /data-evidence-flow="true"[^>]*aria-hidden="true"/);
+  assert.match(html, /data-interactive-hero="true"/);
+  assert.match(html, /data-flow-stage="evidence"/);
+  assert.match(html, /data-flow-stage="analysis"/);
+  assert.match(html, /data-flow-stage="decision"/);
 });
