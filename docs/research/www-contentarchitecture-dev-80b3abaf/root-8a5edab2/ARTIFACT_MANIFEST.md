@@ -18,3 +18,15 @@
 | Condensed DOM per section | `docs/research/…/dom/*.html` | live DOM at 1440 after full scroll | odometer stacks collapsed to `<Odometer text>`; svgs → `<Icon id>` (see `source/svgs.json`) |
 
 No Atlas Cloud generated fallbacks were used.
+
+## Added 2026-09-12 (resume session)
+| Artifact | Local path | Source | Notes |
+|---|---|---|---|
+| Full IDE trees + repo stats (both editions) | `docs/research/…/source/ide-rsc.json` | RSC payload row `2d` (IDE section props) + row `103` (repo stats) | 468 / 493 nodes, every file's content, 52 weekly commit counts |
+| Merged IDE data used by the build | `src/components/sites/…/root-8a5edab2/data/ide.json` | ide-rsc.json + README texts from ide-data.json | READMEs were deferred RSC rows `$104`/`$105` |
+| Terminal command outputs | `docs/research/…/source/terminal-commands.json` | typed into the live terminal (27 commands incl. edge cases) | engine replays all 27 exactly |
+| BIOS easter-egg overlay | `docs/research/…/dom/14-crash-screen.html`, `design-references/…/40-crash-screen-1440.jpeg` | live DOM after `sudo rm -rf /` → `y` | timeline in RepoTerminal.spec.md |
+| Mobile repo screenshot | `design-references/…/22-mobile-repo-390.jpeg` | live, 390px | |
+| README drawer essay | `src/components/sites/…/root-8a5edab2/content/learn-more.ts` | generated from `dom/12-readme-drawer.html` | verbatim; the Mux video block is not reproduced |
+
+Visual QA (2026-09-12): section offsets and document height match the live site exactly at 1440×900 (13,226px) and 390×844 (12,889px).
