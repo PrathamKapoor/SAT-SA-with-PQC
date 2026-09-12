@@ -227,3 +227,20 @@ html.lenis body {
   transition-property: overflow;
   transition-duration: 1ms;
 }
+
+/*
+ * SAT-SA page ("/") background texture: a 56px graph-paper grid, faded toward the edges with a
+ * radial mask. Plain properties only (no custom-property redeclaration — see the git history of
+ * this file for why: redeclaring a --color-* theme token outside @theme gets silently dropped).
+ */
+.satsa-grid-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(70% 60% at 50% 30%, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, black 30%, transparent 75%);
+}
