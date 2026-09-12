@@ -1,9 +1,5 @@
-import { PageShell } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/shared/PageShell";
+import { SatSaPage } from "@/components/sites/sat-sa-with-pqc/root/SatSaPage";
 
 export default function Home() {
-  return (
-    <PageShell>
-      <div className="bg-off-white" />
-    </PageShell>
-  );
+  return <SatSaPage />;
 }
