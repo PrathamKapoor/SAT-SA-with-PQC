@@ -14,13 +14,14 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
       {/* 1. React Bits Grainient Background (Landing Hero Background Only) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-3 overflow-hidden">
         <Grainient
-          className="landing-hero__grainient opacity-80"
-          color1="#0B3157"
-          color2="#0B6E86"
-          color3="#07111F"
-          timeSpeed={0.07}
-          colorBalance={-0.18}
-          warpStrength={0.28}
+          className="landing-hero__grainient opacity-70"
+          color1="#C7D2FE"
+          color2="#67E8F9"
+          color3="#E0E7FF"
+          lightMode
+          timeSpeed={0.06}
+          colorBalance={0.08}
+          warpStrength={0.22}
           warpFrequency={2.4}
           warpSpeed={0.35}
           warpAmplitude={80}
@@ -31,7 +32,7 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
           grainAmount={0.025}
           grainScale={1.5}
           grainAnimated={false}
-          contrast={1.08}
+          contrast={1.12}
           gamma={1.0}
           saturation={0.72}
           centerX={0.0}
@@ -40,10 +41,10 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
         />
       </div>
 
-      {/* 2. Contrast-safe dark overlay ensuring text is crystal-clear and never obscured */}
+      {/* 2. Contrast-safe light veil keeps text clear over the atmospheric field */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-2 bg-gradient-to-b from-[#070d17]/65 via-[#070d17]/80 to-[#070d17] backdrop-blur-[0.5px]"
+        className="pointer-events-none absolute inset-0 -z-2 bg-gradient-to-b from-white/15 via-white/45 to-[#f7f9fc] backdrop-blur-[0.5px]"
       />
       <div aria-hidden="true" className="satsa-grid-texture pointer-events-none absolute inset-0 -z-1 opacity-20" />
 

@@ -12,6 +12,8 @@ async function getHtml(pathname) {
 test("overview exposes one primary review action and readable navigation", async () => {
   const html = await getHtml("/workbench/overview");
 
+  assert.match(html, /data-theme="satsa-light"/);
+  assert.match(html, /data-grainient-mode="light"/);
   assert.equal((html.match(/Open Review Queue/g) ?? []).length, 1);
   assert.match(html, /AIR-GAPPED · READY/i);
   assert.match(html, /Trends &amp; Benchmarks/);
@@ -26,6 +28,8 @@ test("overview exposes one primary review action and readable navigation", async
 test("landing hero keeps an accessible headline and decorative evidence flow", async () => {
   const html = await getHtml("/");
 
+  assert.match(html, /data-theme="satsa-light"/);
+  assert.match(html, /data-grainient-mode="light"/);
   assert.match(html, /<h1[^>]*>[\s\S]*Supervision, backed by evidence\./);
   assert.match(html, /data-evidence-flow="true"[^>]*aria-hidden="true"/);
 });
