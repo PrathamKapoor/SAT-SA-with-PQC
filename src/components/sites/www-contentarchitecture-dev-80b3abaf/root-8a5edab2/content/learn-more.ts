@@ -5,13 +5,9 @@ const PORTRAIT = {
   alt: "Man in black turtleneck smiling and looking to the side indoors",
 };
 
-const BLOG = "https://www.edoardolunardi.dev/blog";
-
 /**
- * CA README drawer. Labels, headings, links and the portrait are taken from
- * `dom/12-readme-drawer.html`; the paragraph copy is a condensed paraphrase of the live essay
- * (same structure: 6 / 5 / 2 paragraphs, links and portrait in the same positions), not a
- * verbatim transcript.
+ * CA README drawer, verbatim from `dom/12-readme-drawer.html` (paragraphs generated from the live
+ * DOM; split lines joined). The Mux video block in "Who am I" is not reproduced.
  */
 export const learnMoreContent: LearnMoreContent = {
   trigger: "Learn more",
@@ -25,28 +21,12 @@ export const learnMoreContent: LearnMoreContent = {
       number: "001",
       title: "Why this exists",
       paragraphs: [
-        [
-          "Every new Sanity build began with the same week of groundwork: a framework, the Studio, a page builder, an SEO layer, webhook revalidation and yet another contact form, all rebuilt from zero.",
-        ],
-        ["That groundwork used up days of the budget before the client saw anything that mattered to them."],
-        [
-          "So the fixes started collecting in one boilerplate, one project after another. Every production incident, from broken migrations to stale caches and duplicate webhooks, ended up patched there.",
-        ],
-        [
-          "For years that repetition passed for expertise. It was really just the same foundation, built again.",
-        ],
-        ["Eventually there was no good reason to keep it private."],
-        [
-          "The reasoning behind the codebase is written up in four free articles: ",
-          { text: "CMS structure", href: `${BLOG}/the-content-architecture-cms-structure` },
-          ", ",
-          { text: "content models", href: `${BLOG}/the-content-architecture-content-models` },
-          ", ",
-          { text: "page composition", href: `${BLOG}/the-content-architecture-page-composition` },
-          ", and ",
-          { text: "content primitives", href: `${BLOG}/the-content-architecture-content-primitives` },
-          ".",
-        ],
+        ["Every Sanity project I shipped, the first week looked identical. Spin up Next, or Astro. Wire the Studio. Rewrite the page builder. Rebuild the SEO layer. Re-do the webhook revalidation. Re-style the same contact form for the fourth time."],
+        ["By the time the actual creative work started, 3 days of the budget were gone and the client had not seen a single pixel that mattered."],
+        ["Extracting it started small. One project. Then two. Then ten. Every time something broke in production, a Sanity migration that nuked a dataset, a CDN cache that served stale OG images for three weeks, a webhook that fired twice and corrupted a sitemap, the fix went back into the boilerplate."],
+        ["For a long time I called this the cost of headless. I had rebuilt the same foundation so many times I could do it half-asleep, and I mistook that for being good at my job instead of what it was, doing the same work twice."],
+        ["At some point that stopped being a reason to keep it to myself."],
+        ["If you want the reasoning before you buy, I wrote it all down: ", { text: "CMS structure", href: "https://www.edoardolunardi.dev/blog/the-content-architecture-cms-structure" }, ", ", { text: "content models", href: "https://www.edoardolunardi.dev/blog/the-content-architecture-content-models" }, ", ", { text: "page composition", href: "https://www.edoardolunardi.dev/blog/the-content-architecture-page-composition" }, ", and ", { text: "content primitives", href: "https://www.edoardolunardi.dev/blog/the-content-architecture-content-primitives" }, ". The thinking behind every decision in the codebase, free to read."],
       ],
     },
     {
@@ -54,19 +34,11 @@ export const learnMoreContent: LearnMoreContent = {
       number: "002",
       title: "Why I keep shipping it",
       paragraphs: [
-        ["It runs on every one of my own projects, so a bug found in client work lands here as a fix days later."],
-        [
-          "One maintainer keeps the architecture consistent, from the first schema file to the last revalidation hook, without opinions pulling it in different directions.",
-        ],
-        [
-          "The repo is the same code I ship on paid work, under the same deadlines. It is not a demo polished for a sale.",
-        ],
-        [
-          "There is no subscription product behind it and nothing phones home. A purchase means the code is yours, and new features come from what real client projects turn up.",
-        ],
-        [
-          "Paying users keep me honest about framework and Sanity upgrades, and the decisions are written down, which is exactly what lets an agent build within them instead of guessing.",
-        ],
+        ["I use this on every project. I am the heaviest user. The bug I find on a Friday client engagement is the patch you get on Monday."],
+        ["I am one person, not a team. That is a feature. The architecture is consistent because one mind held it from the first schema file to the last revalidation hook. Nobody overrode the opinion. Nobody added a field because a stakeholder asked nicely."],
+        ["There is no distance between me and this. The decisions in the repo are the ones I make on paid work, in the same week, under the same deadline. When you open the fetch layer or the page builder, you are reading how I actually ship, not a demo cleaned up for sale. That is the whole relationship: you get the thing I rely on, maintained by the person who relies on it most."],
+        ["I am not trying to turn this into a SaaS. There is no dashboard, no seat-based pricing, no telemetry. The roadmap is not fixed in stone either, it grows out of real client work: when a project turns up something worth having, it becomes part of the product. You buy the repo, you own the repo. I maintain it because I use it too."],
+        ["Maintaining this in public is a forcing function for my own work. With paying users on both repos, I cannot let the schema rot, skip a Next.js or Astro major, or sit on a breaking change in a Sanity plugin. The same discipline is why an agent is useful on it: the calls are already made and written down, so it builds inside them instead of guessing. Your projects stay current because mine have to."],
       ],
     },
     {
@@ -74,24 +46,8 @@ export const learnMoreContent: LearnMoreContent = {
       number: "003",
       title: "Who am I",
       paragraphs: [
-        [
-          "I am Edo ",
-          { image: PORTRAIT },
-          " - a creative web engineer with close to ten years of work for international brands and industry awards. Based in Vienna, working worldwide.",
-        ],
-        [
-          "I'm on ",
-          { text: "Instagram", href: "https://www.instagram.com/edo.tsx" },
-          ", ",
-          { text: "LinkedIn", href: "https://www.linkedin.com/in/edoardolunardi" },
-          " and ",
-          { text: "X", href: "https://x.com/edo_lunardi" },
-          "; portfolio at ",
-          { text: "edoardolunardi.dev", href: "https://www.edoardolunardi.dev/" },
-          ", email at ",
-          { text: "hello@edoardolunardi.dev", href: "mailto:hello@edoardolunardi.dev" },
-          ".",
-        ],
+        ["I am Edo ", { image: PORTRAIT }, " - Creative Web Engineer, nearly a decade in. Sanity Pioneer 2026, Awwwards jury member, recognized across Awwwards, CSSDA, and FWA. I have shipped for Buck, Disney, Porsche, Red Bull, Le Labo Fragrances, Getty. Design sensibility, technical depth, obsessive about detail. Based in Vienna, working worldwide."],
+        ["Find me on ", { text: "Instagram", href: "https://www.instagram.com/edo.tsx" }, ", ", { text: "LinkedIn", href: "https://www.linkedin.com/in/edoardolunardi" }, ", and ", { text: "X", href: "https://x.com/edo_lunardi" }, ". The work lives at ", { text: "edoardolunardi.dev", href: "https://www.edoardolunardi.dev/" }, ". Write to ", { text: "hello@edoardolunardi.dev", href: "mailto:hello@edoardolunardi.dev" }, "."],
       ],
     },
   ],
