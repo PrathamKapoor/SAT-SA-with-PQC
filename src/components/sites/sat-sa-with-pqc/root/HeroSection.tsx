@@ -4,13 +4,14 @@ import { Reveal } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/
 import { EntityRiskChart } from "@/components/sites/sat-sa-with-pqc/shared/EntityRiskChart";
 import MaskedHeading from "@/components/reactbits/MaskedHeading";
 import Grainient from "@/components/reactbits/Grainient";
+import { InteractiveEvidenceHero } from "./InteractiveEvidenceHero";
 import type { heroContent } from "./content/site";
 import { entityRiskContent } from "./content/demo";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 
 export function HeroSection({ content }: { content: typeof heroContent }) {
   return (
-    <section className="relative overflow-hidden px-16 pt-56 pb-64 lg:px-80 lg:pt-80 lg:pb-96">
+    <section className="satsa-hero relative isolate px-16 pt-56 pb-64 lg:px-80 lg:pt-64 lg:pb-80">
       {/* 1. React Bits Grainient Background (Landing Hero Background Only) */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-3 overflow-hidden">
         <Grainient
@@ -48,26 +49,8 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
       />
       <div aria-hidden="true" className="satsa-grid-texture pointer-events-none absolute inset-0 -z-1 opacity-20" />
 
-      <div
-        data-evidence-flow="true"
-        aria-hidden="true"
-        className="pointer-events-none absolute right-24 top-96 hidden h-[480px] w-[42%] max-w-[620px] opacity-55 lg:block"
-      >
-        <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(14,116,144,0.2),rgba(11,49,87,0.08)_42%,transparent_72%)] blur-2xl" />
-        <svg viewBox="0 0 620 480" fill="none" className="relative size-full text-cyan-300/70">
-          <path d="M65 250C150 250 178 130 275 130S395 250 555 250" stroke="currentColor" strokeWidth="1" opacity=".5" />
-          <path d="M65 250C155 250 205 355 310 355S420 250 555 250" stroke="#3b82f6" strokeWidth="1" opacity=".35" />
-          <circle cx="65" cy="250" r="42" stroke="currentColor" opacity=".3" />
-          <circle cx="65" cy="250" r="8" fill="currentColor" opacity=".75" />
-          <circle cx="275" cy="130" r="56" stroke="#60a5fa" opacity=".32" />
-          <circle cx="275" cy="130" r="13" fill="#60a5fa" opacity=".7" />
-          <circle cx="310" cy="355" r="46" stroke="currentColor" opacity=".25" />
-          <circle cx="310" cy="355" r="9" fill="currentColor" opacity=".65" />
-          <circle cx="555" cy="250" r="72" stroke="#93c5fd" opacity=".28" />
-          <circle cx="555" cy="250" r="20" fill="#93c5fd" opacity=".65" />
-          <circle cx="555" cy="250" r="96" stroke="#0e7490" strokeDasharray="4 10" opacity=".28" />
-        </svg>
-      </div>
+      <div className="satsa-hero__layout">
+      <div className="satsa-hero__copy">
 
       {/* 3. Eyebrow: Institutional SIH / NCIIPC Badge */}
       <Reveal as="div" className="mb-20">
@@ -87,10 +70,10 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
           fillScale={1.12}
           parallax={8}
           drift={4}
-          brightness={1.05}
+          brightness={0.62}
           saturation={0.78}
           grayscale={false}
-          reveal="rise"
+          reveal="none"
           trigger="view"
           duration={0.8}
           stagger={0.055}
@@ -98,7 +81,7 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
           weight={700}
           tracking={-0.035}
           lineHeight={0.98}
-          textScale={0.09}
+          textScale={0.112}
           className="text-white"
         />
       </div>
@@ -115,13 +98,13 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
       </Reveal>
 
       {/* 7. Action Buttons */}
-      <Reveal rise delay={200} className="mb-56 flex flex-wrap items-center gap-16">
+      <Reveal rise delay={200} className="flex flex-wrap items-center gap-16">
         <Link
           href="/workbench/overview"
           className="inline-flex items-center gap-8 rounded-8 bg-blue-600 px-24 py-12 font-mono text-caption-20 font-semibold uppercase tracking-wider text-white transition-all hover:bg-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.35)]"
         >
           <span>Open Supervisory Workbench</span>
-          <ArrowRight className="size-4" />
+          <ArrowRight className="size-[18px] shrink-0" />
         </Link>
         <Link
           href="/workbench/governance"
@@ -131,6 +114,9 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
           <span>&rarr;</span>
         </Link>
       </Reveal>
+      </div>
+      <InteractiveEvidenceHero />
+      </div>
 
       {/* 8. Flagship Live Demo Data Panel */}
       <Reveal delay={250} className="overflow-hidden rounded-8 border border-white/10 bg-[#0a0a0a]/85 backdrop-blur-[2px]">
