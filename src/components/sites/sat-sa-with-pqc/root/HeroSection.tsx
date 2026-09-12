@@ -1,7 +1,6 @@
 import { CaButton } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/shared/CaButton";
 import { Reveal } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/shared/Reveal";
 import { EntityRiskChart } from "@/components/sites/sat-sa-with-pqc/shared/EntityRiskChart";
-import MaskedHeading from "@/components/reactbits/MaskedHeading";
 import Prism from "@/components/reactbits/Prism";
 import type { heroContent } from "./content/site";
 import { entityRiskContent } from "./content/demo";
@@ -9,67 +8,61 @@ import { entityRiskContent } from "./content/demo";
 export function HeroSection({ content }: { content: typeof heroContent }) {
   return (
     <section className="relative overflow-hidden px-16 pt-56 pb-64 lg:px-80 lg:pt-80 lg:pb-96">
-      {/* Texture + ambient glow, behind everything in this section */}
+      {/* Subtle ambient lighting softened for razor-sharp readability */}
       <div aria-hidden="true" className="satsa-grid-texture pointer-events-none absolute inset-0 -z-2" />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-160 -right-160 -z-1 size-600 rounded-full bg-[#34d399]/[0.16] blur-[120px]"
+        className="pointer-events-none absolute -top-160 -right-160 -z-1 size-600 rounded-full bg-[#3987e5]/[0.08] blur-[140px]"
       />
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute -top-80 left-1/4 -z-1 size-400 rounded-full bg-[#3987e5]/[0.10] blur-[100px]"
+        className="pointer-events-none absolute top-1/4 -left-80 -z-1 size-400 rounded-full bg-[#34d399]/[0.06] blur-[120px]"
       />
 
-      <Reveal as="p" className="mb-20 font-mono text-caption-20 uppercase text-[#34d399]">
-        {content.eyebrow}
+      {/* Subtle Ambient Prism Animation shifted behind header with low opacity */}
+      <div className="pointer-events-none absolute right-10 top-20 -z-1 h-[320px] w-[320px] opacity-25 overflow-hidden rounded-full blur-[1px]">
+        <Prism
+          animationType="rotate"
+          timeScale={0.3}
+          height={3.5}
+          baseWidth={5.5}
+          scale={3.2}
+          hueShift={0.15}
+          colorFrequency={1.2}
+          noise={0.2}
+          glow={0.8}
+          bloom={0.8}
+          transparent={true}
+        />
+      </div>
+
+      {/* Eyebrow: Institutional SIH / NCIIPC Badge */}
+      <Reveal as="div" className="mb-20">
+        <span className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-12 py-4 font-mono text-caption-20 uppercase tracking-widest text-blue-400">
+          <span className="size-2 rounded-full bg-blue-400" />
+          SMART INDIA HACKATHON 26157 &middot; NCIIPC
+        </span>
       </Reveal>
 
-      {/* Background Prism behind heading and MaskedHeading component from React Bits */}
-      <div className="relative mb-32 max-w-1000 min-h-[140px] sm:min-h-[180px]">
-        {/* Prism WebGL canvas */}
-        <div className="pointer-events-none absolute -inset-x-12 -inset-y-12 z-0 h-[280px] sm:h-[320px] opacity-40 overflow-hidden rounded-2xl">
-          <Prism
-            animationType="rotate"
-            timeScale={0.4}
-            height={3.5}
-            baseWidth={5.5}
-            scale={3.6}
-            hueShift={0.15}
-            colorFrequency={1.2}
-            noise={0.3}
-            glow={1.1}
-            bloom={1.2}
-            transparent={true}
-          />
-        </div>
-
-        {/* MaskedHeading component */}
-        <div className="relative z-10">
-          <MaskedHeading
-            text="Periodic SOC assessments become supervisory intelligence."
-            tag="h1"
-            src="/sites/sat-sa-with-pqc/root/screenshots/pipeline-diagram.jpeg"
-            fillScale={1.3}
-            parallax={26}
-            drift={16}
-            reveal="rise"
-            align="left"
-            weight={700}
-            textScale={0.062}
-            className="text-white font-medium"
-          />
-        </div>
+      {/* Crystal-Clear, High-Contrast Hero Headline */}
+      <div className="mb-24 max-w-1000">
+        <Reveal as="h1" className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight font-sans">
+          Periodic CSE assessments<br className="hidden sm:inline" /> become{" "}
+          <span className="text-blue-400">supervisory intelligence.</span>
+        </Reveal>
       </div>
 
-      <div className="mb-40 max-w-600 text-body-20 text-ghost-grey">
-        {content.body.map((paragraph, i) => (
-          <Reveal key={i}>{paragraph}</Reveal>
-        ))}
-      </div>
+      {/* Clear Lede Subtitle */}
+      <Reveal as="p" className="mb-40 max-w-700 text-body-20 text-slate-200 leading-relaxed font-sans">
+        Turn structured submissions into evidence-backed supervisory decisions.
+        Continuous telemetry verification, multi-worker risk fusion, and post-quantum cryptographic trust for critical sector entities.
+      </Reveal>
+
+      {/* Action Buttons */}
       <Reveal rise delay={200} className="mb-56 flex flex-wrap items-center gap-16">
         <a
-          href="/workbench"
-          className="inline-flex items-center gap-8 rounded-8 bg-[#34d399] px-24 py-12 font-mono text-caption-20 font-semibold uppercase tracking-wider text-black transition-all hover:bg-[#34d399]/90 shadow-[0_0_20px_rgba(52,211,153,0.3)]"
+          href="/workbench/overview"
+          className="inline-flex items-center gap-8 rounded-8 bg-blue-600 px-24 py-12 font-mono text-caption-20 font-semibold uppercase tracking-wider text-white transition-all hover:bg-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.35)]"
         >
           <span>Launch Supervisory Workbench</span>
           <span>&rarr;</span>
@@ -83,13 +76,13 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
         />
         <a
           href={content.secondaryCta.href}
-          className="font-mono text-caption-20 text-white/70 uppercase underline decoration-white/30 underline-offset-4 transition-colors hover:text-white"
+          className="font-mono text-caption-20 text-slate-300 uppercase underline decoration-slate-600 underline-offset-4 transition-colors hover:text-white"
         >
           {content.secondaryCta.text} &rarr;
         </a>
       </Reveal>
 
-      {/* Flagship data panel — mirrors the live product's own chart card chrome */}
+      {/* Flagship data panel */}
       <Reveal delay={250} className="overflow-hidden rounded-8 border border-white/10 bg-[#0a0a0a]/80 backdrop-blur-[2px]">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px]">
           <div className="p-16 lg:p-32">
