@@ -54,7 +54,7 @@ export default function OverviewPage() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] space-y-8">
+    <div data-workbench-overview="true" className="workbench-overview mx-auto w-full max-w-[1440px] space-y-8">
       {/* 1. Action-Led Header & Assessment Status Banner */}
       <section className="rounded-lg border border-[#1b2b48] bg-[#0c1628] p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">

@@ -411,3 +411,57 @@ html.lenis body {
 .satsa-light .bg-red-600.text-white {
   color: #fff;
 }
+
+/* Overview presentation layer: depth and hierarchy without changing dashboard behavior. */
+.workbench-overview {
+  padding-bottom: 32px;
+}
+
+.workbench-overview > section:first-child {
+  border-color: rgba(147, 197, 253, 0.7);
+  background:
+    radial-gradient(circle at 82% 0%, rgba(125, 211, 252, 0.18), transparent 32%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(239, 246, 255, 0.92));
+  box-shadow: 0 18px 55px rgba(37, 99, 235, 0.09);
+}
+
+.workbench-overview > section:nth-child(2) > a,
+.workbench-overview > div > section,
+.workbench-overview > section:nth-child(n + 3) {
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 14px 36px rgba(51, 65, 85, 0.065);
+  backdrop-filter: blur(14px);
+}
+
+.workbench-overview > section:nth-child(2) > a {
+  background-color: rgba(255, 255, 255, 0.92);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.workbench-overview > section:nth-child(2) > a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.11);
+}
+
+.workbench-overview h1,
+.workbench-overview h2,
+.workbench-overview h3 {
+  color: #0b1f3a;
+}
+
+.workbench-overview :is(a, button, select):focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.48);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workbench-overview > section:nth-child(2) > a {
+    transition: none;
+  }
+
+  .workbench-overview > section:nth-child(2) > a:hover {
+    transform: none;
+  }
+}
