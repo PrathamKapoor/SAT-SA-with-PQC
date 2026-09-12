@@ -202,7 +202,7 @@ export default function EntitiesPage() {
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm text-white">
-                        {entity.score.toFixed(1)}
+                        {entity.score.toFixed(1)} <span className="text-slate-500 font-normal text-[11px]">/ 100</span>
                       </span>
                       <StatusBadge
                         variant={

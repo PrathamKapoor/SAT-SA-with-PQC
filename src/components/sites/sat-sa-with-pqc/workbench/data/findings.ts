@@ -197,7 +197,7 @@ export const findings: Finding[] = [
     severity: "critical",
     confidence: "high",
     findingFamily: "negative_space",
-    findingFamilyLabel: "Negative Space",
+    findingFamilyLabel: "Missing Evidence",
     ruleOrCategory: "negative_space.telemetry_blackout",
 
     observedPattern: "7 designated Tier-1 switchgear and database assets in the active inventory had zero telemetry, audit, or access logs submitted across the 60-day assessment window.",
