@@ -12,6 +12,42 @@ Dates are approximate to the working session in which each phase
 landed, not calendar-precise release dates (this project has not yet
 made a tagged release).
 
+## Unreleased — Phase P33: controlled benchmark + air-gap rehearsal evidence
+
+No product features, no detector/threshold changes. Reproducible,
+measured evidence only (all synthetic; real-data boundaries unchanged):
+
+- **Controlled supervisory benchmark v1.0.0** (`evaluation/
+  controlled_benchmark/`, `scripts/run_controlled_benchmark.py`):
+  a versioned, seeded manifest whose expected labels are locked to the
+  declared ground-truth catalog
+  (`satsa.analysis.validate.synthetic_ground_truth` — never detector
+  output; enforced by `validate_manifest` and
+  `tests/test_phase88_controlled_benchmark.py`). The runner drives the
+  REAL ingestion/analysis/prioritization pipeline and reports,
+  strictly separated: scenario-family metrics (measured: 5/5 expected
+  families detected, micro precision 0.4167 / recall 1.0; action
+  alignment 4/5), closure-time statistical baselines vs the real
+  FastClosureWorker, the simulated workload/prioritization experiment,
+  and the per-worker ablation — all on the existing
+  `evaluation/baselines`, `evaluation/workload`,
+  `evaluation/ablation` infrastructure. Deterministic for fixed seed
+  (proven by a two-full-run equality test).
+- **Offline/air-gap rehearsal tool** (`scripts/airgap_rehearsal.py`,
+  `docs/AIRGAP_REHEARSAL.md`): non-destructive verification that an
+  offline wheelhouse bundle installs and runs SAT-SA with
+  `--no-index` installs, first-party imports resolving from the
+  installed site-packages (neutral cwd), and `sat-sa
+  --version/doctor/demo/validate` all green in that environment;
+  fails clearly with "bundle not supplied" when no bundle is given.
+  Executed on the development host: **overall pass** — a same-host
+  rehearsal, explicitly not target-machine/NCIIPC deployment proof.
+- **Measured report from the actual runs**:
+  `reports/CONTROLLED_BENCHMARK_P33.md` (limitations stated first);
+  methodology: `docs/CONTROLLED_BENCHMARK.md`.
+- No real CIC-IDS2017/BOTS/CSE/SOC/NCIIPC data was processed (none
+  available); all prior claims boundaries stand unchanged.
+
 ## Unreleased — Phases P28–P31: release-gate verification, green
 
 No new product features. Release engineering and verification only:
