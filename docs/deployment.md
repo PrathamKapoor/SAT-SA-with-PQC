@@ -14,7 +14,9 @@ and `requirements.txt`'s Runtime section exactly): `kyber-py`,
 `starlette`, `uvicorn`, `python-multipart` (required — Starlette's
 multipart form/file-upload parsing, used by `/ingest`), `click`,
 `scikit-learn`, `pydantic`, `python-pkcs11` (optional, HSM only). Dev
-(mirrors `[project.optional-dependencies].dev`): `pytest`, `httpx`.
+(mirrors `[project.optional-dependencies].dev`): `pytest`, `httpx`,
+`setuptools` (required to run the test suite — Python 3.12+ environments
+no longer bundle it; see `tests/test_phase86_packaging_discovery.py`).
 
 ## 2. Verify the tree
 

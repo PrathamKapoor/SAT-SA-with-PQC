@@ -674,6 +674,14 @@ Status values: COMPLETE · PARTIAL · IN PROGRESS · BLOCKED · NOT STARTED
 
 ## P24 — CI, deployment artifacts, operator diagnostics (partial — see limitations)
 
+> **Current-state note (P32, September 2026):** the CI/Docker
+> "unverified" limitations below are historical to the P24 session.
+> The release gate has since run green on GitHub Actions — commit
+> `a72f079` (P31), run [34667939977](https://github.com/PrathamKapoor/SAT-SA-with-PQC/actions/runs/34667939977):
+> Python 3.11 + 3.13 suites, package/import integrity, and Docker
+> build/`sat-sa doctor` smoke all `success`. See `docs/CLAIMS.md`.
+> Target-machine deployment and real-data validation remain unperformed.
+
 - status: PARTIAL — CI workflow, `sat-sa doctor`, and a proven
   backup/restore procedure are COMPLETE; a Dockerfile exists but is
   explicitly unverified (no Docker daemon in this session's

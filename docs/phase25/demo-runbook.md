@@ -4,11 +4,23 @@ A two-minute reproducible walkthrough of SAT-SA for an SIH
 judge or a real supervisor. The full flow runs against the
 committed demo dataset and uses only the product's own UI.
 
+> **Presentation note (reconciled P32, September 2026).** Every
+> command below is the documented, CI-verified install/demo path
+> (`docs/deployment.md`, `README.md`). All demo data is
+> **synthetic/committed demo data** — not real CSE, SOC, BOTS,
+> CIC-IDS2017, or NCIIPC data. SAT-SA is decision support: agents
+> observe and recommend, and a **human examiner records the decision**
+> (terminal authority). Present it as a prioritization and
+> evidence-triage instrument, not a SIEM, real-time monitor, or
+> autonomous supervisory authority.
+
 ## Pre-flight
 
 ```bash
 git clone <repo>
 cd TRUST-SAT
+python -m venv .venv && .venv\Scripts\activate   # POSIX: source .venv/bin/activate
+pip install -r requirements.txt
 pip install -e .
 python -m pytest tests/ -q    # release acceptance requires 0 failed
 ```
@@ -16,32 +28,27 @@ python -m pytest tests/ -q    # release acceptance requires 0 failed
 ## Start the UI
 
 ```bash
-python -c "
-from qsmlops.database.engine import SQLiteDatabaseEngine
-from qsmlops.database.migrations import MigrationRunner
-from satsa.service import SatsaService
-from satsa.ui import create_app
-from fastapi.testclient import TestClient
-import tempfile, pathlib
-td = pathlib.Path(tempfile.mkdtemp(prefix='demo_'))
-eng = SQLiteDatabaseEngine(td / 'demo.db'); eng.connect()
-MigrationRunner(eng).migrate()
-svc = SatsaService(eng)
-app = create_app(svc, trust_key_dir=td / 'keys')
-client = TestClient(app)
-client.post('/demo/load')          # the magic button
-# then visit /, /entities, /findings, /queue, /benchmarks, /reports/<id>
-"
+python scripts/serve_ui.py --db ./demo.db --trust-key-dir ./demo-keys --port 8000
 ```
 
-Or, for a real HTTP server, wrap `app` with uvicorn:
-`uvicorn.run(app, host="127.0.0.1", port=8080)`.
+`satsa.ui.create_app` requires pre-wired services, so `serve_ui.py`
+does the engine + migration + service + app wiring and calls
+`uvicorn.run` itself. On an empty database it bootstraps the committed
+five-CSE demo dataset automatically (use `--no-demo` to skip). This is
+the same launcher documented and verified in `docs/deployment.md` §6.
+
+**Fallback if demo data is unavailable** (fresh checkout, or you
+pointed at an empty database with `--no-demo`): run the CLI story
+first — `python demo.py --db ./demo.db --keys ./demo-keys` (prints
+`DEMO COMPLETED SUCCESSFULLY` and the demo dataset is loaded) — then
+start `serve_ui.py` as above, or click the demo-load control on the
+overview page.
 
 ## The two-minute walkthrough
 
 | t (s) | Action | What you see |
 |---|---|---|
-| 0 | Open `http://127.0.0.1:8080/` | Overview: "Load Demonstration Assessment" button at the top |
+| 0 | Open `http://127.0.0.1:8000/` | Overview: "Load Demonstration Assessment" button at the top |
 | 5 | Click the button | Five CSEs ingest, run, and the page redirects to `/demo/result` showing the top-risk entity's risk profile |
 | 15 | Click "Entities" in the top nav | Five rows, one per CSE, with risk score + top dimension |
 | 20 | Click **CSE-EXEC** | Entity detail: risk decomposition table (7 dimensions), full findings list, "Download full report" button |
