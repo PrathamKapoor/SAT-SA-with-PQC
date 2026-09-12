@@ -47,6 +47,27 @@ export function HeroSection({ content }: { content: typeof heroContent }) {
       />
       <div aria-hidden="true" className="satsa-grid-texture pointer-events-none absolute inset-0 -z-1 opacity-20" />
 
+      <div
+        data-evidence-flow="true"
+        aria-hidden="true"
+        className="pointer-events-none absolute right-24 top-96 hidden h-[480px] w-[42%] max-w-[620px] opacity-55 lg:block"
+      >
+        <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(14,116,144,0.2),rgba(11,49,87,0.08)_42%,transparent_72%)] blur-2xl" />
+        <svg viewBox="0 0 620 480" fill="none" className="relative size-full text-cyan-300/70">
+          <path d="M65 250C150 250 178 130 275 130S395 250 555 250" stroke="currentColor" strokeWidth="1" opacity=".5" />
+          <path d="M65 250C155 250 205 355 310 355S420 250 555 250" stroke="#3b82f6" strokeWidth="1" opacity=".35" />
+          <circle cx="65" cy="250" r="42" stroke="currentColor" opacity=".3" />
+          <circle cx="65" cy="250" r="8" fill="currentColor" opacity=".75" />
+          <circle cx="275" cy="130" r="56" stroke="#60a5fa" opacity=".32" />
+          <circle cx="275" cy="130" r="13" fill="#60a5fa" opacity=".7" />
+          <circle cx="310" cy="355" r="46" stroke="currentColor" opacity=".25" />
+          <circle cx="310" cy="355" r="9" fill="currentColor" opacity=".65" />
+          <circle cx="555" cy="250" r="72" stroke="#93c5fd" opacity=".28" />
+          <circle cx="555" cy="250" r="20" fill="#93c5fd" opacity=".65" />
+          <circle cx="555" cy="250" r="96" stroke="#0e7490" strokeDasharray="4 10" opacity=".28" />
+        </svg>
+      </div>
+
       {/* 3. Eyebrow: Institutional SIH / NCIIPC Badge */}
       <Reveal as="div" className="mb-20">
         <span className="inline-flex items-center gap-2 rounded-full border border-blue-500/35 bg-blue-950/50 px-14 py-5 font-mono text-caption-20 uppercase tracking-widest text-blue-300">

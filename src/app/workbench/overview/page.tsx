@@ -54,7 +54,7 @@ export default function OverviewPage() {
   });
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="mx-auto w-full max-w-[1440px] space-y-8">
       {/* 1. Action-Led Header & Assessment Status Banner */}
       <section className="rounded-lg border border-[#1b2b48] bg-[#0c1628] p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -106,24 +106,24 @@ export default function OverviewPage() {
       </section>
 
       {/* 2. Four KPI Cards with Clean Semantic Hierarchy */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {/* Card 1: Assessed Entities (Neutral Slate) */}
         <Link
           href="/workbench/entities"
           className="group rounded-lg border border-slate-800 bg-[#0a1222] p-4 transition-all hover:border-slate-700 hover:bg-[#0e192f] focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-            <span className="uppercase font-semibold">Assessed entities</span>
+          <div className="flex items-center justify-between text-sm text-slate-400">
+            <span className="font-semibold">Assessed entities</span>
             <Building2 className="size-4 text-slate-400" />
           </div>
           <div className="mt-2.5">
             <div className="text-3xl font-bold font-mono text-slate-100">
               {filteredEntities.length}
             </div>
-            <div className="text-xs font-mono text-slate-300 font-medium mt-0.5">
+            <div className="mt-1 text-sm font-medium text-slate-200">
               CSEs assessed
             </div>
-            <div className="text-[11px] font-mono text-slate-400 mt-1">
+            <div className="mt-1 text-xs text-slate-400">
               +4 vs previous cycle
             </div>
           </div>
@@ -138,18 +138,18 @@ export default function OverviewPage() {
           href="/workbench/entities?filter=attention"
           className="group rounded-lg border border-amber-500/30 bg-[#14151e] p-4 transition-all hover:border-amber-500/60 hover:bg-[#181a26] focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
-          <div className="flex items-center justify-between text-xs font-mono text-amber-400">
-            <span className="uppercase font-semibold">Attention required</span>
+          <div className="flex items-center justify-between text-sm text-amber-400">
+            <span className="font-semibold">Attention required</span>
             <AlertTriangle className="size-4 text-amber-400" />
           </div>
           <div className="mt-2.5">
             <div className="text-3xl font-bold font-mono text-amber-300">
               8
             </div>
-            <div className="text-xs font-mono text-amber-200 font-medium mt-0.5">
+            <div className="mt-1 text-sm font-medium text-amber-200">
               Require attention
             </div>
-            <div className="text-[11px] font-mono text-slate-400 mt-1">
+            <div className="mt-1 text-xs text-slate-400">
               5 execution gaps &middot; 3 peer outliers
             </div>
           </div>
@@ -164,18 +164,18 @@ export default function OverviewPage() {
           href="/workbench/review-queue"
           className="group rounded-lg border border-blue-500/30 bg-[#0c172a] p-4 transition-all hover:border-blue-500/60 hover:bg-[#101f38] focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <div className="flex items-center justify-between text-xs font-mono text-blue-300">
-            <span className="uppercase font-semibold">Review samples due</span>
+          <div className="flex items-center justify-between text-sm text-blue-300">
+            <span className="font-semibold">Review samples due</span>
             <FileSearch className="size-4 text-blue-400" />
           </div>
           <div className="mt-2.5">
             <div className="text-3xl font-bold font-mono text-blue-300">
               23
             </div>
-            <div className="text-xs font-mono text-blue-200 font-medium mt-0.5">
+            <div className="mt-1 text-sm font-medium text-blue-200">
               Review samples due
             </div>
-            <div className="text-[11px] font-mono text-slate-400 mt-1">
+            <div className="mt-1 text-xs text-slate-400">
               Ranked by priority reason & evidence count
             </div>
           </div>
@@ -190,18 +190,18 @@ export default function OverviewPage() {
           href="/workbench/submissions"
           className="group rounded-lg border border-red-500/30 bg-[#191118] p-4 transition-all hover:border-red-500/60 hover:bg-[#20141f] focus:outline-none focus:ring-2 focus:ring-red-500"
         >
-          <div className="flex items-center justify-between text-xs font-mono text-red-300">
-            <span className="uppercase font-semibold">Data-quality gaps</span>
+          <div className="flex items-center justify-between text-sm text-red-300">
+            <span className="font-semibold">Data-quality gaps</span>
             <ShieldAlert className="size-4 text-red-400" />
           </div>
           <div className="mt-2.5">
             <div className="text-3xl font-bold font-mono text-red-300">
               3
             </div>
-            <div className="text-xs font-mono text-red-200 font-medium mt-0.5">
+            <div className="mt-1 text-sm font-medium text-red-200">
               Data-quality gaps
             </div>
-            <div className="text-[11px] font-mono text-slate-400 mt-1">
+            <div className="mt-1 text-xs text-slate-400">
               1 quarantined file &middot; 2 stale inventories
             </div>
           </div>
@@ -213,12 +213,12 @@ export default function OverviewPage() {
       </section>
 
       {/* 3. Entity Priority Ranking & Capability Overview */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
         {/* Left: Entity Priority Ranking (Action List, 6 cols) */}
-        <section className="rounded-lg border border-slate-800 bg-[#0c1424] p-5 lg:col-span-6 space-y-4">
+        <section className="space-y-4 rounded-lg border border-slate-800 bg-[#0c1424] p-5 xl:col-span-7">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-              <h2 className="text-sm font-bold text-white uppercase font-mono">
+              <h2 className="text-xl font-semibold text-white">
                 Entity Priority Ranking
               </h2>
               <p className="text-[11px] text-slate-400 font-mono mt-0.5">
@@ -253,7 +253,7 @@ export default function OverviewPage() {
                     <div className="min-w-0 space-y-1">
                       <Link
                         href={`/workbench/entities/${entity.slug}`}
-                        className="font-semibold text-sm text-slate-100 hover:text-blue-400 transition-colors flex items-center gap-1.5"
+                        className="flex items-center gap-1.5 text-base font-semibold text-slate-100 transition-colors hover:text-blue-400"
                       >
                         <span className="truncate">{entity.name}</span>
                         <ArrowUpRight className="size-3 text-slate-500 shrink-0" />
@@ -277,7 +277,7 @@ export default function OverviewPage() {
                         <button
                           type="button"
                           onClick={() => setScoreModalEntity(entity)}
-                          className="text-[10px] font-mono text-blue-400 hover:underline inline-flex items-center gap-0.5"
+                          className="inline-flex items-center gap-1 rounded-md border border-blue-500/25 bg-blue-500/10 px-2 py-1 font-mono text-xs text-blue-300 transition-colors hover:bg-blue-500/20"
                           title="View multi-worker score decomposition"
                         >
                           <HelpCircle className="size-3" />
@@ -332,10 +332,10 @@ export default function OverviewPage() {
         </section>
 
         {/* Right: Capability Overview (Option B: Clean Ranked/Bar Summary) */}
-        <section className="rounded-lg border border-slate-800 bg-[#0c1424] p-5 lg:col-span-6 space-y-4">
+        <section className="space-y-4 rounded-lg border border-slate-800 bg-[#0c1424] p-5 xl:col-span-5">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>
-              <h2 className="text-sm font-bold text-white uppercase font-mono">
+              <h2 className="text-xl font-semibold text-white">
                 Capability overview
               </h2>
               <p className="text-[11px] text-slate-400 font-mono mt-0.5">
@@ -356,7 +356,7 @@ export default function OverviewPage() {
         <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-amber-400" />
-            <h2 className="text-sm font-bold uppercase font-mono text-white">
+            <h2 className="text-xl font-semibold text-white">
               Why attention is needed
             </h2>
           </div>
@@ -365,15 +365,15 @@ export default function OverviewPage() {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Finding 1: Execution Gap */}
           <div className="rounded-lg border border-slate-800 bg-slate-900/90 p-4 flex flex-col justify-between space-y-3">
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <StatusBadge variant="attention" label="EXECUTION GAP" size="sm" />
-                <span className="font-mono text-[10px] text-slate-400 uppercase">Confidence: High</span>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-1 font-mono text-xs font-semibold text-emerald-300">HIGH CONFIDENCE</span>
               </div>
-              <h3 className="font-sans text-sm font-semibold text-slate-100">
+              <h3 className="font-sans text-lg font-semibold leading-snug text-slate-100">
                 18 critical alerts closed without escalation
               </h3>
 
@@ -382,7 +382,7 @@ export default function OverviewPage() {
                 <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400 block">
                   Evidence
                 </span>
-                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                <ul className="list-inside list-disc space-y-1 text-sm leading-6 text-slate-300">
                   <li>3 CSEs showed the same pattern</li>
                   <li>Average closure duration: under 4 minutes</li>
                   <li>Linked escalation records: 0</li>
@@ -394,7 +394,7 @@ export default function OverviewPage() {
                 <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-amber-400 block">
                   Why it matters
                 </span>
-                <p className="text-xs text-slate-300 mt-0.5">
+                <p className="mt-1 text-sm leading-6 text-slate-300">
                   Rapid closure without escalation may indicate insufficient escalation discipline or queue-clearing pressure.
                 </p>
               </div>
@@ -417,9 +417,9 @@ export default function OverviewPage() {
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <StatusBadge variant="confirmed_concern" label="MISSING EVIDENCE" size="sm" />
-                <span className="font-mono text-[10px] text-slate-400 uppercase">Confidence: High</span>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-1 font-mono text-xs font-semibold text-emerald-300">HIGH CONFIDENCE</span>
               </div>
-              <h3 className="font-sans text-sm font-semibold text-slate-100">
+              <h3 className="font-sans text-lg font-semibold leading-snug text-slate-100">
                 CSE-X has no telemetry for 7 critical assets
               </h3>
 
@@ -428,7 +428,7 @@ export default function OverviewPage() {
                 <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400 block">
                   Evidence
                 </span>
-                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                <ul className="list-inside list-disc space-y-1 text-sm leading-6 text-slate-300">
                   <li>7 Tier-1 payment switchgear nodes registered</li>
                   <li>Active operational log records: 0 in 60-day cycle</li>
                   <li>Negative-space detector signal verified</li>
@@ -440,7 +440,7 @@ export default function OverviewPage() {
                 <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-red-400 block">
                   Why it matters
                 </span>
-                <p className="text-xs text-slate-300 mt-0.5">
+                <p className="mt-1 text-sm leading-6 text-slate-300">
                   Absence of telemetry from core payment switches creates an unmonitored blind spot in critical infrastructure.
                 </p>
               </div>
@@ -463,9 +463,9 @@ export default function OverviewPage() {
             <div className="space-y-2.5">
               <div className="flex items-center justify-between">
                 <StatusBadge variant="attention" label="PEER DEVIATION" size="sm" />
-                <span className="font-mono text-[10px] text-slate-400 uppercase">Confidence: High</span>
+                <span className="rounded-full bg-emerald-500/10 px-2 py-1 font-mono text-xs font-semibold text-emerald-300">HIGH CONFIDENCE</span>
               </div>
-              <h3 className="font-sans text-sm font-semibold text-slate-100">
+              <h3 className="font-sans text-lg font-semibold leading-snug text-slate-100">
                 CSE-Y closure time is 4.8× faster than peer cohort
               </h3>
 
@@ -474,7 +474,7 @@ export default function OverviewPage() {
                 <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-slate-400 block">
                   Evidence
                 </span>
-                <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+                <ul className="list-inside list-disc space-y-1 text-sm leading-6 text-slate-300">
                   <li>Entity median closure: 4.8 min vs Cohort median: 24.0 min</li>
                   <li>98.4% of investigation notes contain &lt;15 characters</li>
                   <li>Statistically significant outlier (z = 3.82, p &lt; 0.001)</li>
@@ -486,7 +486,7 @@ export default function OverviewPage() {
                 <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-amber-400 block">
                   Why it matters
                 </span>
-                <p className="text-xs text-slate-300 mt-0.5">
+                <p className="mt-1 text-sm leading-6 text-slate-300">
                   Ultra-fast closure paired with sparse documentation indicates metric gaming or superficial triage rather than operational efficiency.
                 </p>
               </div>
@@ -512,7 +512,7 @@ export default function OverviewPage() {
           <div>
             <div className="flex items-center gap-2">
               <Database className="size-4 text-blue-400" />
-              <h2 className="text-sm font-bold uppercase font-mono text-white">
+              <h2 className="text-xl font-semibold text-white">
                 Data & evidence health
               </h2>
             </div>
