@@ -26,3 +26,8 @@ python-pkcs11>=0.9.0
 # install flow does immediately after this file's install step.
 pytest>=8.0
 httpx>=0.27
+# tests/test_phase86_packaging_discovery.py intentionally calls the real
+# `setuptools.find_packages` discovery function. Python 3.12+ environments
+# no longer bundle setuptools, so the CI test job must install it
+# explicitly (P31: this exact gap broke the Python 3.13 CI job).
+setuptools>=68
