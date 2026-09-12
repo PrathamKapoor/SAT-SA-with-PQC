@@ -244,3 +244,170 @@ html.lenis body {
   mask-image: radial-gradient(70% 60% at 50% 30%, black 30%, transparent 75%);
   -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, black 30%, transparent 75%);
 }
+
+/* SAT-SA light presentation. Scoped so the contentarchitecture reference route remains untouched. */
+.satsa-light {
+  --satsa-page: #f7f9fc;
+  --satsa-surface: rgba(255, 255, 255, 0.88);
+  --satsa-surface-muted: rgba(241, 245, 249, 0.88);
+  --satsa-border: #dbe3ee;
+  --satsa-ink: #0f172a;
+  --satsa-muted: #526079;
+  background-color: var(--satsa-page);
+  color: var(--satsa-ink);
+  color-scheme: light;
+}
+
+/* Workbench components use Tailwind's standard quarter-rem spacing scale. */
+.satsa-workbench {
+  --spacing: 0.25rem;
+}
+
+.satsa-light .satsa-grid-texture::before {
+  background-image:
+    linear-gradient(to right, rgba(37, 99, 235, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px);
+}
+
+.satsa-light .bg-black-deep,
+.satsa-light .bg-\[\#080f1c\],
+.satsa-light .bg-\[\#0a0a0a\],
+.satsa-light .bg-\[\#0a0a0a\]\/85,
+.satsa-light .bg-\[\#0a0a0a\]\/90,
+.satsa-light .bg-\[\#0a1222\],
+.satsa-light .bg-\[\#0a1222\]\/95,
+.satsa-light .bg-\[\#0c1424\],
+.satsa-light .bg-\[\#0c1628\],
+.satsa-light .bg-\[\#0c172a\],
+.satsa-light .bg-\[\#0e192f\],
+.satsa-light .bg-\[\#0f1726\],
+.satsa-light .bg-\[\#121624\],
+.satsa-light .bg-\[\#14151e\],
+.satsa-light .bg-\[\#191118\],
+.satsa-light .bg-slate-900,
+.satsa-light .bg-slate-900\/40,
+.satsa-light .bg-slate-900\/50,
+.satsa-light .bg-slate-900\/60,
+.satsa-light .bg-slate-900\/80,
+.satsa-light .bg-slate-900\/90,
+.satsa-light .bg-slate-950,
+.satsa-light .bg-slate-950\/40,
+.satsa-light .bg-slate-950\/60,
+.satsa-light .bg-slate-950\/90 {
+  background-color: var(--satsa-surface);
+}
+
+.satsa-light .bg-slate-800,
+.satsa-light .bg-slate-800\/60,
+.satsa-light .bg-slate-800\/80,
+.satsa-light .bg-slate-800\/90,
+.satsa-light .bg-white\/10,
+.satsa-light .bg-white\/15 {
+  background-color: var(--satsa-surface-muted);
+}
+
+.satsa-light .bg-blue-950\/20,
+.satsa-light .bg-blue-950\/50,
+.satsa-light .bg-blue-950\/60 {
+  background-color: rgba(219, 234, 254, 0.8);
+}
+
+.satsa-light .bg-emerald-950\/20 {
+  background-color: rgba(209, 250, 229, 0.72);
+}
+
+.satsa-light .bg-red-950\/10 {
+  background-color: rgba(254, 226, 226, 0.72);
+}
+
+.satsa-light .text-white,
+.satsa-light .text-slate-100 {
+  color: var(--satsa-ink);
+}
+
+.satsa-light .text-white\/30,
+.satsa-light .text-white\/60,
+.satsa-light .text-white\/70,
+.satsa-light .text-ghost-grey,
+.satsa-light .text-slate-200,
+.satsa-light .text-slate-300,
+.satsa-light .text-slate-400 {
+  color: var(--satsa-muted);
+}
+
+.satsa-light .text-slate-500,
+.satsa-light .text-slate-600 {
+  color: #64748b;
+}
+
+.satsa-light .text-blue-200,
+.satsa-light .text-blue-300,
+.satsa-light .text-blue-400 {
+  color: #1d4ed8;
+}
+
+.satsa-light .text-amber-200,
+.satsa-light .text-amber-300,
+.satsa-light .text-amber-400 {
+  color: #a16207;
+}
+
+.satsa-light .text-red-200,
+.satsa-light .text-red-300,
+.satsa-light .text-red-400 {
+  color: #b91c1c;
+}
+
+.satsa-light .text-emerald-200,
+.satsa-light .text-emerald-300,
+.satsa-light .text-emerald-400 {
+  color: #047857;
+}
+
+.satsa-light .border-\[\#15233c\],
+.satsa-light .border-\[\#1b2b48\],
+.satsa-light .border-\[\#1d2f50\],
+.satsa-light .border-slate-700,
+.satsa-light .border-slate-700\/50,
+.satsa-light .border-slate-700\/60,
+.satsa-light .border-slate-700\/80,
+.satsa-light .border-slate-800,
+.satsa-light .border-slate-800\/60,
+.satsa-light .border-slate-800\/80,
+.satsa-light .border-white\/10,
+.satsa-light .border-white\/15,
+.satsa-light .border-white\/20 {
+  border-color: var(--satsa-border);
+}
+
+.satsa-light .divide-slate-800\/60 > :not(:last-child),
+.satsa-light .divide-white\/10 > :not(:last-child),
+.satsa-light .divide-white\/5 > :not(:last-child) {
+  border-color: var(--satsa-border);
+}
+
+.satsa-light .hover\:bg-slate-800:hover,
+.satsa-light .hover\:bg-slate-800\/30:hover,
+.satsa-light .hover\:bg-slate-800\/40:hover,
+.satsa-light .hover\:bg-slate-900\/40:hover,
+.satsa-light .hover\:bg-white\/5:hover,
+.satsa-light .hover\:bg-\[\#0e192f\]:hover,
+.satsa-light .hover\:bg-\[\#101f38\]:hover,
+.satsa-light .hover\:bg-\[\#121f36\]:hover,
+.satsa-light .hover\:bg-\[\#152545\]:hover,
+.satsa-light .hover\:bg-\[\#181a26\]:hover,
+.satsa-light .hover\:bg-\[\#20141f\]:hover {
+  background-color: #eef4fb;
+}
+
+.satsa-light .hover\:text-white:hover,
+.satsa-light .hover\:text-slate-200:hover {
+  color: var(--satsa-ink);
+}
+
+.satsa-light .bg-blue-600.text-white,
+.satsa-light .bg-blue-600 .text-white,
+.satsa-light .bg-amber-600.text-white,
+.satsa-light .bg-red-600.text-white {
+  color: #fff;
+}

@@ -39,7 +39,7 @@ import { walkthroughSectionContent } from "./content/walkthrough";
 export function SatSaPage() {
   return (
     <SmoothScroll>
-      <div className="flex min-h-svh flex-col bg-[linear-gradient(180deg,#000_0%,#060606_35%,#000_100%)] text-white">
+      <div data-theme="satsa-light" className="satsa-light flex min-h-svh flex-col bg-[#f7f9fc] text-slate-950">
         <SiteNav content={navContent} />
         <main className="flex-1">
           <HeroSection content={heroContent} />

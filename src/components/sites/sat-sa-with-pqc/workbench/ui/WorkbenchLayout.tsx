@@ -24,6 +24,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import Grainient from "@/components/reactbits/Grainient";
 import { useWorkbench } from "../state/WorkbenchContext";
 
 interface WorkbenchLayoutProps {
@@ -95,7 +96,23 @@ export const WorkbenchLayout: React.FC<WorkbenchLayoutProps> = ({ children }) =>
   ];
 
   return (
-    <div className="flex min-h-screen bg-[#070d17] text-slate-100 font-sans antialiased selection:bg-blue-600 selection:text-white">
+    <div data-theme="satsa-light" className="satsa-light satsa-workbench relative isolate flex min-h-screen bg-[#f5f8fc] font-sans text-slate-950 antialiased selection:bg-blue-200 selection:text-slate-950">
+      <Grainient
+        className="pointer-events-none absolute inset-0 z-0 opacity-45"
+        color1="#DBEAFE"
+        color2="#A5F3FC"
+        color3="#EDE9FE"
+        lightMode
+        timeSpeed={0.035}
+        colorBalance={0.1}
+        warpStrength={0.16}
+        warpFrequency={2.1}
+        warpSpeed={0.25}
+        warpAmplitude={90}
+        grainAmount={0.018}
+        contrast={1.05}
+        saturation={0.68}
+      />
       {/* Mobile Backdrop */}
       {mobileMenuOpen && (
         <div
@@ -107,7 +124,7 @@ export const WorkbenchLayout: React.FC<WorkbenchLayoutProps> = ({ children }) =>
 
       {/* Sidebar: readable 256px desktop width */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-[#15233c] bg-[#0a1222] text-slate-300 transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-slate-200 bg-white/90 text-slate-700 shadow-sm backdrop-blur-xl transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${
           mobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
         }`}
       >
@@ -208,7 +225,7 @@ export const WorkbenchLayout: React.FC<WorkbenchLayoutProps> = ({ children }) =>
       </aside>
 
       {/* Main Content Pane */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         {/* Top Supervisory Bar */}
         <header className="sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3 border-b border-[#15233c] bg-[#0a1222]/95 px-4 py-2.5 backdrop-blur sm:px-6">
           {/* Left Context: Mobile toggle + Assessment Period & Cohort Filter */}
