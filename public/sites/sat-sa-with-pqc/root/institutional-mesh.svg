@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#061224" />
+      <stop offset="40%" stop-color="#0b3157" />
+      <stop offset="75%" stop-color="#0e4b75" />
+      <stop offset="100%" stop-color="#0b6e86" />
+    </linearGradient>
+    <linearGradient id="cyanGlow" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.85" />
+      <stop offset="50%" stop-color="#60a5fa" stop-opacity="0.95" />
+      <stop offset="100%" stop-color="#e0f2fe" stop-opacity="1" />
+    </linearGradient>
+    <pattern id="gridPattern" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#38bdf8" stroke-width="0.75" stroke-opacity="0.25" />
+    </pattern>
+    <radialGradient id="luminousSpot" cx="60%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.5" />
+      <stop offset="50%" stop-color="#0284c7" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#07111f" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1600" height="900" fill="url(#bgGrad)" />
+
+  <!-- Luminous supervisory accent center -->
+  <rect width="1600" height="900" fill="url(#luminousSpot)" />
+
+  <!-- Structured institutional grid -->
+  <rect width="1600" height="900" fill="url(#gridPattern)" />
+
+  <!-- Precision contour lines -->
+  <g fill="none" stroke="url(#cyanGlow)" stroke-width="2" stroke-opacity="0.7">
+    <path d="M -100 650 Q 400 350, 900 550 T 1700 300" />
+    <path d="M -100 550 Q 500 250, 1000 450 T 1700 200" stroke-width="3" stroke-opacity="0.9" />
+    <path d="M -100 750 Q 300 450, 800 650 T 1700 400" stroke-width="1.5" stroke-opacity="0.5" />
+    <path d="M 200 900 L 1400 0" stroke="#93c5fd" stroke-width="1" stroke-dasharray="8 8" stroke-opacity="0.4" />
+    <path d="M 400 900 L 1600 0" stroke="#38bdf8" stroke-width="1" stroke-dasharray="4 4" stroke-opacity="0.3" />
+  </g>
+
+  <!-- Institutional geometry nodes -->
+  <g fill="#e0f2fe" opacity="0.8">
+    <circle cx="500" cy="250" r="4" />
+    <circle cx="1000" cy="450" r="5" />
+    <circle cx="800" cy="650" r="3.5" />
+    <circle cx="300" cy="450" r="4" />
+    <circle cx="1200" cy="320" r="4.5" />
+  </g>
+</svg>
