@@ -22,7 +22,8 @@ interface RevealProps {
  */
 export function Reveal({ as: Tag = "div", children, className, delay = 0, rise = false }: RevealProps) {
   const ref = useRef<HTMLElement>(null);
-  const inView = useInView(ref, { rootMargin: "0px 0px -10% 0px" });
+  // The live site reveals as soon as a block touches the viewport (text at y≈870 of 900 is shown).
+  const inView = useInView(ref);
   return (
     <Tag
       ref={ref}
