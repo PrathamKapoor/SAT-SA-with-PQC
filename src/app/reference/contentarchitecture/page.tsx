@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageShell } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/shared/PageShell";
+import { ContentArchitecturePage } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/root-8a5edab2/ContentArchitecturePage";
 
 export const metadata: Metadata = {
   title: "Agent-Ready Sanity Kit for Next.js & Astro | The Content Architecture",
@@ -15,9 +15,5 @@ export const metadata: Metadata = {
 };
 
 export default function ContentArchitectureReferencePage() {
-  return (
-    <PageShell>
-      <div className="bg-off-white" />
-    </PageShell>
-  );
+  return <ContentArchitecturePage />;
 }
