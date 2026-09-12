@@ -363,16 +363,20 @@ export interface PlopPlan {
 const PLOP_STEP_MS = 130;
 const PLOP_TASK_MS = 770;
 export const PLOP_FOLDER = "features/page-builder/sections";
+/** The Astro edition nests the page builder under `src/`. */
+const PLOP_FOLDERS = [PLOP_FOLDER, `src/${PLOP_FOLDER}`];
 
-export function plopPlan(name: string): PlopPlan {
+export function plopPlan(name: string, tree?: RepoFolderNode): PlopPlan {
   const fileName = name ? `${name}-section.tsx` : "section.tsx";
+  const folder = (tree && PLOP_FOLDERS.find((path) => getNode(tree, path)?.type === "folder")) ?? PLOP_FOLDER;
+  const prefix = folder.startsWith("src/") ? "src/" : "";
   const writes = [
     `✔  ++ /sanity/schemas/page-sections/${fileName}`,
     "✔  |- /sanity/schemas/page-sections/index.ts",
     "✔  |- /sanity/schemas/page-sections/index.ts",
-    `✔  ++ /${PLOP_FOLDER}/${fileName}`,
-    "✔  |- /features/page-builder/page-sections.tsx",
-    "✔  |- /features/page-builder/page-sections.tsx",
+    `✔  ++ /${folder}/${fileName}`,
+    `✔  |- /${prefix}features/page-builder/page-sections.tsx`,
+    `✔  |- /${prefix}features/page-builder/page-sections.tsx`,
   ];
   const steps: TimelineStep[] = writes.map((line, i) => ({ at: (i + 1) * PLOP_STEP_MS, line }));
   const typesAt = writes.length * PLOP_STEP_MS + PLOP_TASK_MS;
@@ -384,9 +388,9 @@ export function plopPlan(name: string): PlopPlan {
     spinner: "scaffolding",
     steps,
     doneAt: formatAt,
-    folderPath: PLOP_FOLDER,
+    folderPath: folder,
     file: { type: "file", name: fileName, content: `// ${capitalized} section.\n` },
-    openPath: joinPath(PLOP_FOLDER, fileName),
+    openPath: joinPath(folder, fileName),
   };
 }
 
