@@ -1,12 +1,19 @@
 services:
-  # Public presentation environment using committed synthetic demo data only.
-  # This is not the air-gapped NCIIPC deployment configuration.
+  # Public presentation environment: the Next.js SAT-SA Workbench frontend
+  # (light/purple UI, interactive evidence hero), not the Python backend
+  # in this repo. That frontend's source lives on the `feat/sat-sa-site`
+  # branch of this same GitHub repo (a separate Next.js codebase with its
+  # own Dockerfile at its root) — this service builds and runs that branch.
+  #
+  # The Python backend's own demo UI (satsa/ui/*, dark/green) previously
+  # ran here; scripts/render_start.sh and the render-deploy notes below it
+  # are for that path and are unused while `branch: feat/sat-sa-site`.
   - type: web
     name: SAT-SA-with-PQC
     runtime: docker
     region: singapore
     plan: free
-    branch: main
+    branch: feat/sat-sa-site
     # Was `checksPass`: GitHub's classic combined-status API reports
     # pending/0 for this repo's commits even when all 4 GitHub Actions
     # checks (test py3.11/3.13, package integrity, Docker build/smoke)
@@ -16,15 +23,8 @@ services:
     autoDeployTrigger: commit
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    # Render supplies PORT at runtime. Demo state intentionally lives under
-    # /tmp, so it resets safely when the instance restarts or redeploys.
-    #
-    # This runs scripts/render_start.sh rather than an inline `sh -c '...'`
-    # string: Render does not hand `dockerCommand` to a real shell before
-    # exec'ing it, so a `${PORT:-10000}` expansion written inline here is
-    # never expanded — the whole string is looked up as one literal command
-    # name and fails with "not found". A committed script with a shebang
-    # sidesteps that entirely.
-    dockerCommand: scripts/render_start.sh
+    # No dockerCommand override: the Next.js Dockerfile's own CMD
+    # (`node server.js`, a standalone-mode production server) already
+    # reads Render's injected $PORT correctly.
     healthCheckPath: /
     numInstances: 1
