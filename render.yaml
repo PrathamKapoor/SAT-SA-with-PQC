@@ -12,11 +12,13 @@ services:
     dockerContext: .
     # Render supplies PORT at runtime. Demo state intentionally lives under
     # /tmp, so it resets safely when the instance restarts or redeploys.
-    dockerCommand: >-
-      sh -c 'exec python scripts/serve_ui.py
-      --db /tmp/satsa-demo/satsa.db
-      --trust-key-dir /tmp/satsa-demo/keys
-      --host 0.0.0.0
-      --port "${PORT:-10000}"'
+    #
+    # This runs scripts/render_start.sh rather than an inline `sh -c '...'`
+    # string: Render does not hand `dockerCommand` to a real shell before
+    # exec'ing it, so a `${PORT:-10000}` expansion written inline here is
+    # never expanded — the whole string is looked up as one literal command
+    # name and fails with "not found". A committed script with a shebang
+    # sidesteps that entirely.
+    dockerCommand: scripts/render_start.sh
     healthCheckPath: /
     numInstances: 1
