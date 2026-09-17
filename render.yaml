@@ -7,7 +7,13 @@ services:
     region: singapore
     plan: free
     branch: main
-    autoDeployTrigger: checksPass
+    # Was `checksPass`: GitHub's classic combined-status API reports
+    # pending/0 for this repo's commits even when all 4 GitHub Actions
+    # checks (test py3.11/3.13, package integrity, Docker build/smoke)
+    # succeed, because Actions reports check-runs, not classic statuses.
+    # That left Render waiting on a signal that never arrives, so pushes
+    # were never auto-deployed. Deploy on every push to `branch` instead.
+    autoDeployTrigger: commit
     dockerfilePath: ./Dockerfile
     dockerContext: .
     # Render supplies PORT at runtime. Demo state intentionally lives under
