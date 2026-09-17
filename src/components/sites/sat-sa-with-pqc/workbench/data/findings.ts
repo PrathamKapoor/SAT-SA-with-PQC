@@ -1,5 +1,5 @@
 /**
- * SAT-SA NCIIPC Supervisory Workbench — Authoritative Findings Repository
+ * SAT-SA NCIIPC Supervisory Workbench: Authoritative Findings Repository
  * Structured evidence narratives, peer context, detector lineage, and raw rows.
  */
 

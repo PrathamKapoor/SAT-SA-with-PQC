@@ -3,8 +3,8 @@ import { Reveal } from "@/components/sites/www-contentarchitecture-dev-80b3abaf/
 import type { validationContent } from "./content/site";
 
 const STATUS_STYLE: Record<string, string> = {
-  verified: "text-[#34d399] border-[#34d399]/30",
-  "verified, scoped": "text-[#34d399] border-[#34d399]/30",
+  verified: "text-[#7c3aed] border-[#7c3aed]/30",
+  "verified, scoped": "text-[#7c3aed] border-[#7c3aed]/30",
   simulated: "text-white/70 border-white/20",
   pending: "text-dark-grey border-white/10",
 };
@@ -12,7 +12,7 @@ const STATUS_STYLE: Record<string, string> = {
 export function ValidationSection({ content }: { content: typeof validationContent }) {
   return (
     <section id="validation" className="border-white/10 border-t px-16 py-56 lg:px-80 lg:py-80">
-      <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
+      <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#7c3aed] uppercase">
         {content.eyebrow}
       </Reveal>
       <Reveal as="h2" className="mb-24 max-w-800 text-balance font-medium text-headline-10">

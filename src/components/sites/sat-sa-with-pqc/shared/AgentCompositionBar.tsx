@@ -7,7 +7,7 @@ interface AgentCompositionBarProps {
 }
 
 const MLOPS_COLOR = "#3987e5";
-const SATSA_COLOR = "#34d399";
+const SATSA_COLOR = "#7c3aed";
 
 /** A 100%-stacked bar: retained MLOps agents vs SAT-SA supervisory agents. Both segments are
  * always directly labelled, so the two fixed hues never have to carry meaning alone. */

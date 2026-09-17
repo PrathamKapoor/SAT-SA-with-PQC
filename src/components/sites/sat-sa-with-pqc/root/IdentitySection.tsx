@@ -7,7 +7,7 @@ export function IdentitySection({ content }: { content: typeof identityContent }
     <section id="mission" className="border-white/10 border-t px-16 py-56 lg:px-80 lg:py-80">
       <div className="grid grid-cols-1 gap-24 lg:grid-cols-12 lg:gap-48">
         <div className="lg:col-span-4">
-          <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
+          <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#7c3aed] uppercase">
             {content.eyebrow}
           </Reveal>
           <Reveal as="h2" className="text-balance font-medium text-headline-10">
@@ -19,7 +19,7 @@ export function IdentitySection({ content }: { content: typeof identityContent }
             <ul className="flex flex-col gap-16">
               {content.is.map((line, i) => (
                 <li key={i} className="flex gap-12 text-body-10 text-ghost-grey">
-                  <CheckIcon className="mt-2 size-16 shrink-0 text-[#34d399]" />
+                  <CheckIcon className="mt-2 size-16 shrink-0 text-[#7c3aed]" />
                   <span>{line}</span>
                 </li>
               ))}

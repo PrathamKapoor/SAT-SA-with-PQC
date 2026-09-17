@@ -6,18 +6,18 @@ export function TrustSection({ content }: { content: typeof trustContent }) {
     <section id="trust" className="relative border-white/10 border-t px-16 py-64 lg:px-80 lg:py-96">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-0 left-1/2 -z-1 size-500 -translate-x-1/2 rounded-full bg-[#34d399]/[0.05] blur-[130px]"
+        className="pointer-events-none absolute top-0 left-1/2 -z-1 size-500 -translate-x-1/2 rounded-full bg-[#7c3aed]/[0.05] blur-[130px]"
       />
       <div className="grid grid-cols-1 gap-32 lg:grid-cols-12 lg:gap-48">
         <div className="lg:col-span-5">
-          <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
+          <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#7c3aed] uppercase">
             {content.eyebrow}
           </Reveal>
           <Reveal as="h2" className="mb-24 text-balance font-medium text-headline-10">
             {content.title}
           </Reveal>
           <Reveal className="mb-32 text-body-20 text-ghost-grey">{content.intro}</Reveal>
-          <Reveal delay={100} className="border-[#34d399]/30 border-l-2 pl-16 text-body-10 text-dark-grey italic">
+          <Reveal delay={100} className="border-[#7c3aed]/30 border-l-2 pl-16 text-body-10 text-dark-grey italic">
             {content.claim}
           </Reveal>
         </div>
@@ -27,7 +27,7 @@ export function TrustSection({ content }: { content: typeof trustContent }) {
             {content.pillars.map((pillar) => (
               <div key={pillar.label} className="bg-[#0a0a0a] p-16 lg:p-24">
                 <div className="mb-4 font-mono text-caption-10 text-dark-grey uppercase">{pillar.label}</div>
-                <div className="mb-8 font-mono text-caption-20 text-[#34d399]">{pillar.value}</div>
+                <div className="mb-8 font-mono text-caption-20 text-[#7c3aed]">{pillar.value}</div>
                 <p className="text-ui text-dark-grey">{pillar.detail}</p>
               </div>
             ))}

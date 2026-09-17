@@ -5,7 +5,7 @@ export function LimitationsSection({ content }: { content: typeof limitationsCon
   return (
     <section className="border-white/10 border-t bg-white/[0.02] px-16 py-56 lg:px-80 lg:py-72">
       <div className="max-w-800">
-        <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
+        <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#7c3aed] uppercase">
           {content.eyebrow}
         </Reveal>
         <Reveal as="h2" className="mb-12 font-medium text-headline-10">

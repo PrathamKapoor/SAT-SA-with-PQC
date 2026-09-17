@@ -12,6 +12,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useWorkbench } from "@/components/sites/sat-sa-with-pqc/workbench/state/WorkbenchContext";
+import { governanceConfig } from "@/components/sites/sat-sa-with-pqc/workbench/data/governance";
 import { StatusBadge } from "@/components/sites/sat-sa-with-pqc/workbench/ui/StatusBadge";
 
 export default function ReportsPage() {
@@ -46,10 +47,10 @@ export default function ReportsPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            Auditable Supervisory Reports
+            Reports
           </h1>
-          <p className="text-xs font-mono text-slate-400 mt-0.5">
-            Statutory supervisory packets & assessment summaries for NCIIPC examiners
+          <p className="mt-0.5 text-sm text-slate-400">
+            Supervisory packets and assessment summaries
           </p>
         </div>
       </div>
@@ -73,7 +74,7 @@ export default function ReportsPage() {
           <button
             type="button"
             onClick={() => handleDownload("Executive-Summary")}
-            className="w-full flex items-center justify-center gap-2 rounded bg-blue-600 py-2 font-mono text-xs font-semibold text-white hover:bg-blue-500 transition-colors shadow"
+            className="w-full flex items-center justify-center gap-2 rounded bg-violet-600 py-2 font-mono text-xs font-semibold text-white hover:bg-violet-500 transition-colors shadow"
           >
             <Download className="size-3.5" />
             <span>{downloading === "Executive-Summary" ? "Generating..." : "Download Executive Summary"}</span>
@@ -100,7 +101,7 @@ export default function ReportsPage() {
             onClick={() => handleDownload("Disposition-Packet")}
             className="w-full flex items-center justify-center gap-2 rounded border border-slate-700 bg-slate-800 py-2 font-mono text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-colors shadow"
           >
-            <Download className="size-3.5 text-blue-400" />
+            <Download className="size-3.5 text-violet-400" />
             <span>{downloading === "Disposition-Packet" ? "Generating..." : "Download Disposition Dossier"}</span>
           </button>
         </div>
@@ -109,14 +110,13 @@ export default function ReportsPage() {
         <div className="rounded-lg border border-slate-800 bg-[#0c1424] p-5 space-y-3 flex flex-col justify-between">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <StatusBadge variant="verified" label="AUDIT READY" size="sm" />
               <span className="font-mono text-xs text-slate-400">7-Year Retention</span>
             </div>
             <h3 className="font-sans text-base font-bold text-white">
               Statutory Defense & Provenance Bundle
             </h3>
             <p className="text-xs text-slate-300 font-sans">
-              Cryptographically bound evidence bundle containing raw submissions hashes, detector calibration weights, and 103 hash-chained ledger blocks.
+              Cryptographically bound evidence bundle containing raw submissions hashes, detector calibration weights, and {governanceConfig.hashChainedBlocksTotal} hash-chained ledger blocks.
             </p>
           </div>
 
@@ -125,7 +125,7 @@ export default function ReportsPage() {
             onClick={() => handleDownload("Statutory-Bundle")}
             className="w-full flex items-center justify-center gap-2 rounded border border-slate-700 bg-slate-800 py-2 font-mono text-xs font-semibold text-slate-200 hover:bg-slate-700 transition-colors shadow"
           >
-            <Download className="size-3.5 text-blue-400" />
+            <Download className="size-3.5 text-violet-400" />
             <span>{downloading === "Statutory-Bundle" ? "Generating..." : "Download Statutory Bundle"}</span>
           </button>
         </div>

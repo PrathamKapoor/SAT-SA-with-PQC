@@ -40,17 +40,17 @@ export const EvidenceViewer: React.FC<EvidenceViewerProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 bg-slate-900/80 px-4 py-2.5">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 text-slate-300">
-            <Lock className="size-3.5 text-blue-400" />
+            <Lock className="size-3.5 text-violet-400" />
             <span className="font-semibold text-slate-200">Raw Submitted Evidence Rows</span>
           </div>
-          <span className="rounded bg-slate-800 px-2 py-0.5 text-[11px] text-slate-400">
+          <span className="rounded bg-slate-800 px-2 py-0.5 text-xs text-slate-400">
             {records.length} {records.length === 1 ? "record" : "records"}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Role badge */}
-          <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-400">
+          <div className="hidden sm:flex items-center gap-1 text-xs text-slate-400">
             <span>Role:</span>
             <span className="text-slate-200 font-semibold">NCIIPC Supervisory Examiner</span>
           </div>
@@ -72,11 +72,11 @@ export const EvidenceViewer: React.FC<EvidenceViewerProps> = ({
       </div>
 
       {/* Provenance Metadata Sub-bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/60 bg-slate-900/40 px-4 py-1.5 text-[11px] text-slate-400">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/60 bg-slate-900/40 px-4 py-1.5 text-xs text-slate-400">
         <div className="flex items-center gap-2">
           <span>Submission ID: <strong className="text-slate-300">{submissionId}</strong></span>
           <span>·</span>
-          <span>SHA3-256: <code className="text-blue-300">{contentHashSha3.slice(0, 16)}...</code></span>
+          <span>SHA3-256: <code className="text-violet-300">{contentHashSha3.slice(0, 16)}...</code></span>
         </div>
         <div className="flex items-center gap-1 text-emerald-400">
           <ShieldCheck className="size-3.5" />
@@ -88,7 +88,7 @@ export const EvidenceViewer: React.FC<EvidenceViewerProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b border-slate-800 bg-slate-900/60 text-slate-400 uppercase tracking-wider text-[10px]">
+            <tr className="border-b border-slate-800 bg-slate-900/60 text-slate-400 uppercase tracking-wider text-xs">
               <th className="py-2 px-3">Alert / Record</th>
               <th className="py-2 px-3">Timestamp (UTC)</th>
               <th className="py-2 px-3">Target Asset</th>
@@ -112,7 +112,7 @@ export const EvidenceViewer: React.FC<EvidenceViewerProps> = ({
                 <td className="py-2 px-3 font-mono">{rec.durationSeconds > 0 ? `${rec.durationSeconds}s` : "N/A"}</td>
                 <td className="py-2 px-3">
                   {rec.linkedCaseId ? (
-                    <span className="text-blue-400">{rec.linkedCaseId}</span>
+                    <span className="text-violet-400">{rec.linkedCaseId}</span>
                   ) : (
                     <span className="text-red-400 font-semibold">[NULL / NONE]</span>
                   )}
@@ -129,7 +129,7 @@ export const EvidenceViewer: React.FC<EvidenceViewerProps> = ({
                   <button
                     type="button"
                     onClick={() => handleCopy(maskString(rec.rawJsonSnippet), rec.id)}
-                    className="inline-flex items-center gap-1 rounded bg-slate-800 px-2 py-1 text-[10px] text-slate-300 hover:bg-slate-700 transition-colors"
+                    className="inline-flex items-center gap-1 rounded bg-slate-800 px-2 py-1 text-xs text-slate-300 hover:bg-slate-700 transition-colors"
                   >
                     {copiedId === rec.id ? <Check className="size-3 text-emerald-400" /> : <Copy className="size-3" />}
                     <span>{copiedId === rec.id ? "Copied" : "Copy JSON"}</span>

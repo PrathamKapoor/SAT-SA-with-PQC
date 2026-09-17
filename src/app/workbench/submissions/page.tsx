@@ -62,17 +62,17 @@ export default function SubmissionsPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            Data Submissions & Input Integrity
+            Submissions
           </h1>
-          <p className="text-xs font-mono text-slate-400 mt-0.5">
-            Examiner data quality & negative-space trust boundary · Cycle: Aug–Sep 2026
+          <p className="mt-0.5 text-sm text-slate-400">
+            Data quality and input integrity
           </p>
         </div>
       </div>
 
       {/* Negative-Space Credibility Callout */}
-      <div className="rounded-lg border border-blue-500/30 bg-[#0c1628] p-4 text-xs font-sans text-slate-200 space-y-1.5">
-        <div className="flex items-center gap-2 font-mono text-blue-400 font-bold uppercase text-[11px]">
+      <div className="rounded-lg border border-violet-500/30 bg-[#0c1628] p-4 text-xs font-sans text-slate-200 space-y-1.5">
+        <div className="flex items-center gap-2 font-mono text-violet-400 font-bold uppercase text-xs">
           <ShieldCheck className="size-4" />
           <span>Supervisory Negative-Space Integrity Principle</span>
         </div>
@@ -86,7 +86,7 @@ export default function SubmissionsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse font-mono text-xs">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/80 text-[10px] text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-800 bg-slate-900/80 text-xs text-slate-400 uppercase tracking-wider">
                 <th className="py-3 px-4">Submission & Entity</th>
                 <th className="py-3 px-3">Period & Ingest</th>
                 <th className="py-3 px-3">Schema Result</th>
@@ -105,18 +105,18 @@ export default function SubmissionsPage() {
                     <div className="font-mono text-xs font-bold text-white">
                       {sub.submissionIdentifier}
                     </div>
-                    <span className="text-[11px] text-slate-400 font-sans block">
+                    <span className="text-xs text-slate-400 font-sans block">
                       {sub.entityName}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-500">
+                    <span className="text-xs font-mono text-slate-500">
                       {sub.format} · {sub.sourceOrigin}
                     </span>
                   </td>
 
                   {/* Period & Ingest Timestamp */}
-                  <td className="py-3 px-3 text-[11px]">
+                  <td className="py-3 px-3 text-xs">
                     <div>{sub.reportingPeriod}</div>
-                    <div className="text-slate-500 text-[10px]">
+                    <div className="text-slate-500 text-xs">
                       {sub.ingestTimestamp.replace("T", " ").replace("Z", " UTC")}
                     </div>
                   </td>
@@ -133,7 +133,7 @@ export default function SubmissionsPage() {
                   </td>
 
                   {/* Asset Inventory Freshness */}
-                  <td className="py-3 px-3 text-[11px]">
+                  <td className="py-3 px-3 text-xs">
                     <div className="flex items-center gap-1.5">
                       <span
                         className={
@@ -145,13 +145,13 @@ export default function SubmissionsPage() {
                         {sub.assetInventoryFreshnessDays} days old
                       </span>
                     </div>
-                    <span className="text-[10px] text-slate-500 uppercase">
+                    <span className="text-xs text-slate-500 uppercase">
                       {sub.assetInventoryStatus === "fresh" ? "Fresh (<30d)" : "Stale (>90d)"}
                     </span>
                   </td>
 
                   {/* Referential Integrity & Duplicates */}
-                  <td className="py-3 px-3 text-[11px]">
+                  <td className="py-3 px-3 text-xs">
                     <div className="flex items-center gap-2">
                       <span>Ref errs: <strong className={sub.referentialIntegrityFailuresCount > 50 ? "text-red-400" : "text-slate-200"}>{sub.referentialIntegrityFailuresCount}</strong></span>
                       <span>·</span>
@@ -160,7 +160,7 @@ export default function SubmissionsPage() {
                   </td>
 
                   {/* Records Breakdown */}
-                  <td className="py-3 px-3 text-[11px]">
+                  <td className="py-3 px-3 text-xs">
                     <div className="flex items-center gap-1.5">
                       <span className="text-emerald-400 font-semibold">{sub.recordsAccepted.toLocaleString()}</span>
                       <span className="text-slate-500">/</span>
@@ -172,18 +172,18 @@ export default function SubmissionsPage() {
                         {sub.recordsRejected}
                       </span>
                     </div>
-                    <div className="text-[10px] text-slate-500">
+                    <div className="text-xs text-slate-500">
                       Total: {sub.recordsTotal.toLocaleString()}
                     </div>
                   </td>
 
                   {/* PQC Signature Verification */}
                   <td className="py-3 px-3">
-                    <div className="flex items-center gap-1 text-emerald-400 text-[11px]">
+                    <div className="flex items-center gap-1 text-emerald-400 text-xs">
                       <ShieldCheck className="size-3.5" />
                       <span>{sub.pqcSignatureAlgorithm.split(" ")[0]} Valid</span>
                     </div>
-                    <code className="text-[9px] text-slate-500 block">
+                    <code className="text-xs text-slate-500 block">
                       {sub.contentHashSha3.slice(0, 10)}...
                     </code>
                   </td>
@@ -193,9 +193,9 @@ export default function SubmissionsPage() {
                     <button
                       type="button"
                       onClick={() => handleDownloadReport(sub)}
-                      className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-[11px] text-slate-200 hover:bg-slate-700 transition-colors"
+                      className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs text-slate-200 hover:bg-slate-700 transition-colors"
                     >
-                      <Download className="size-3 text-blue-400" />
+                      <Download className="size-3 text-violet-400" />
                       <span>JSON Receipt</span>
                     </button>
                   </td>

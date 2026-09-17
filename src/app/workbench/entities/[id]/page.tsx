@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ShieldCheck,
   CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
 import { useWorkbench } from "@/components/sites/sat-sa-with-pqc/workbench/state/WorkbenchContext";
 import { StatusBadge } from "@/components/sites/sat-sa-with-pqc/workbench/ui/StatusBadge";
@@ -34,7 +35,7 @@ export default function EntityProfilePage() {
       <div className="flex items-center justify-between">
         <Link
           href="/workbench/entities"
-          className="inline-flex items-center gap-1.5 font-mono text-xs text-blue-400 hover:underline"
+          className="inline-flex items-center gap-1.5 font-mono text-xs text-violet-400 hover:underline"
         >
           <ArrowLeft className="size-3.5" />
           <span>Back to All Entities</span>
@@ -69,7 +70,7 @@ export default function EntityProfilePage() {
               </div>
               <div>
                 <span className="text-slate-500 uppercase">Peer Cohort:</span>{" "}
-                <strong className="text-blue-300">{entity.cohort}</strong>
+                <strong className="text-violet-300">{entity.cohort}</strong>
               </div>
               <div>
                 <span className="text-slate-500 uppercase">Confidence:</span>{" "}
@@ -90,7 +91,7 @@ export default function EntityProfilePage() {
         <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-12 border-t border-slate-800/80">
           {/* Top Concerns List (7 cols) */}
           <div className="md:col-span-7 space-y-2">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-amber-400 font-semibold block">
+            <span className="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold block">
               Top Supervisory Concerns ({entity.topConcerns.length})
             </span>
             <ul className="space-y-1.5 text-xs text-slate-200">
@@ -105,10 +106,10 @@ export default function EntityProfilePage() {
 
           {/* Why This Score Summary (5 cols) */}
           <div className="md:col-span-5 rounded border border-slate-800 bg-slate-900/60 p-3 space-y-2 font-mono text-xs">
-            <span className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold block">
+            <span className="text-xs uppercase tracking-wider text-slate-400 font-semibold block">
               Why this score? (Risk: {entity.score.toFixed(1)} / 100)
             </span>
-            <div className="space-y-1 text-slate-300 text-[11px]">
+            <div className="space-y-1 text-slate-300 text-xs">
               {entity.scoreDecomposition.slice(0, 3).map((item, i) => (
                 <div key={i} className="flex items-center justify-between border-b border-slate-800/50 pb-1">
                   <span className="text-slate-400 truncate max-w-[210px]">{item.factor.split(":")[0]}</span>
@@ -116,7 +117,7 @@ export default function EntityProfilePage() {
                 </div>
               ))}
             </div>
-            <p className="text-[10px] text-slate-500 pt-1">
+            <p className="text-xs text-slate-500 pt-1">
               Decomposable formula: weights, corroborated cases, and source verification listed below.
             </p>
           </div>
@@ -138,7 +139,7 @@ export default function EntityProfilePage() {
               onClick={() => setActiveTab(tab.id)}
               className={`border-b-2 px-3.5 py-2.5 font-medium transition-colors ${
                 activeTab === tab.id
-                  ? "border-blue-500 text-blue-400 bg-blue-500/10 font-bold"
+                  ? "border-violet-500 text-violet-400 bg-violet-500/10 font-bold"
                   : "border-transparent text-slate-400 hover:text-white"
               }`}
             >
@@ -165,7 +166,7 @@ export default function EntityProfilePage() {
                 <h3 className="text-sm font-bold text-white uppercase">
                   Decomposable Risk Model Factors
                 </h3>
-                <p className="text-slate-400 text-[11px]">
+                <p className="text-slate-400 text-xs">
                   Every risk factor is bounded, explainable, and bound to verified source records
                 </p>
               </div>
@@ -177,7 +178,7 @@ export default function EntityProfilePage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/80 text-[10px] uppercase text-slate-400">
+                  <tr className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase text-slate-400">
                     <th className="py-2.5 px-3">Risk Factor</th>
                     <th className="py-2.5 px-3">Weight</th>
                     <th className="py-2.5 px-3">Subscore</th>
@@ -196,7 +197,7 @@ export default function EntityProfilePage() {
                       <td className="py-2.5 px-3 text-amber-300 font-bold">
                         {f.subscore.toFixed(1)}
                       </td>
-                      <td className="py-2.5 px-3 text-slate-400 font-sans text-[11px]">
+                      <td className="py-2.5 px-3 text-slate-400 font-sans text-xs">
                         {f.sourceRecords}
                       </td>
                       <td className="py-2.5 px-3">
@@ -206,7 +207,7 @@ export default function EntityProfilePage() {
                           size="sm"
                         />
                       </td>
-                      <td className="py-2.5 px-3 text-[11px] text-slate-400 font-sans">
+                      <td className="py-2.5 px-3 text-xs text-slate-400 font-sans">
                         {f.limitations}
                       </td>
                     </tr>
@@ -274,9 +275,9 @@ export default function EntityProfilePage() {
                   </div>
                   <Link
                     href={`/workbench/findings/${finding.findingSlug}`}
-                    className="font-mono text-xs text-blue-400 hover:underline"
+                    className="font-mono text-xs text-violet-400 hover:underline"
                   >
-                    Open Evidence Narrative &rarr;
+                    Open Evidence Narrative <ArrowRight className="inline size-3.5 shrink-0" aria-hidden="true" />
                   </Link>
                 </div>
 
@@ -313,7 +314,7 @@ export default function EntityProfilePage() {
             <h2 className="text-sm font-bold uppercase text-white">
               Supervisory Review Ledger for {entity.name}
             </h2>
-            <span className="text-emerald-400 text-[11px] flex items-center gap-1">
+            <span className="text-emerald-400 text-xs flex items-center gap-1">
               <CheckCircle2 className="size-3.5" />
               <span>Immutable Chain Verified</span>
             </span>
@@ -321,23 +322,23 @@ export default function EntityProfilePage() {
 
           <div className="space-y-3">
             <div className="rounded border border-slate-800 bg-slate-900/60 p-3 space-y-1 text-slate-300">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <div className="flex items-center justify-between text-xs text-slate-400">
                 <span>Block #100 · 2026-08-31 23:59:12 UTC</span>
                 <span className="text-emerald-400">PQC Signed</span>
               </div>
               <p className="font-semibold text-white">Periodic Submission Ingested (1,428,912 records)</p>
-              <p className="text-slate-400 text-[11px]">
+              <p className="text-slate-400 text-xs">
                 Actor: INGEST_DAEMON_AIRGAP · Digest: e3b0c44298fc1c14...
               </p>
             </div>
 
             <div className="rounded border border-slate-800 bg-slate-900/60 p-3 space-y-1 text-slate-300">
-              <div className="flex items-center justify-between text-[11px] text-slate-400">
+              <div className="flex items-center justify-between text-xs text-slate-400">
                 <span>Block #101 · 2026-09-01 02:15:30 UTC</span>
                 <span className="text-emerald-400">PQC Signed</span>
               </div>
               <p className="font-semibold text-white">Analysis Run Completed (16 analytical workers)</p>
-              <p className="text-slate-400 text-[11px]">
+              <p className="text-slate-400 text-xs">
                 Actor: SYSTEM_SUPERVISOR_RUNNER · Generated 24 findings. Risk score evaluated: 78.4.
               </p>
             </div>

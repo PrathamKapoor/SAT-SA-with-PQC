@@ -23,7 +23,7 @@ export function PipelineSection({ content }: { content: typeof pipelineContent }
     <section id="pipeline" className="border-white/10 border-t px-16 py-64 lg:px-80 lg:py-96">
       <div className="mb-40 grid grid-cols-1 gap-24 lg:grid-cols-12 lg:gap-48">
         <div className="lg:col-span-5">
-          <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
+          <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#7c3aed] uppercase">
             {content.eyebrow}
           </Reveal>
           <Reveal as="h2" className="text-balance font-medium text-headline-10">
@@ -35,14 +35,14 @@ export function PipelineSection({ content }: { content: typeof pipelineContent }
         </Reveal>
       </div>
 
-      {/* Connected step flow — a horizontal row on desktop, joined by a line; stacks on mobile. */}
+      {/* Connected step flow: a horizontal row on desktop, joined by a line; stacks on mobile. */}
       <div className="relative mb-40 grid grid-cols-2 gap-x-16 gap-y-32 sm:grid-cols-3 lg:grid-cols-6 lg:gap-x-8">
         <div aria-hidden="true" className="absolute inset-x-0 top-19 hidden h-px bg-white/10 lg:block" />
         {content.stages.map((stage, i) => {
           const Icon = ICONS[stage.icon];
           return (
             <Reveal key={stage.num} delay={i * 60} className="relative flex flex-col gap-12">
-              <span className="relative z-1 flex size-38 items-center justify-center rounded-full border border-[#34d399]/30 bg-[#0a0a0a] text-[#34d399]">
+              <span className="relative z-1 flex size-38 items-center justify-center rounded-full border border-[#7c3aed]/30 bg-[#0a0a0a] text-[#7c3aed]">
                 <Icon className="size-16" />
               </span>
               <div>

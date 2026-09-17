@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Building2 } from "lucide-react";
 import {
   cohorts,
@@ -14,11 +14,17 @@ import {
   OfflineBarChart,
 } from "@/components/sites/sat-sa-with-pqc/workbench/ui/OfflineChart";
 import { StatusBadge } from "@/components/sites/sat-sa-with-pqc/workbench/ui/StatusBadge";
+import { HeatmapNCIIPC } from "@/components/sites/sat-sa-with-pqc/workbench/ui/HeatmapNCIIPC";
+import { useWorkbench } from "@/components/sites/sat-sa-with-pqc/workbench/state/WorkbenchContext";
+import { averageDimensions, entitiesInCohort } from "@/components/sites/sat-sa-with-pqc/workbench/state/derived";
 
 export default function TrendsPage() {
   const [selectedCohortId, setSelectedCohortId] = useState<string>("cohort-fin-large");
   const currentCohort =
     cohorts.find((c) => c.cohortId === selectedCohortId) || cohorts[0];
+  const { entitiesList, selectedCohort } = useWorkbench();
+  const scopedEntities = useMemo(() => entitiesInCohort(entitiesList, selectedCohort), [entitiesList, selectedCohort]);
+  const capabilityDimensions = useMemo(() => averageDimensions(scopedEntities), [scopedEntities]);
 
   return (
     <div className="space-y-6">
@@ -26,10 +32,10 @@ export default function TrendsPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            Trends & Cohort Benchmarks
+            Analytics
           </h1>
-          <p className="text-xs font-mono text-slate-400 mt-0.5">
-            Statistical multi-cycle comparisons · Explaining comparability to prevent misleading league tables
+          <p className="text-sm text-slate-400 mt-0.5">
+            Capabilities, trends and cohort benchmarks
           </p>
         </div>
 
@@ -50,43 +56,61 @@ export default function TrendsPage() {
         </div>
       </div>
 
+      <section id="capabilities" aria-labelledby="capabilities-heading" className="scroll-mt-20 rounded-lg border border-slate-800 bg-[#0c1424] p-5">
+        <div className="flex items-baseline justify-between gap-3 border-b border-slate-800 pb-3">
+          <h2 id="capabilities-heading" className="text-base font-semibold text-white">
+            Capability overview
+          </h2>
+          <span className="font-mono text-xs text-slate-400" title="Average across entities in the selected cohort">
+            {selectedCohort} <span aria-hidden="true">&middot;</span> {scopedEntities.length} CSEs
+          </span>
+        </div>
+        {capabilityDimensions.length ? (
+          <div className="pt-2">
+            <HeatmapNCIIPC dimensions={capabilityDimensions} />
+          </div>
+        ) : (
+          <p className="pt-4 text-sm text-slate-500">No entities in this cohort.</p>
+        )}
+      </section>
+
       {/* Cohort Membership & Comparability Context Box (Crucial for preventing misleading league tables!) */}
-      <div className="rounded-lg border border-blue-500/30 bg-[#0c1628] p-5 space-y-3">
+      <div className="rounded-lg border border-violet-500/30 bg-[#0c1628] p-5 space-y-3">
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <div className="flex items-center gap-2">
-            <Building2 className="size-4 text-blue-400" />
+            <Building2 className="size-4 text-violet-400" />
             <h2 className="text-sm font-bold uppercase font-mono text-white">
               Why Entities in &ldquo;{currentCohort.name}&rdquo; Are Comparable
             </h2>
           </div>
-          <span className="rounded bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 font-mono text-[10px] text-blue-300 uppercase">
+          <span className="rounded bg-violet-500/15 border border-violet-500/30 px-2 py-0.5 font-mono text-xs text-violet-300 uppercase">
             {currentCohort.memberCount} Standard Peers
           </span>
         </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 text-xs font-mono pt-1">
           <div className="rounded border border-slate-800 bg-slate-900/60 p-2.5">
-            <span className="text-slate-500 text-[10px] uppercase block">Sector Scope</span>
+            <span className="text-slate-500 text-xs uppercase block">Sector Scope</span>
             <span className="text-slate-200 mt-0.5 block font-sans">{currentCohort.comparabilityCriteria.sectorScope}</span>
           </div>
 
           <div className="rounded border border-slate-800 bg-slate-900/60 p-2.5">
-            <span className="text-slate-500 text-[10px] uppercase block">Asset Scale</span>
+            <span className="text-slate-500 text-xs uppercase block">Asset Scale</span>
             <span className="text-slate-200 mt-0.5 block font-sans">{currentCohort.comparabilityCriteria.assetScale}</span>
           </div>
 
           <div className="rounded border border-slate-800 bg-slate-900/60 p-2.5">
-            <span className="text-slate-500 text-[10px] uppercase block">Criticality Mix</span>
+            <span className="text-slate-500 text-xs uppercase block">Criticality Mix</span>
             <span className="text-slate-200 mt-0.5 block font-sans">{currentCohort.comparabilityCriteria.criticalityMix}</span>
           </div>
 
           <div className="rounded border border-slate-800 bg-slate-900/60 p-2.5">
-            <span className="text-slate-500 text-[10px] uppercase block">Architecture Type</span>
+            <span className="text-slate-500 text-xs uppercase block">Architecture Type</span>
             <span className="text-slate-200 mt-0.5 block font-sans">{currentCohort.comparabilityCriteria.architectureType}</span>
           </div>
 
           <div className="rounded border border-slate-800 bg-slate-900/60 p-2.5">
-            <span className="text-slate-500 text-[10px] uppercase block">Reporting Period</span>
+            <span className="text-slate-500 text-xs uppercase block">Reporting Period</span>
             <span className="text-slate-200 mt-0.5 block font-sans">{currentCohort.comparabilityCriteria.reportingPeriod}</span>
           </div>
         </div>
@@ -101,7 +125,7 @@ export default function TrendsPage() {
               <h3 className="text-sm font-bold uppercase font-mono text-white">
                 Alert Closure-Time Velocity (Mar – Sep 2026)
               </h3>
-              <p className="text-[11px] font-mono text-slate-400">
+              <p className="text-xs font-mono text-slate-400">
                 CSE-X & CSE-Y velocity divergence from 24m cohort median
               </p>
             </div>
@@ -130,7 +154,7 @@ export default function TrendsPage() {
               <h3 className="text-sm font-bold uppercase font-mono text-white">
                 Critical-Alert Escalation Compliance
               </h3>
-              <p className="text-[11px] font-mono text-slate-400">
+              <p className="text-xs font-mono text-slate-400">
                 CSE-X dropping to 68.8% vs statutory cohort standard of 98.0%
               </p>
             </div>
@@ -162,7 +186,7 @@ export default function TrendsPage() {
               <h3 className="text-sm font-bold uppercase font-mono text-white">
                 Telemetry Coverage Completeness by Asset Class
               </h3>
-              <p className="text-[11px] font-mono text-slate-400">
+              <p className="text-xs font-mono text-slate-400">
                 Identifies negative-space voids where expected audit records are absent
               </p>
             </div>
@@ -187,7 +211,7 @@ export default function TrendsPage() {
               <h3 className="text-sm font-bold uppercase text-white">
                 Supervisory Risk Dimension Evolution (CSE-X)
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-xs text-slate-400">
                 Decomposition of monthly increases across 4 detector families
               </p>
             </div>
@@ -203,21 +227,21 @@ export default function TrendsPage() {
                   <span>{row.period} Cycle Assessment</span>
                   <span className="text-amber-300">Total Score: {row.total}</span>
                 </div>
-                <div className="grid grid-cols-4 gap-2 text-[11px] text-slate-400 pt-1">
+                <div className="grid grid-cols-4 gap-2 text-xs text-slate-400 pt-1">
                   <div>
-                    <span className="text-slate-500 block text-[9px] uppercase">Execution Gap</span>
+                    <span className="text-slate-500 block text-xs uppercase">Execution Gap</span>
                     <strong className="text-slate-300">+{row.executionGap}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9px] uppercase">Negative Space</span>
+                    <span className="text-slate-500 block text-xs uppercase">Negative Space</span>
                     <strong className="text-red-400">+{row.negativeSpace}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9px] uppercase">Peer Deviation</span>
-                    <strong className="text-blue-300">+{row.peerDeviation}</strong>
+                    <span className="text-slate-500 block text-xs uppercase">Peer Deviation</span>
+                    <strong className="text-violet-300">+{row.peerDeviation}</strong>
                   </div>
                   <div>
-                    <span className="text-slate-500 block text-[9px] uppercase">Anomaly</span>
+                    <span className="text-slate-500 block text-xs uppercase">Anomaly</span>
                     <strong className="text-slate-300">+{row.anomaly}</strong>
                   </div>
                 </div>

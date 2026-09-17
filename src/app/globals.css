@@ -230,7 +230,7 @@ html.lenis body {
 
 /*
  * SAT-SA page ("/") background texture: a 56px graph-paper grid, faded toward the edges with a
- * radial mask. Plain properties only (no custom-property redeclaration — see the git history of
+ * radial mask. Plain properties only (no custom-property redeclaration; see the git history of
  * this file for why: redeclaring a --color-* theme token outside @theme gets silently dropped).
  */
 .satsa-grid-texture::before {
@@ -263,12 +263,6 @@ html.lenis body {
   --spacing: 0.25rem;
 }
 
-.satsa-light .satsa-grid-texture::before {
-  background-image:
-    linear-gradient(to right, rgba(37, 99, 235, 0.08) 1px, transparent 1px),
-    linear-gradient(rgba(37, 99, 235, 0.08) 1px, transparent 1px);
-}
-
 .satsa-light .bg-black-deep,
 .satsa-light .bg-\[\#080f1c\],
 .satsa-light .bg-\[\#0a0a0a\],
@@ -293,6 +287,22 @@ html.lenis body {
 .satsa-light .bg-slate-950,
 .satsa-light .bg-slate-950\/40,
 .satsa-light .bg-slate-950\/60,
+.satsa-light .bg-slate-900\/5,
+.satsa-light .bg-slate-900\/10,
+.satsa-light .bg-slate-900\/20,
+.satsa-light .bg-slate-900\/25,
+.satsa-light .bg-slate-900\/30,
+.satsa-light .bg-slate-900\/70,
+.satsa-light .bg-slate-900\/75,
+.satsa-light .bg-slate-900\/95,
+.satsa-light .bg-slate-950\/5,
+.satsa-light .bg-slate-950\/10,
+.satsa-light .bg-slate-950\/20,
+.satsa-light .bg-slate-950\/25,
+.satsa-light .bg-slate-950\/30,
+.satsa-light .bg-slate-950\/70,
+.satsa-light .bg-slate-950\/75,
+.satsa-light .bg-slate-950\/95,
 .satsa-light .bg-slate-950\/90 {
   background-color: var(--satsa-surface);
 }
@@ -412,106 +422,163 @@ html.lenis body {
   color: #fff;
 }
 
-/* Overview presentation layer: a calm supervisory command surface. */
+
+/* Legacy dark-era violet shades read as primary purple on the light surface. */
+.satsa-light .text-violet-200,
+.satsa-light .text-violet-300,
+.satsa-light .text-violet-400 {
+  color: #6d28d9;
+}
+
+.satsa-light .bg-violet-950\/20,
+.satsa-light .bg-violet-950\/50,
+.satsa-light .bg-violet-950\/60 {
+  background-color: rgba(237, 233, 254, 0.8);
+}
+
+.satsa-light .bg-violet-600.text-white,
+.satsa-light .bg-violet-600 .text-white {
+  color: #fff;
+}
+
+.satsa-light .satsa-grid-texture::before {
+  background-image:
+    linear-gradient(to right, rgba(124, 58, 237, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(124, 58, 237, 0.07) 1px, transparent 1px);
+}
+
 .satsa-workbench main {
   background:
-    radial-gradient(circle at 72% 0%, rgba(37, 99, 235, 0.07), transparent 28rem),
-    #f6f8fb;
+    radial-gradient(circle at 78% 0%, rgba(124, 58, 237, 0.06), transparent 30rem),
+    #f7f7fb;
 }
 
-.workbench-overview { padding-bottom: 40px; }
-
-.workbench-overview__hero {
-  border-color: rgba(30, 64, 175, 0.3) !important;
-  background:
-    radial-gradient(circle at 84% 12%, rgba(34, 211, 238, 0.18), transparent 28%),
-    linear-gradient(132deg, #0b1930 0%, #102c4d 62%, #103c5d 100%) !important;
-  box-shadow: 0 24px 60px rgba(15, 42, 77, 0.2);
+.satsa-workbench :is(a, button, select, input, textarea):focus-visible {
+  outline: 2px solid rgba(124, 58, 237, 0.6);
+  outline-offset: 2px;
 }
-
-.satsa-light .workbench-overview__hero :is(h1, .text-white, .text-slate-100) { color: #fff; }
-.satsa-light .workbench-overview__hero :is(.text-slate-300, .text-slate-400) { color: #c7d5e6; }
-.satsa-light .workbench-overview__hero .text-amber-300 { color: #fde68a; }
-.satsa-light .workbench-overview__hero .text-emerald-300 { color: #a7f3d0; }
-.satsa-light .workbench-overview__hero .border-amber-500\/30 { border-color: rgba(251, 191, 36, 0.38); }
-.satsa-light .workbench-overview__hero .border-emerald-500\/30 { border-color: rgba(52, 211, 153, 0.34); }
-
-.workbench-overview__metrics {
-  overflow: hidden;
-  border: 1px solid #dfe6ef;
-  border-radius: 20px;
-  background: #dfe6ef;
-  box-shadow: 0 18px 42px rgba(51, 65, 85, 0.08);
-}
-
-.satsa-light .workbench-metric {
-  min-height: 184px;
-  border: 0;
-  background: rgba(255, 255, 255, 0.97);
-  transition: background-color 180ms ease, transform 180ms ease;
-}
-
-.satsa-light .workbench-metric--attention { background: linear-gradient(145deg, #fff, #fffbeb); }
-.satsa-light .workbench-metric--review { background: linear-gradient(145deg, #fff, #eff6ff); }
-.satsa-light .workbench-metric--data { background: linear-gradient(145deg, #fff, #fff7f7); }
-.workbench-metric:hover { transform: translateY(-2px); }
-
-.satsa-light .workbench-panel {
-  border-color: #dfe6ef;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 16px 44px rgba(51, 65, 85, 0.075);
-  backdrop-filter: blur(14px);
-}
-
-.workbench-overview h2,
-.workbench-overview h3 { color: #10223b; }
-
-.workbench-entity-row { border-bottom: 1px solid #e8edf3; }
-.workbench-entity-row:last-child { border-bottom: 0; }
-
-.satsa-light .workbench-finding {
-  position: relative;
-  border-color: #e5eaf1;
-  border-left-width: 3px;
-  background: linear-gradient(145deg, #fff, #f8fafc);
-  box-shadow: 0 8px 24px rgba(51, 65, 85, 0.055);
-}
-
-.satsa-light .workbench-finding--attention { border-left-color: #d97706; }
-.satsa-light .workbench-finding--critical { border-left-color: #dc2626; }
-.satsa-light .workbench-finding--peer { border-left-color: #2563eb; }
-
-.workbench-health-grid { background: #e2e8f0; }
-.satsa-light .workbench-health-card { background: #f8fafc; }
 
 .satsa-workbench aside {
-  box-shadow: 10px 0 36px rgba(15, 23, 42, 0.04);
+  box-shadow: 8px 0 32px rgba(15, 23, 42, 0.035);
 }
 
-.workbench-overview :is(a, button, select):focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.48);
-  outline-offset: 3px;
+/*
+ * Workbench launchpad: every vertical measure scales with viewport height so the
+ * whole decision surface fits the first screen from 720px tall upward.
+ */
+.workbench-main {
+  padding-block: clamp(1rem, 3vh, 2rem);
 }
 
-@media (max-width: 639px) {
-  .satsa-workbench,
-  .satsa-workbench > div,
-  .satsa-workbench main,
-  .workbench-overview { min-width: 0; max-width: 100%; }
-  .workbench-overview { padding-bottom: 24px; }
-  .workbench-overview__hero { border-radius: 16px; }
-  .workbench-overview__hero > div,
-  .workbench-overview__hero > div > div { min-width: 0; }
-  .workbench-overview__hero h1 {
-    max-width: 100%;
-    font-size: 24px;
-    overflow-wrap: anywhere;
+.workbench-launch {
+  gap: clamp(0.75rem, 2.2vh, 2rem);
+}
+
+.workbench-launch__title {
+  font-size: clamp(1.75rem, 4.2vh, 2.75rem);
+  line-height: 1.05;
+}
+
+.workbench-launch__lede {
+  font-size: clamp(0.9375rem, 1.9vh, 1.125rem);
+}
+
+.workbench-launch__actions,
+.workbench-launch__panels {
+  gap: clamp(0.625rem, 1.6vh, 1rem);
+}
+
+.workbench-action {
+  min-height: clamp(6.5rem, 15vh, 10.5rem);
+  padding: clamp(0.875rem, 2vh, 1.375rem);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.workbench-action__inner {
+  gap: clamp(0.5rem, 1.4vh, 1rem);
+}
+
+.workbench-action:hover {
+  box-shadow: 0 12px 32px rgba(76, 29, 149, 0.1);
+}
+
+.workbench-action__metric {
+  font-size: clamp(1.625rem, 3.6vh, 2.25rem);
+}
+
+.workbench-launch-panel {
+  padding: clamp(0.875rem, 2vh, 1.375rem) clamp(1rem, 2vh, 1.5rem);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.workbench-sop__step {
+  min-height: clamp(2.625rem, 5.6vh, 3.625rem);
+}
+
+.workbench-capabilities {
+  row-gap: clamp(0.3rem, 1.05vh, 0.8rem);
+}
+
+.workbench-action,
+.workbench-launch-panel {
+  container-type: inline-size;
+}
+
+/* Optional one-line descriptions yield first when a card or panel gets narrow (kept in the title tooltip). */
+@container (max-width: 17rem) {
+  .workbench-action__desc { display: none !important; }
+}
+
+@container (max-width: 26rem) {
+  .workbench-sop__desc { display: none; }
+}
+
+/* Short laptop screens: action cards collapse to a single row so nothing scrolls. */
+@media (max-width: 639px), (min-width: 640px) and (max-height: 820px) {
+  .workbench-action {
+    min-height: 0;
+    padding: 0.75rem 0.875rem;
   }
-  .workbench-overview__hero a { max-width: 100%; justify-content: center; }
-  .workbench-overview__metrics { border-radius: 16px; }
+  .workbench-action__inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .workbench-action__top { display: contents; }
+  .workbench-action__icon { order: 0; }
+  .workbench-action__body { order: 1; flex: 1 1 auto; align-items: center; }
+  .workbench-action__arrow { order: 2; }
+  .workbench-action__desc {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    line-height: 1.25rem;
+  }
+}
+
+/* Cards too narrow for a single row keep the stacked layout. */
+@container (max-width: 17rem) {
+  .workbench-action__inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .workbench-action__top { display: flex; }
+  .workbench-action__body { align-items: flex-end; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .satsa-light .workbench-metric { transition: none; }
-  .workbench-metric:hover { transform: none; }
+  .workbench-action { transition: none; }
+  .workbench-action:hover { transform: none; }
+}
+
+.coverage-gauge__ring {
+  width: clamp(7rem, 11vw, 9.25rem);
+  container-type: inline-size;
+}
+
+/* Sized against the ring's own width so "92.5%" always sits inside the stroke. */
+.coverage-gauge__value {
+  font-size: 14cqi;
 }

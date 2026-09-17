@@ -1,5 +1,5 @@
 /**
- * SAT-SA NCIIPC Supervisory Workbench — Trends & Benchmarks Data
+ * SAT-SA NCIIPC Supervisory Workbench: Trends & Benchmarks Data
  * Multi-cycle time-series, peer distributions, cohort comparability criteria.
  */
 
