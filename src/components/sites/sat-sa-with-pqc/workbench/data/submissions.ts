@@ -1,5 +1,5 @@
 /**
- * SAT-SA NCIIPC Supervisory Workbench — Data Submissions & Input Integrity
+ * SAT-SA NCIIPC Supervisory Workbench: Data Submissions & Input Integrity
  * Distinguishes true operational absence from dataset ingestion failures.
  */
 

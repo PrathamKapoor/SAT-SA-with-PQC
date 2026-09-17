@@ -75,10 +75,10 @@ export default function EntitiesPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">
-            Constituent Security Entities (CSEs)
+            Entities
           </h1>
-          <p className="text-xs font-mono text-slate-400 mt-0.5">
-            Sortable supervisory risk directory · Total: {filtered.length} matching entities
+          <p className="mt-0.5 text-sm text-slate-400">
+            {filtered.length} CSEs ranked by supervisory risk
           </p>
         </div>
       </div>
@@ -94,13 +94,13 @@ export default function EntitiesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by entity name or code (e.g. CSE-X)..."
-              className="w-full rounded border border-slate-700 bg-slate-950 py-1.5 pl-8 pr-3 text-xs text-slate-200 placeholder:text-slate-500 focus:border-blue-500 focus:outline-none"
+              className="w-full rounded border border-slate-700 bg-slate-950 py-1.5 pl-8 pr-3 text-xs text-slate-200 placeholder:text-slate-500 focus:border-violet-500 focus:outline-none"
             />
           </div>
 
           {/* Sector filter */}
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400 text-[11px] uppercase">Sector:</span>
+            <span className="text-slate-400 text-xs uppercase">Sector:</span>
             <select
               aria-label="Filter by Sector"
               value={sectorFilter}
@@ -115,7 +115,7 @@ export default function EntitiesPage() {
 
           {/* Risk Band filter */}
           <div className="flex items-center gap-1.5">
-            <span className="text-slate-400 text-[11px] uppercase">Risk:</span>
+            <span className="text-slate-400 text-xs uppercase">Risk:</span>
             <select
               aria-label="Filter by Risk Band"
               value={riskFilter}
@@ -136,7 +136,7 @@ export default function EntitiesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/80 font-mono text-[11px] text-slate-400 uppercase tracking-wider">
+              <tr className="border-b border-slate-800 bg-slate-900/80 font-mono text-xs text-slate-400 uppercase tracking-wider">
                 <th
                   onClick={() => handleSort("name")}
                   className="py-3 px-4 cursor-pointer hover:text-white"
@@ -189,11 +189,11 @@ export default function EntitiesPage() {
                   <td className="py-3 px-4 font-sans">
                     <Link
                       href={`/workbench/entities/${entity.slug}`}
-                      className="font-semibold text-sm text-slate-100 hover:text-blue-400 transition-colors block"
+                      className="font-semibold text-sm text-slate-100 hover:text-violet-400 transition-colors block"
                     >
                       {entity.name}
                     </Link>
-                    <span className="font-mono text-[11px] text-slate-400">
+                    <span className="font-mono text-xs text-slate-400">
                       {entity.sector} · {entity.environment}
                     </span>
                   </td>
@@ -202,7 +202,7 @@ export default function EntitiesPage() {
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-sm text-white">
-                        {entity.score.toFixed(1)} <span className="text-slate-500 font-normal text-[11px]">/ 100</span>
+                        {entity.score.toFixed(1)} <span className="text-slate-500 font-normal text-xs">/ 100</span>
                       </span>
                       <StatusBadge
                         variant={
@@ -220,7 +220,7 @@ export default function EntitiesPage() {
 
                   {/* Trend */}
                   <td className="py-3 px-3">
-                    <div className="flex items-center gap-1 text-[11px]">
+                    <div className="flex items-center gap-1 text-xs">
                       {entity.trend === "deteriorating" && (
                         <>
                           <TrendingUp className="size-3.5 text-red-400" />
@@ -249,7 +249,7 @@ export default function EntitiesPage() {
                   {/* Completeness / Confidence */}
                   <td className="py-3 px-3">
                     <div className="flex flex-col gap-1">
-                      <div className="flex items-center justify-between text-[10px]">
+                      <div className="flex items-center justify-between text-xs">
                         <span>{entity.dataCompletenessPct}%</span>
                         <span className="uppercase text-slate-400">
                           {entity.confidence} conf
@@ -282,18 +282,18 @@ export default function EntitiesPage() {
                   </td>
 
                   {/* Peer Cohort */}
-                  <td className="py-3 px-3 text-slate-400 font-sans text-[11px]">
+                  <td className="py-3 px-3 text-slate-400 font-sans text-xs">
                     {entity.cohort}
                   </td>
 
                   {/* Review Status */}
                   <td className="py-3 px-3">
                     <span
-                      className={`inline-block rounded px-2 py-0.5 text-[10px] uppercase font-semibold ${
+                      className={`inline-block rounded px-2 py-0.5 text-xs uppercase font-semibold ${
                         entity.reviewStatus === "open"
                           ? "bg-amber-500/10 text-amber-300 border border-amber-500/20"
                           : entity.reviewStatus === "in_review"
-                          ? "bg-blue-500/10 text-blue-300 border border-blue-500/20"
+                          ? "bg-violet-500/10 text-violet-300 border border-violet-500/20"
                           : "bg-slate-800 text-slate-400"
                       }`}
                     >
@@ -305,7 +305,7 @@ export default function EntitiesPage() {
                   <td className="py-3 px-4 text-right">
                     <Link
                       href={`/workbench/entities/${entity.slug}`}
-                      className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-[11px] font-medium text-blue-300 hover:bg-slate-700 transition-colors"
+                      className="inline-flex items-center gap-1 rounded border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs font-medium text-violet-300 hover:bg-slate-700 transition-colors"
                     >
                       <span>Profile</span>
                       <ArrowUpRight className="size-3" />

@@ -14,9 +14,9 @@ export function WalkthroughSection({
     <section id="see-it-work" className="relative border-white/10 border-t px-16 py-64 lg:px-80 lg:py-96">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute top-0 right-0 -z-1 size-500 rounded-full bg-[#34d399]/[0.05] blur-[120px]"
+        className="pointer-events-none absolute top-0 right-0 -z-1 size-500 rounded-full bg-[#7c3aed]/[0.05] blur-[120px]"
       />
-      <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
+      <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#7c3aed] uppercase">
         {content.eyebrow}
       </Reveal>
       <Reveal as="h2" className="mb-16 max-w-800 text-balance font-medium text-headline-10">

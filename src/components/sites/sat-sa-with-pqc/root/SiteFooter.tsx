@@ -10,7 +10,7 @@ export function SiteFooter({ content }: { content: typeof footerContent }) {
             href={content.repo.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-8 font-mono text-caption-20 text-white uppercase transition-colors hover:text-[#34d399]"
+            className="inline-flex items-center gap-8 font-mono text-caption-20 text-white uppercase transition-colors hover:text-[#7c3aed]"
           >
             {content.repo.label}
             <ExternalLinkIcon className="size-14" />

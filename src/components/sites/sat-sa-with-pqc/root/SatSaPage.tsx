@@ -28,9 +28,9 @@ import {
 import { walkthroughSectionContent } from "./content/walkthrough";
 
 /**
- * SAT-SA landing page — real content from github.com/PrathamKapoor/SAT-SA-with-PQC, reusing the
+ * SAT-SA landing page: real content from github.com/PrathamKapoor/SAT-SA-with-PQC, reusing the
  * contentarchitecture.dev shared design system (spacing, type scale, palette, primitives) with the
- * product's own signal-green (#34d399, hardcoded per use — redeclaring the shared --color-accent
+ * product's own signal-purple (#7c3aed, hardcoded per use; redeclaring the shared --color-accent
  * theme variable outside @theme gets silently dropped by Tailwind's build) instead of CA's orange.
  * Background is a layered dark gradient plus a graph-paper texture (`.satsa-grid-texture` in
  * globals.css) rather than flat black, following the same "dense bordered panel" language for

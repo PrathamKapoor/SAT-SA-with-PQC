@@ -19,7 +19,7 @@ interface FindingWalkthroughProps {
 
 /**
  * "An actual working of it": a click-through of one real finding, exactly as the live product
- * shows it. Every string here is copied from the finding-detail page — this is not a simulation
+ * shows it. Every string here is copied from the finding-detail page; this is not a simulation
  * of the product, it's the product's own explanation, made explorable.
  */
 export function FindingWalkthrough({ content }: FindingWalkthroughProps) {
@@ -30,7 +30,7 @@ export function FindingWalkthrough({ content }: FindingWalkthroughProps) {
       {/* Header: mirrors the live finding-detail page's title block */}
       <div className="flex flex-col gap-16 border-white/10 border-b px-16 py-20 sm:flex-row sm:items-start sm:justify-between lg:px-32 lg:py-32">
         <div>
-          <span className="mb-12 inline-block rounded-2 border border-[#34d399]/30 bg-[#34d399]/10 px-8 py-2 font-mono text-ui text-[#34d399] uppercase">
+          <span className="mb-12 inline-block rounded-2 border border-[#7c3aed]/30 bg-[#7c3aed]/10 px-8 py-2 font-mono text-ui text-[#7c3aed] uppercase">
             {content.state}
           </span>
           <h3 className="mb-8 max-w-500 text-balance font-medium text-headline-10 text-white">{content.title}</h3>
@@ -112,8 +112,8 @@ export function FindingWalkthrough({ content }: FindingWalkthroughProps) {
         ) : null}
 
         {tab === "recommendation" ? (
-          <div className="rounded-4 border border-[#34d399]/20 bg-[#34d399]/[0.04] p-16 lg:p-24">
-            <p className="mb-8 font-mono text-caption-10 text-[#34d399] uppercase">{content.recommendation.action}</p>
+          <div className="rounded-4 border border-[#7c3aed]/20 bg-[#7c3aed]/[0.04] p-16 lg:p-24">
+            <p className="mb-8 font-mono text-caption-10 text-[#7c3aed] uppercase">{content.recommendation.action}</p>
             <p className="mb-12 text-body-10 text-white">{content.recommendation.detail}</p>
             <p className="text-ui text-dark-grey italic">{content.recommendation.caveat}</p>
           </div>
@@ -121,8 +121,8 @@ export function FindingWalkthrough({ content }: FindingWalkthroughProps) {
 
         {tab === "trust" ? (
           <div className="flex flex-col gap-16">
-            <div className="flex items-center gap-8 font-mono text-caption-10 text-[#34d399] uppercase">
-              <span aria-hidden="true" className="size-8 rounded-full bg-[#34d399]" />
+            <div className="flex items-center gap-8 font-mono text-caption-10 text-[#7c3aed] uppercase">
+              <span aria-hidden="true" className="size-8 rounded-full bg-[#7c3aed]" />
               {content.trust} signed
             </div>
             <div>

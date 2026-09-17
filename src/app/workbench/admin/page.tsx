@@ -31,10 +31,10 @@ export default function AdminPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white font-sans">
-            Supervisory Administration & Calibration
+            Administration
           </h1>
-          <p className="text-slate-400 mt-0.5">
-            Station EXAM-DEL-04 · Examiner role management and threshold governance
+          <p className="mt-0.5 text-sm text-slate-400">
+            Roles and threshold governance
           </p>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function AdminPage() {
             </div>
             <div className="flex items-center justify-between bg-slate-900/60 p-2.5 rounded border border-slate-800">
               <span>PQC Cryptographic Provider:</span>
-              <span className="text-blue-300 font-bold">Local ML-DSA-65 (NIST FIPS 204)</span>
+              <span className="text-violet-300 font-bold">Local ML-DSA-65 (NIST FIPS 204)</span>
             </div>
           </div>
         </div>
@@ -76,21 +76,21 @@ export default function AdminPage() {
         <div className="rounded-lg border border-slate-800 bg-[#0c1424] p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-800 pb-2">
             <div className="flex items-center gap-2">
-              <UserCheck className="size-4 text-blue-400" />
+              <UserCheck className="size-4 text-violet-400" />
               <h2 className="text-sm font-bold uppercase text-white font-sans">
                 Authorized Examiner Roster
               </h2>
             </div>
-            <span className="text-slate-400 text-[11px]">NCIIPC Station 04</span>
+            <span className="text-slate-400 text-xs">NCIIPC Station 04</span>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between bg-slate-900/60 p-2.5 rounded border border-slate-800">
               <div>
                 <strong className="text-white block font-sans">Examiner A. Sharma</strong>
-                <span className="text-slate-400 text-[11px]">Identity: EXAM-SHARMA-01</span>
+                <span className="text-slate-400 text-xs">Identity: EXAM-SHARMA-01</span>
               </div>
-              <span className="rounded bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 text-blue-300 font-bold">
+              <span className="rounded bg-violet-500/15 border border-violet-500/30 px-2 py-0.5 text-violet-300 font-bold">
                 Lead Examiner
               </span>
             </div>
@@ -98,7 +98,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between bg-slate-900/60 p-2.5 rounded border border-slate-800">
               <div>
                 <strong className="text-white block font-sans">Examiner V. Patel</strong>
-                <span className="text-slate-400 text-[11px]">Identity: EXAM-PATEL-02</span>
+                <span className="text-slate-400 text-xs">Identity: EXAM-PATEL-02</span>
               </div>
               <span className="rounded bg-slate-800 px-2 py-0.5 text-slate-300">
                 Senior Analyst
@@ -108,7 +108,7 @@ export default function AdminPage() {
             <div className="flex items-center justify-between bg-slate-900/60 p-2.5 rounded border border-slate-800">
               <div>
                 <strong className="text-white block font-sans">Examiner M. Rao</strong>
-                <span className="text-slate-400 text-[11px]">Identity: EXAM-RAO-04</span>
+                <span className="text-slate-400 text-xs">Identity: EXAM-RAO-04</span>
               </div>
               <span className="rounded bg-slate-800 px-2 py-0.5 text-slate-300">
                 Supervisory Examiner
@@ -127,7 +127,7 @@ export default function AdminPage() {
               Supervisory Detector Calibration Settings
             </h2>
           </div>
-          <span className="text-amber-400 text-[11px]">Audit Logging Mandatory</span>
+          <span className="text-amber-400 text-xs">Audit Logging Mandatory</span>
         </div>
 
         <form onSubmit={handleSaveCalibration} className="space-y-4 max-w-xl">
@@ -141,7 +141,7 @@ export default function AdminPage() {
               onChange={(e) => setFastClosureThreshold(Number(e.target.value))}
               className="w-full rounded border border-slate-700 bg-slate-950 p-2 text-white"
             />
-            <span className="text-[11px] text-slate-500 mt-0.5 block font-sans">
+            <span className="text-xs text-slate-500 mt-0.5 block font-sans">
               Current: Alerts closed faster than 300s (5m) trigger Execution Gap inspection.
             </span>
           </div>
@@ -156,7 +156,7 @@ export default function AdminPage() {
               onChange={(e) => setMinInvestigationNotes(Number(e.target.value))}
               className="w-full rounded border border-slate-700 bg-slate-950 p-2 text-white"
             />
-            <span className="text-[11px] text-slate-500 mt-0.5 block font-sans">
+            <span className="text-xs text-slate-500 mt-0.5 block font-sans">
               Closure notes shorter than 25 chars without telemetry attachments are flagged as metric gaming.
             </span>
           </div>
@@ -164,7 +164,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3 pt-2">
             <button
               type="submit"
-              className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500 transition-colors shadow"
+              className="rounded bg-violet-600 px-4 py-2 font-semibold text-white hover:bg-violet-500 transition-colors shadow"
             >
               Commit Calibration Update
             </button>

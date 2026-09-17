@@ -69,7 +69,7 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
             <h3 className="font-sans text-sm font-semibold text-white">
               Supervisory Disposition Record
             </h3>
-            <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-[10px] text-slate-400 uppercase">
+            <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-400 uppercase">
               Immutable Ledger
             </span>
           </div>
@@ -86,19 +86,19 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
         <div className="border-b border-slate-800 bg-slate-900/60 p-4 font-mono text-xs">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 text-slate-300">
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase">Entity</span>
+              <span className="text-slate-500 block text-xs uppercase">Entity</span>
               <strong className="text-slate-200">{item.entityName}</strong>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase">Asset</span>
+              <span className="text-slate-500 block text-xs uppercase">Asset</span>
               <strong className="text-slate-200">{item.assetId}</strong>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase">Alert / Case ID</span>
+              <span className="text-slate-500 block text-xs uppercase">Alert / Case ID</span>
               <strong className="text-amber-400">{item.alertOrCaseId}</strong>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px] uppercase">Current State</span>
+              <span className="text-slate-500 block text-xs uppercase">Current State</span>
               <StatusBadge
                 variant={
                   item.currentDisposition === "confirmed_concern"
@@ -112,7 +112,7 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
               />
             </div>
           </div>
-          <div className="mt-2 text-slate-400 text-[11px] bg-slate-950/40 p-2 rounded border border-slate-800/80">
+          <div className="mt-2 text-slate-400 text-xs bg-slate-950/40 p-2 rounded border border-slate-800/80">
             <span className="text-amber-400 font-semibold">Priority Reason: </span>
             {item.priorityReason}
           </div>
@@ -139,7 +139,7 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
                   >
                     <ShieldAlert className="size-5 mb-1 text-red-400" />
                     <span className="text-xs font-bold font-mono uppercase">Confirmed Concern</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">Serious anomaly verified</span>
+                    <span className="text-xs text-slate-400 mt-0.5">Serious anomaly verified</span>
                   </button>
 
                   <button
@@ -153,7 +153,7 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
                   >
                     <ShieldCheck className="size-5 mb-1 text-slate-400" />
                     <span className="text-xs font-bold font-mono uppercase">Not Substantiated</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">Satisfactorily explained</span>
+                    <span className="text-xs text-slate-400 mt-0.5">Satisfactorily explained</span>
                   </button>
 
                   <button
@@ -167,7 +167,7 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
                   >
                     <AlertTriangle className="size-5 mb-1 text-amber-400" />
                     <span className="text-xs font-bold font-mono uppercase">Needs More Info</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">Request periodic data</span>
+                    <span className="text-xs text-slate-400 mt-0.5">Request periodic data</span>
                   </button>
 
                   <button
@@ -175,13 +175,13 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
                     onClick={() => setSelectedDisposition("escalated")}
                     className={`flex flex-col items-center justify-center p-3 rounded border text-center transition-all ${
                       selectedDisposition === "escalated"
-                        ? "border-blue-500 bg-blue-500/20 text-blue-200 shadow"
+                        ? "border-violet-500 bg-violet-500/20 text-violet-200 shadow"
                         : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700"
                     }`}
                   >
-                    <Send className="size-5 mb-1 text-blue-400" />
+                    <Send className="size-5 mb-1 text-violet-400" />
                     <span className="text-xs font-bold font-mono uppercase">Escalate to Case</span>
-                    <span className="text-[10px] text-slate-400 mt-0.5">Formal inquiry case</span>
+                    <span className="text-xs text-slate-400 mt-0.5">Formal inquiry case</span>
                   </button>
                 </div>
               </div>
@@ -196,10 +196,10 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
                   value={rationale}
                   onChange={(e) => setRationale(e.target.value)}
                   placeholder="Record verifiable justification (e.g. 'Shift handover log confirms absence of ticket creation for alert A-1001. Cross-referenced with operator OP-881 desk roster...')"
-                  className="w-full rounded border border-slate-700 bg-slate-950 p-2.5 font-mono text-xs text-slate-200 placeholder:text-slate-600 focus:border-blue-500 focus:outline-none"
+                  className="w-full rounded border border-slate-700 bg-slate-950 p-2.5 font-mono text-xs text-slate-200 placeholder:text-slate-600 focus:border-violet-500 focus:outline-none"
                   required
                 />
-                <p className="mt-1 text-[11px] text-slate-500 font-mono">
+                <p className="mt-1 text-xs text-slate-500 font-mono">
                   Every disposition record is digitally signed with ML-DSA-65 and hashed into the supervisory ledger.
                 </p>
               </div>
@@ -233,10 +233,10 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
           {/* Audit History Snapshot */}
           {item.dispositionHistory.length > 0 && (
             <div className="border-t border-slate-800 pt-3">
-              <span className="text-[11px] font-mono text-slate-500 uppercase block mb-1.5">
+              <span className="text-xs font-mono text-slate-500 uppercase block mb-1.5">
                 Prior Review Ledger ({item.dispositionHistory.length} recorded events)
               </span>
-              <div className="max-h-24 overflow-y-auto space-y-1 text-[11px] font-mono">
+              <div className="max-h-24 overflow-y-auto space-y-1 text-xs font-mono">
                 {item.dispositionHistory.map((hist) => (
                   <div key={hist.id} className="flex items-center justify-between text-slate-400 bg-slate-950/60 px-2 py-1 rounded">
                     <span>
@@ -268,7 +268,7 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
                   onClick={() => onViewEvidence(item)}
                   className="inline-flex items-center gap-1.5 rounded border border-slate-700 px-3 py-1.5 font-mono text-xs text-slate-300 hover:bg-slate-800"
                 >
-                  <FileText className="size-3.5 text-blue-400" />
+                  <FileText className="size-3.5 text-violet-400" />
                   <span>Inspect Raw Evidence</span>
                 </button>
               )}
@@ -287,7 +287,7 @@ export const DispositionModal: React.FC<DispositionModalProps> = ({
                 className={`inline-flex items-center gap-1.5 rounded px-4 py-1.5 font-mono text-xs font-semibold text-white shadow ${
                   reversalMode
                     ? "bg-amber-600 hover:bg-amber-500"
-                    : "bg-blue-600 hover:bg-blue-500"
+                    : "bg-violet-600 hover:bg-violet-500"
                 }`}
               >
                 <CheckCircle2 className="size-4" />

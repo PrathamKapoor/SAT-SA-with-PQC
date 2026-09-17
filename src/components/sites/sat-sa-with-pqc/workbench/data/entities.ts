@@ -1,5 +1,5 @@
 /**
- * SAT-SA NCIIPC Supervisory Workbench — Authoritative Entity Dataset
+ * SAT-SA NCIIPC Supervisory Workbench: Authoritative Entity Dataset
  * Period: August–September 2026 Assessment Cycle
  * Total CSEs Assessed: 42 across 5 Critical Sector Cohorts.
  */

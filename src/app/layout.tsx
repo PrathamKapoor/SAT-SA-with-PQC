@@ -13,7 +13,7 @@ const fontMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SAT-SA — Supervisory Analytics Tool for SOC Assessment",
+  title: "SAT-SA: Supervisory Analytics Tool for SOC Assessment",
   description:
     "A periodic, offline, evidence-driven supervisory analytics system supporting human examiners, with post-quantum trusted evidence (TRUST-SAT).",
 };
