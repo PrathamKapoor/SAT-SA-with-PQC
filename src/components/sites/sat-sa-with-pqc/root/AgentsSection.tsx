@@ -6,7 +6,7 @@ export function AgentsSection({ content }: { content: typeof agentsContent }) {
   return (
     <section id="agents" className="relative border-white/10 border-t px-16 py-64 lg:px-80 lg:py-96">
       <div aria-hidden="true" className="satsa-grid-texture pointer-events-none absolute inset-0 -z-1 opacity-40" />
-      <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
+      <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#7c3aed] uppercase">
         {content.eyebrow}
       </Reveal>
       <Reveal as="h2" className="mb-24 max-w-800 text-balance font-medium text-headline-10">

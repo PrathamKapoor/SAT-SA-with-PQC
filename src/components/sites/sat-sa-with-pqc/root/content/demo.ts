@@ -1,5 +1,5 @@
 /**
- * Real data captured from a live run of the committed demo (scripts/serve_ui.py), 2026-09-12 —
+ * Real data captured from a live run of the committed demo (scripts/serve_ui.py), 2026-09-12.
  * used to drive the actual charts and the interactive finding walkthrough. Nothing here is
  * synthesized for the page; every value matches a screenshot in
  * docs/design-references/satsa-with-pqc/.
@@ -26,7 +26,7 @@ export const entityRiskContent: EntityRisk[] = [
   { rank: 7, entity: "CSE-HEALTHY", score: 19, band: "low", topContributor: "no findings in execution_gap (weight 25)" },
 ];
 
-/** From the live /entities/{ACME-BANK} risk decomposition — only dimensions with findings shown;
+/** From the live /entities/{ACME-BANK} risk decomposition; only dimensions with findings shown;
  * the other 5 of the 7 dimensions carry no findings for this entity and score 0. */
 export const acmeBankRiskContent = {
   entity: "ACME-BANK",
@@ -41,7 +41,7 @@ export const acmeBankRiskContent = {
   ],
 };
 
-/** From the live finding detail page for finding_fefd75d2b61943d8b5ec1ec60abb7a63 — copied verbatim. */
+/** From the live finding detail page for finding_fefd75d2b61943d8b5ec1ec60abb7a63, copied verbatim. */
 export const findingWalkthroughContent = {
   entity: "ACME-BANK",
   rule: "execution_gap.ack_without_investigation",
@@ -62,11 +62,11 @@ export const findingWalkthroughContent = {
       { field: "Confidence · analytical_support", value: "0.900" },
       { field: "Confidence · evidence_completeness", value: "1.000" },
       { field: "Confidence · overall", value: "0.900" },
-      { field: "Confidence · peer_confidence", value: "—" },
+      { field: "Confidence · peer_confidence", value: "n/a" },
     ],
   },
   evidence: {
-    intro: "Source-record pointers that the finding was built from — 4 rows from one CSV submission.",
+    intro: "Source-record pointers that the finding was built from: 4 rows from one CSV submission.",
     rows: [
       { record: "srcrec_21b748c…", submission: "submission_908fd…", format: "csv", locator: "row 1" },
       { record: "srcrec_2852dd6…", submission: "submission_908fd…", format: "csv", locator: "row 2" },

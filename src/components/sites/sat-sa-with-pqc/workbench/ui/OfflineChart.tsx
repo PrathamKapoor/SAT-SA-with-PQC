@@ -106,7 +106,7 @@ export const OfflineLineChart: React.FC<LineSeriesProps> = ({
                   y={y + 4}
                   textAnchor="end"
                   fill="#64748b"
-                  className="font-mono text-[10px]"
+                  className="font-mono text-xs"
                 >
                   {tick}
                   {yUnit}
@@ -188,7 +188,7 @@ export const OfflineLineChart: React.FC<LineSeriesProps> = ({
                   y={height - padding.bottom + 18}
                   textAnchor="middle"
                   fill={isHovered ? "#f8fafc" : "#64748b"}
-                  className="font-mono text-[10px] select-none"
+                  className="font-mono text-xs select-none"
                 >
                   {d.period.split(" ")[0]}
                 </text>

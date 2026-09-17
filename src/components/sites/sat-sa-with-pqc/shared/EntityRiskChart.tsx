@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { EntityRisk } from "@/components/sites/sat-sa-with-pqc/root/content/demo";
 
-/** Fixed status palette (never re-themed) — icon + label always pairs with the color. */
+/** Fixed status palette (never re-themed): icon + label always pairs with the color. */
 const STATUS = {
   low: { color: "#0ca30c", label: "Low risk" },
   medium: { color: "#fab219", label: "Medium risk" },

@@ -82,7 +82,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded border px-2 py-0.5 font-mono uppercase tracking-wider ${
-        size === "sm" ? "text-[10px] leading-tight" : "text-xs leading-normal"
+        size === "sm" ? "text-xs leading-tight" : "text-xs leading-normal"
       } ${getVariantStyles()} ${className}`.trim()}
     >
       {getIcon()}

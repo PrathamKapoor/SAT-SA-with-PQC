@@ -20,7 +20,7 @@ export function StatsSection({ content }: { content: typeof statsContent }) {
         aria-hidden="true"
         className="satsa-grid-texture pointer-events-none absolute inset-0 -z-1 opacity-60"
       />
-      <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#34d399] uppercase">
+      <Reveal as="p" className="mb-16 font-mono text-caption-20 text-[#7c3aed] uppercase">
         {content.eyebrow}
       </Reveal>
       <Reveal as="h2" className="mb-40 max-w-800 text-balance font-medium text-headline-10">
@@ -32,8 +32,7 @@ export function StatsSection({ content }: { content: typeof statsContent }) {
           <div className="flex items-center justify-center gap-24 border-white/10 border-b p-24 lg:border-r lg:border-b-0">
             <CoverageGauge value={coverageContent.value} />
             <div>
-              <p className="font-mono text-caption-10 text-white uppercase">Line coverage</p>
-              <p className="mt-4 text-ui text-dark-grey">
+              <p className="text-ui text-dark-grey">
                 {coverageContent.statements.toLocaleString()} statements &middot; {coverageContent.missed} missed
               </p>
               <p className="text-ui text-dark-grey">{coverageContent.scope}</p>

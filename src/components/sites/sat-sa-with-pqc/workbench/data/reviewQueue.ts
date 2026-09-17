@@ -1,5 +1,5 @@
 /**
- * SAT-SA NCIIPC Supervisory Workbench — Operational Review Queue
+ * SAT-SA NCIIPC Supervisory Workbench: Operational Review Queue
  * Ranks review candidates across entities with explicit reasons for priority,
  * recommended examiner actions, evidence counts, and auditable dispositions.
  */

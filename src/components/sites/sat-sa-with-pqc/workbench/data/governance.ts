@@ -1,5 +1,5 @@
 /**
- * SAT-SA NCIIPC Supervisory Workbench — Governance, Audit & PQC Ledger
+ * SAT-SA NCIIPC Supervisory Workbench: Governance, Audit & PQC Ledger
  * Verifiable trust indicators, lineage graphs, and statutory defense records.
  */
 
