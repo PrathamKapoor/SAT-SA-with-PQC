@@ -1,5 +1,6 @@
-import { SatSaPage } from "@/components/sites/sat-sa-with-pqc/root/SatSaPage";
+import { redirect } from "next/navigation";
 
+// Temporary until the public surface is rebuilt (stage 12).
 export default function Home() {
-  return <SatSaPage />;
+  redirect("/login");
 }
