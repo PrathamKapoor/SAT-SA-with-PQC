@@ -30,6 +30,10 @@ fixture exporter shows the exact mapping for each record.
 | POST | `/api/v1/session` | `{credential}` | `200 {identity_id, name, role}` · `401` · `429` (rate limited) |
 | GET | `/api/v1/session` | | `200 {identity_id, name, role}` · `401` |
 
+These endpoints back the **backend session adapter** (`SATSA_AUTH_ADAPTER=backend`,
+the default for production builds). The development adapter used by `npm run dev`
+makes no backend call and never forwards its session to the API.
+
 `role` is one of `satsa_viewer | satsa_analyst | satsa_supervisor | satsa_auditor | satsa_admin`
 (`qsmlops/security/permissions/model.py`). The UI stores the credential in an
 HttpOnly `satsa_session` cookie and never exposes it to browser JavaScript.

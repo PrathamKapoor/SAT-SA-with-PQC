@@ -16,7 +16,7 @@ export interface SidebarProps {
   groups: NavGroup[];
   signalFindingIds: string[];
   decidedFindingIds: string[];
-  user: { displayName: string; roleLabel: string };
+  user: { displayName: string; roleLabel: string; principal: string };
   sessionMode: "development" | "backend";
 }
 
@@ -97,11 +97,11 @@ function SessionFooter({ user, sessionMode, collapsed }: Pick<SidebarProps, "use
         {!collapsed && (
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-ink">{user.roleLabel}</p>
-            <p className="truncate text-[11.5px] text-muted">{sessionMode === "development" ? "Development session" : user.displayName}</p>
+            <p className="truncate font-mono text-[11px] text-muted">{sessionMode === "development" ? `${user.principal} · development` : user.displayName}</p>
           </div>
         )}
         <form action={signOut}>
-          <button type="submit" aria-label="Sign out" title="Sign out" className="rounded-sm p-1.5 text-muted hover:bg-sunken hover:text-ink">
+          <button type="submit" aria-label={sessionMode === "development" ? "Exit development session" : "Sign out"} title={sessionMode === "development" ? "Exit development session" : "Sign out"} className="rounded-sm p-1.5 text-muted hover:bg-sunken hover:text-ink">
             <LogOut className="size-4" aria-hidden="true" />
           </button>
         </form>

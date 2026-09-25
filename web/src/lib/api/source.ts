@@ -36,8 +36,8 @@ export interface FindingQuery {
 
 /**
  * The single seam between the UI and SAT-SA. Pages call these methods only;
- * they never import the fixture or call fetch directly. Sol 6 wires the
- * backend by implementing the endpoints in docs/API_CONTRACT.md, which the
+ * they never import the fixture or call fetch directly. The backend is
+ * connected by implementing the endpoints in docs/API_CONTRACT.md, which the
  * `api` adapter (./http.ts) already calls.
  */
 export interface SatsaDataSource {

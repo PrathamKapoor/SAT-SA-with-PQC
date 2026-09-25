@@ -13,7 +13,7 @@ application. Next.js 16, React 19, Tailwind CSS 4, Lucide icons.
 | Surface | Routes | Data |
 |---|---|---|
 | Public site | `/`, `/methodology`, `/security` | Product description only. No entity, finding or evidence data. |
-| Sign in | `/login` | Issued credential (backend) or a labelled development session (fixture mode) |
+| Sign in | `/login` | Issued credential (backend adapter) or a development identity (development adapter) |
 | Application | `/workbench/*` | Through `SatsaDataSource`; requires a session |
 
 Application routes, grouped as in the sidebar:
@@ -29,6 +29,21 @@ Application routes, grouped as in the sidebar:
 Navigation is filtered by role (viewer, analyst, supervisor, auditor,
 administrator), mirroring `qsmlops/security/permissions/model.py`. The backend
 remains the only place a permission is enforced.
+
+## Sessions: backend or development
+
+`SATSA_AUTH_ADAPTER` selects how a session is established (`src/lib/auth/config.ts`):
+
+| Value | Used when | Behaviour |
+|---|---|---|
+| `development` | default under `npm run dev` | Sign-in lists five development identities (`dev-admin`, `dev-supervisor`, `dev-analyst`, `dev-auditor`, `dev-viewer`). One click enters the application. The session is a browser-session cookie; the top bar shows "Development session" and an exit action. |
+| `backend` | default for every production build (`next build`, Docker, Render) | Sign-in takes a credential issued by the SAT-SA backend (`POST /api/v1/session`). |
+
+Development identities exist only in this frontend. They carry no credential,
+are validated against a fixed list on every request, and are never sent to a
+backend API. A production build only offers them if `SATSA_AUTH_ADAPTER=development`
+is set explicitly. Roles and permissions are the backend's
+(`qsmlops/security/permissions/model.py`), mirrored in `src/lib/auth/permissions.ts`.
 
 ## Data: real, fixture, empty
 
@@ -53,7 +68,7 @@ Requires Node 24 (`.nvmrc`).
 ```bash
 cd web
 npm ci
-npm run dev                  # http://localhost:3000, fixture mode
+npm run dev                  # http://localhost:3000: fixture data, development sessions
 npm run check                # lint + typecheck + production build (CI runs this)
 SAT_SA_BASE_URL=http://localhost:3000 npm run test:ui   # smoke tests against a running server
 
@@ -70,15 +85,15 @@ docker build -t sat-sa-web . && docker run -p 3000:3000 sat-sa-web
 
 ```
 src/app/(public)/            public site (product, methodology, security)
-src/app/login/               sign-in (credential form, development session)
+src/app/login/               sign-in (credential form or development identities)
 src/app/workbench/           secure application, one folder per route
 src/components/ui/           design-system primitives (button, badges, data, dialog, layout, states, tooltip)
 src/components/shell/        app shell: sidebar, top bar, navigation icons
 src/components/domain/       SAT-SA components (finding row, evidence lifecycle, review panel, provenance chain, ...)
-src/components/public/       public chrome and the interactive evidence hero (canvas)
+src/components/public/       public chrome and the evidence field (interactive canvas hero)
 src/lib/types/domain.ts      domain types mirroring the backend records
 src/lib/api/                 SatsaDataSource interface, fixture and HTTP adapters
-src/lib/auth/                roles and permissions, session, sign-in actions
+src/lib/auth/                session provider, backend and development adapters, identities, roles
 src/lib/domain/              labels, formatting, lifecycle and measure derivations
 src/lib/model.ts             server-side view models (joins only, no invented scores)
 src/lib/mocks/               development fixture (generated) and its adapter
