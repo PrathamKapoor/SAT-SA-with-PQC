@@ -43,7 +43,7 @@ def test_postgres_failed_migration_does_not_mark_version(postgres_dsn, monkeypat
     engine = create_engine(postgres_dsn)
     try:
         MigrationRunner(engine).migrate()
-        bad = Migration(11, "deliberately_invalid", (
+        bad = Migration(max(m.version for m in MIGRATIONS) + 1, "deliberately_invalid", (
             "CREATE TABLE phase1_rollback_probe (id INTEGER PRIMARY KEY)",
             "INVALID SQL",
         ))
