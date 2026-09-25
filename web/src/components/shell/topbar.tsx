@@ -16,7 +16,7 @@ export function TopBar({ nav, period, origin }: { nav: SidebarProps; period: str
   const pathname = usePathname();
   const title = titleFor(pathname);
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-paper/95 px-4 backdrop-blur-sm md:px-6">
+    <header className="no-print flex h-14 shrink-0 items-center gap-3 border-b border-line bg-paper/95 px-4 backdrop-blur-sm md:px-6">
       <MobileNav {...nav} />
       <p className="min-w-0 truncate text-[14px] font-semibold text-ink">{title}</p>
 
