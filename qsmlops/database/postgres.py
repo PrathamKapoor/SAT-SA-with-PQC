@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import Sequence
 from contextlib import contextmanager
-from typing import Any, Sequence
+from typing import Any
 
 from psycopg import Error as PsycopgError
 from psycopg import errors, rows
@@ -86,6 +87,7 @@ class PostgresDatabaseEngine(DatabaseEngine):
     """Connection pool with one thread-local connection per transaction."""
 
     def __init__(self, dsn: str, *, min_size: int = 1, max_size: int = 5) -> None:
+        self.dsn = dsn
         self._pool = ConnectionPool(
             conninfo=dsn, min_size=min_size, max_size=max_size,
             kwargs={"row_factory": rows.dict_row}, open=False,

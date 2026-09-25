@@ -639,8 +639,7 @@ MIGRATIONS = MIGRATIONS + (
                 created_at REAL NOT NULL
             )
             """,
-            "CREATE INDEX IF NOT EXISTS idx_satsa_receipts_subject"
-            " ON satsa_trust_receipts (subject_type, subject_id)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_receipts_subject ON satsa_trust_receipts (subject_type, subject_id)",
         ),
     ),
     # -----------------------------------------------------------------
@@ -666,10 +665,8 @@ MIGRATIONS = MIGRATIONS + (
                 created_at REAL NOT NULL
             )
             """,
-            "CREATE INDEX IF NOT EXISTS idx_satsa_review_decisions_finding"
-            " ON satsa_review_decisions (finding_id)",
-            "CREATE INDEX IF NOT EXISTS idx_satsa_review_decisions_actor"
-            " ON satsa_review_decisions (principal_identity_id, occurred_at)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_review_decisions_finding ON satsa_review_decisions (finding_id)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_review_decisions_actor ON satsa_review_decisions (principal_identity_id, occurred_at)",
         ),
     ),
 )
@@ -919,6 +916,53 @@ MIGRATIONS = MIGRATIONS + (
             )
             """,
             "CREATE INDEX IF NOT EXISTS idx_satsa_run_risk_org ON satsa_run_risk (organization_id, created_at)",
+        ),
+    ),
+)
+
+
+# Phase 4 adds run-level review and recommendation references while LangGraph
+# owns its own checkpoint tables in the same configured database.
+MIGRATIONS = MIGRATIONS + (
+    Migration(
+        13,
+        "satsa_langgraph_review",
+        (
+            "ALTER TABLE satsa_run_context ADD COLUMN graph_enabled INTEGER NOT NULL DEFAULT 0",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_run_recommendations (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                run_id TEXT NOT NULL,
+                finding_id TEXT NOT NULL REFERENCES satsa_findings(id),
+                action TEXT NOT NULL,
+                recommendation_json TEXT NOT NULL,
+                content_digest TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                UNIQUE(run_id, finding_id),
+                FOREIGN KEY (run_id, organization_id)
+                    REFERENCES satsa_run_context(run_id, organization_id)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS satsa_run_review_decisions (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                run_id TEXT NOT NULL UNIQUE,
+                finding_id TEXT REFERENCES satsa_findings(id),
+                user_id TEXT NOT NULL REFERENCES satsa_users(id),
+                principal_identity_id TEXT NOT NULL,
+                action TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                finding_content_digest TEXT NOT NULL DEFAULT '',
+                content_digest TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                FOREIGN KEY (run_id, organization_id)
+                    REFERENCES satsa_run_context(run_id, organization_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_run_recommendations_org ON satsa_run_recommendations (organization_id, run_id)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_run_review_org ON satsa_run_review_decisions (organization_id, run_id)",
         ),
     ),
 )

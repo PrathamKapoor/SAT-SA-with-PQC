@@ -19,6 +19,9 @@ scikit-learn>=1.3
 pydantic>=2.0
 python-pkcs11>=0.9.0
 ijson>=3.5,<4
+langgraph==1.2.10
+langgraph-checkpoint-postgres==3.1.2
+langgraph-checkpoint-sqlite==3.0.3
 
 # Development / test dependencies — mirrors
 # [project.optional-dependencies].dev in pyproject.toml. NOT required

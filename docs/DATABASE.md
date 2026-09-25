@@ -62,3 +62,12 @@ Peer policy is currently fail-closed for hosted runs: only the run's own tenant-
 Audit state changes use the existing QSMLOps `AuditService`. When multiple processes use a file-backed evidence ledger, the API and worker must point to the same durable ledger volume; database transactions serialize append operations, but separate per-instance files would create separate chains. The worker never logs artifact contents or credentials. Existing TRUST-SAT and ML-DSA verification remain functional for SQLite runs. PostgreSQL runs do not receive a trust receipt in Phase 3 because `TrustService` still rejects hosted storage; no `verified` claim is made for them. LangGraph is not implemented. S3 live-bucket validation and hosted deployment are not claimed.
 
 Offline execution remains available with SQLite and local artifact storage. Hosted execution requires PostgreSQL and a separately running worker; the worker code supports both database dialects, but a deployed SaaS topology, shared durable audit volume, S3 bucket, and production operations are not verified by the local tests.
+
+## Phase 4 graph state
+
+Migration 13 adds the graph opt-in flag to `satsa_run_context`, tenant-owned
+`satsa_run_recommendations`, and one attributable terminal
+`satsa_run_review_decisions` row per graph run. LangGraph manages its own
+checkpoint tables in PostgreSQL; SQLite offline mode stores checkpoints in
+`<database>.langgraph.sqlite`. See [LANGGRAPH_ORCHESTRATION.md](LANGGRAPH_ORCHESTRATION.md)
+for the queue, checkpoint, interrupt, review, and trust boundary.

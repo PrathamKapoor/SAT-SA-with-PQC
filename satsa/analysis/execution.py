@@ -55,11 +55,13 @@ RUN_TRANSITIONS = {
         "completed",
         "partial",
         "failed",
+        "awaiting_review",
         "cancel_requested",
         "cancelled",
         "queued",
     },
     "cancel_requested": {"cancelled", "failed"},
+    "awaiting_review": {"queued", "cancel_requested"},
     "failed": {"queued"},
 }
 _CATEGORY_TYPES: dict[str, type[Any]] = {
@@ -125,7 +127,13 @@ class AnalysisExecutionService:
                 "idempotency key must be 1-128 printable non-space characters"
             )
 
-    def create_run(self, submission_version_id: str, *, idempotency_key: str) -> dict:
+    def create_run(
+        self,
+        submission_version_id: str,
+        *,
+        idempotency_key: str,
+        graph_enabled: bool = False,
+    ) -> dict:
         self.tenant._require(ANALYSIS_RUN)
         self._validate_key(idempotency_key)
         version = self.db.query_one(
@@ -154,7 +162,12 @@ class AnalysisExecutionService:
                     (self.org, submission_version_id, idempotency_key),
                 )
                 if existing:
-                    return self.get_run(existing["id"])
+                    previous = self.get_run(existing["id"])
+                    if bool(previous["graph_enabled"]) != graph_enabled:
+                        raise DomainValidationError(
+                            "idempotency key belongs to a different execution mode"
+                        )
+                    return previous
                 self.db.execute(
                     "INSERT INTO satsa_runs (id,organization_id,entity_id,assessment_id,"
                     "snapshot_digest,code_version,analytics_version,status,started_at,"
@@ -181,8 +194,8 @@ class AnalysisExecutionService:
                 )
                 self.db.execute(
                     "INSERT INTO satsa_run_context (run_id,organization_id,submission_id,"
-                    "submission_version_id,idempotency_key,requested_by_user_id,requested_at,correlation_id)"
-                    " VALUES (?,?,?,?,?,?,?,?)",
+                    "submission_version_id,idempotency_key,requested_by_user_id,requested_at,correlation_id,graph_enabled)"
+                    " VALUES (?,?,?,?,?,?,?,?,?)",
                     (
                         run_id,
                         self.org,
@@ -192,6 +205,7 @@ class AnalysisExecutionService:
                         self.user,
                         now,
                         correlation_id,
+                        int(graph_enabled),
                     ),
                 )
                 for worker in _default_workers(DEFAULT_FAST_CLOSURE_POLICY):
@@ -230,12 +244,18 @@ class AnalysisExecutionService:
             if not existing:
                 raise
             run_id = existing["run_id"]
-        return self.get_run(run_id)
+        result = self.get_run(run_id)
+        if bool(result["graph_enabled"]) != graph_enabled:
+            raise DomainValidationError(
+                "idempotency key belongs to a different execution mode"
+            )
+        return result
 
     def get_run(self, run_id: str) -> dict:
         self.tenant._require(FINDING_VIEW)
         row = self.db.query_one(
-            "SELECT r.*,c.submission_id,c.submission_version_id,c.correlation_id AS execution_id"
+            "SELECT r.*,c.submission_id,c.submission_version_id,c.graph_enabled,"
+            "c.correlation_id AS execution_id"
             " FROM satsa_runs r JOIN satsa_run_context c ON c.run_id=r.id"
             " WHERE r.organization_id=? AND c.organization_id=? AND r.id=?",
             (self.org, self.org, run_id),
@@ -282,7 +302,7 @@ class AnalysisExecutionService:
             )
             self.db.execute(
                 "UPDATE satsa_execution_jobs SET status='cancel_requested',cancel_requested_at=?,updated_at=?"
-                " WHERE organization_id=? AND run_id=? AND status IN ('queued','running','retry_wait')",
+                " WHERE organization_id=? AND run_id=? AND status IN ('queued','running','retry_wait','completed')",
                 (now, now, self.org, run_id),
             )
         self._audit("analysis.cancel_requested", run_id)
@@ -309,6 +329,128 @@ class AnalysisExecutionService:
                 )
             return None
         return {**row, "profile": json.loads(row["profile_json"])}
+
+    def list_recommendations(self, run_id: str) -> list[dict]:
+        self.tenant._require(FINDING_VIEW)
+        self.get_run(run_id)
+        return self.db.query_all(
+            "SELECT id,finding_id,action,recommendation_json,content_digest,created_at"
+            " FROM satsa_run_recommendations WHERE organization_id=? AND run_id=?"
+            " ORDER BY finding_id",
+            (self.org, run_id),
+        )
+
+    def get_review_decision(self, run_id: str) -> dict | None:
+        self.tenant._require(FINDING_VIEW)
+        self.get_run(run_id)
+        return self.db.query_one(
+            "SELECT id,run_id,finding_id,user_id,principal_identity_id,action,reason,"
+            "finding_content_digest,content_digest,created_at"
+            " FROM satsa_run_review_decisions WHERE organization_id=? AND run_id=?",
+            (self.org, run_id),
+        )
+
+    def decide(self, run_id: str, *, action: str, reason: str = "") -> dict:
+        """Record one attributable run-level supervisory decision and requeue.
+
+        This extends the finding-scoped review model to the whole run, including
+        runs with no findings. It uses the existing review action vocabulary.
+        """
+        self.tenant._require(REVIEW_CREATE)
+        if _membership_role(self.db, self.org, self.user) not in {
+            "satsa_supervisor",
+            "satsa_admin",
+        }:
+            raise PermissionDeniedError("only a supervisor may decide an analysis run")
+        # The existing finding review model also offers annotate and
+        # request_review. Neither is a terminal run-level determination.
+        if action not in {"confirm", "dismiss", "escalate"} or len(reason) > 4000:
+            raise DomainValidationError("invalid supervisory action or reason")
+        run = self.get_run(run_id)
+        if not run["graph_enabled"]:
+            raise DomainValidationError("run is not graph supervised")
+        existing = self.get_review_decision(run_id)
+        if existing:
+            if existing["action"] == action and existing["reason"] == reason:
+                return existing
+            raise DomainValidationError("supervisory decision already recorded")
+        if run["status"] != "awaiting_review":
+            raise DomainValidationError("run has not reached human review")
+        finding = self.db.query_one(
+            "SELECT f.* FROM satsa_findings f"
+            " JOIN satsa_observations o ON o.id=f.observation_id"
+            " JOIN satsa_runs r ON r.id=o.run_id"
+            " WHERE r.organization_id=? AND r.id=? ORDER BY f.id LIMIT 1",
+            (self.org, run_id),
+        )
+        identity = self.db.query_one(
+            "SELECT identity_id FROM satsa_users WHERE id=?", (self.user,)
+        )
+        now = time.time()
+        decision_id = _stable_id("runreview", run_id)
+        from satsa.analysis.canonical import live_finding_digest
+
+        document = {
+            "run_id": run_id,
+            "organization_id": self.org,
+            "finding_id": finding["id"] if finding else None,
+            "finding_content_digest": live_finding_digest(finding) if finding else "",
+            "principal_identity_id": identity["identity_id"],
+            "action": action,
+            "reason": reason,
+            "created_at": now,
+        }
+        with self.db.transaction():
+            prior = self.db.query_one(
+                "SELECT id,action,reason FROM satsa_run_review_decisions"
+                " WHERE organization_id=? AND run_id=?",
+                (self.org, run_id),
+            )
+            if prior is not None:
+                if prior["action"] == action and prior["reason"] == reason:
+                    decision = self.get_review_decision(run_id)
+                    assert decision is not None
+                    return decision
+                raise DomainValidationError("supervisory decision already recorded")
+            current = self.db.query_one(
+                "SELECT status FROM satsa_runs WHERE organization_id=? AND id=?",
+                (self.org, run_id),
+            )
+            if current is None or current["status"] != "awaiting_review":
+                raise DomainValidationError("run is no longer awaiting review")
+            self.db.execute(
+                "INSERT INTO satsa_run_review_decisions"
+                " (id,organization_id,run_id,finding_id,user_id,principal_identity_id,"
+                "action,reason,finding_content_digest,content_digest,created_at)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (
+                    decision_id,
+                    self.org,
+                    run_id,
+                    document["finding_id"],
+                    self.user,
+                    identity["identity_id"],
+                    action,
+                    reason,
+                    document["finding_content_digest"],
+                    digest_document(document),
+                    now,
+                ),
+            )
+            self.db.execute(
+                "UPDATE satsa_runs SET status='queued' WHERE organization_id=? AND id=?",
+                (self.org, run_id),
+            )
+            self.db.execute(
+                "UPDATE satsa_execution_jobs SET status='queued',attempt_count=0,available_at=?,"
+                "updated_at=?,completed_at=NULL WHERE organization_id=? AND run_id=?"
+                " AND status='completed'",
+                (now, now, self.org, run_id),
+            )
+        self._audit("analysis.review_decided", run_id, decision_id=decision_id)
+        decision = self.get_review_decision(run_id)
+        assert decision is not None
+        return decision
 
     def list_findings(
         self, run_id: str, *, limit: int = 100, offset: int = 0
@@ -589,6 +731,32 @@ class ExecutionQueue:
             )
             return True
 
+    def pause_for_review(self, lease: Lease) -> bool:
+        """Release the lease only after LangGraph has durably interrupted."""
+        now = time.time()
+        with self.db.transaction():
+            if self._lease_row(lease, now) is None:
+                return False
+            current = self.db.query_one(
+                "SELECT status FROM satsa_runs WHERE organization_id=? AND id=?",
+                (lease.organization_id, lease.run_id),
+            )
+            _transition(current["status"], "awaiting_review")
+            self.db.execute(
+                "UPDATE satsa_runs SET status='awaiting_review'"
+                " WHERE organization_id=? AND id=?",
+                (lease.organization_id, lease.run_id),
+            )
+            # A completed queue item is inert until an authorized decision
+            # explicitly requeues it. LangGraph retains the interrupt state.
+            self.db.execute(
+                "UPDATE satsa_execution_jobs SET status='completed',completed_at=?,"
+                "updated_at=?,lease_owner='',lease_expires_at=NULL"
+                " WHERE organization_id=? AND run_id=?",
+                (now, now, lease.organization_id, lease.run_id),
+            )
+            return True
+
     def fail(self, lease: Lease, *, code: str, message: str, retryable: bool) -> str:
         now = time.time()
         with self.db.transaction():
@@ -699,7 +867,23 @@ class AnalysisExecutionWorker:
         heartbeat_thread.start()
         try:
             context = self._resolve_context(lease)
-            self._execute(lease, context)
+            if context["graph_enabled"]:
+                from satsa.analysis.graph import (
+                    AnalysisGraphRuntime,
+                    durable_checkpointer,
+                )
+
+                with durable_checkpointer(self.db) as checkpointer:
+                    outcome = AnalysisGraphRuntime(
+                        self, lease, context, checkpointer
+                    ).run()
+                if outcome == "awaiting_review":
+                    if not self.queue.pause_for_review(lease):
+                        raise LeaseLost("lease expired before review checkpoint")
+                    self._audit_run_safely(lease, "analysis.awaiting_review")
+                    return "awaiting_review"
+            else:
+                self._execute(lease, context)
             current = self._job_state(lease.run_id)
             status = (
                 "cancelled"
@@ -740,6 +924,12 @@ class AnalysisExecutionWorker:
                 if status in {"completed", "partial"}:
                     self._attest_if_configured(lease, [])
             return status
+        except CancelAtBoundary:
+            self._mark_pending_cancelled(lease)
+            if not self.queue.complete(lease, "cancelled"):
+                return "lease_lost"
+            self._audit_run_safely(lease, "analysis.cancelled")
+            return "cancelled"
         except LeaseLost:
             log.info(
                 "analysis lease lost",
@@ -774,7 +964,8 @@ class AnalysisExecutionWorker:
 
     def _resolve_context(self, lease: Lease) -> dict:
         row = self.db.query_one(
-            "SELECT r.*,c.submission_id,c.submission_version_id,c.organization_id AS context_org"
+            "SELECT r.*,c.submission_id,c.submission_version_id,c.graph_enabled,"
+            "c.organization_id AS context_org"
             " FROM satsa_runs r JOIN satsa_run_context c ON c.run_id=r.id"
             " JOIN satsa_submissions s ON s.id=c.submission_id AND s.organization_id=c.organization_id"
             " JOIN satsa_submission_versions v ON v.id=c.submission_version_id"
@@ -1143,6 +1334,46 @@ class AnalysisExecutionWorker:
                 now,
             ),
         )
+
+    def _persist_recommendations(self, lease: Lease) -> int:
+        from satsa.analysis.recommend import recommend
+
+        findings = self.db.query_all(
+            "SELECT f.id,f.rule_or_category,f.evidence_refs_json FROM satsa_findings f"
+            " JOIN satsa_observations o ON o.id=f.observation_id"
+            " JOIN satsa_runs r ON r.id=o.run_id"
+            " WHERE r.organization_id=? AND r.id=? ORDER BY f.id",
+            (lease.organization_id, lease.run_id),
+        )
+        with self.db.transaction():
+            self._assert_lease(lease)
+            for finding in findings:
+                item = recommend(
+                    {
+                        "id": finding["id"],
+                        "rule_or_category": finding["rule_or_category"],
+                        "evidence_refs": json.loads(
+                            finding["evidence_refs_json"] or "[]"
+                        ),
+                    }
+                ).to_dict()
+                self.db.execute(
+                    "INSERT INTO satsa_run_recommendations"
+                    " (id,organization_id,run_id,finding_id,action,recommendation_json,"
+                    "content_digest,created_at) VALUES (?,?,?,?,?,?,?,?)"
+                    " ON CONFLICT(run_id,finding_id) DO NOTHING",
+                    (
+                        _stable_id("recommendation", lease.run_id, finding["id"]),
+                        lease.organization_id,
+                        lease.run_id,
+                        finding["id"],
+                        item["action"],
+                        _j(item, "{}"),
+                        digest_document(item),
+                        time.time(),
+                    ),
+                )
+        return len(findings)
 
     class _ScopedRiskEngine:
         def __init__(self, db, org):
