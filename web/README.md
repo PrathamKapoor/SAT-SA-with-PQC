@@ -1,67 +1,98 @@
 # SAT-SA web UI (`web/`)
 
-The public SAT-SA frontend: a landing page and a supervisory **workbench**,
-built with Next.js 16 / React 19 / Tailwind 4.
+The SAT-SA product interface: a public site and the secure supervisory
+application. Next.js 16, React 19, Tailwind CSS 4, Lucide icons.
 
-- **Live:** https://sat-sa-with-pqc-81gi.onrender.com/
-- **Deployed by:** `../render.yaml`. Render still builds the separate
-  `feat/sat-sa-site` branch, not this folder. This folder holds the same UI
-  code as that branch at the time it was moved here. Until Render is pointed at
-  `web/` on `main`, keep the two in sync, or the live site will drift from this folder.
-- **Origin:** moved from the `feat/sat-sa-site` branch, which was built on the
-  MIT-licensed [ai-website-cloner-template](https://github.com/JCodesMore/ai-website-cloner-template)
-  (see `LICENSE`).
+- **Live:** https://sat-sa-with-pqc-81gi.onrender.com/ (Render builds the
+  `feat/sat-sa-site` branch, see `../render.yaml`; this folder is the current
+  UI and will replace that branch once hosting is pointed here)
+- **Backend contract:** [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)
 
-## What it is and is not
+## Surfaces
 
-| Route | Content |
-|---|---|
-| `/` | Landing page. Stats and walkthrough come from `src/components/sites/sat-sa-with-pqc/root/content/*.ts`, captured from a run of the Python demo |
-| `/workbench/*` | Overview, entities, findings, review queue, submissions, trends, governance, reports, admin |
-| `/reference/contentarchitecture` | Leftover design reference from the template. Some of its shared helpers (`Reveal`, `CaButton`, `SmoothScroll`, `hooks`) are still imported by the SAT-SA pages |
+| Surface | Routes | Data |
+|---|---|---|
+| Public site | `/`, `/methodology`, `/security` | Product description only. No entity, finding or evidence data. |
+| Sign in | `/login` | Issued credential (backend) or a labelled development session (fixture mode) |
+| Application | `/workbench/*` | Through `SatsaDataSource`; requires a session |
 
-**The workbench does not call the Python backend.** All data is static TypeScript
-in `src/components/sites/sat-sa-with-pqc/workbench/data/`, and review actions only
-change the viewer's own browser state (React state persisted to `localStorage`,
-see `workbench/state/WorkbenchContext.tsx`). The backend
-(`../satsa/`) has its own server-rendered UI (`python scripts/serve_ui.py`) and a
-small JSON API (`/api/entities`, `/api/entities/{id}/risk`). Connecting the two is
-open prototype work.
+Application routes, grouped as in the sidebar:
+
+- **Command:** Workbench (fits the viewport, no page scroll on desktop), Overview
+- **Supervision:** Entities, entity detail, Findings, finding detail (investigation workspace), Review queue, Decisions
+- **Analytics:** Analytics, Benchmarks, Pipeline
+- **Data:** Submissions, Ingest, Security data
+- **Intelligence:** Agents, Architecture, Reports (printable per entity)
+- **Trust:** TRUST-SAT, Audit
+- **Admin:** Administration, System
+
+Navigation is filtered by role (viewer, analyst, supervisor, auditor,
+administrator), mirroring `qsmlops/security/permissions/model.py`. The backend
+remains the only place a permission is enforced.
+
+## Data: real, fixture, empty
+
+`SATSA_DATA_SOURCE` selects the adapter (read on the server only):
+
+- `fixture` (default): `src/lib/mocks/fixture.json`, **generated** from a real
+  backend run over the committed synthetic demo dataset by
+  `scripts/export-demo-fixture.py`. It is never hand-edited and contains no
+  review decisions, because the demo records none.
+- `api`: the SAT-SA backend at `SATSA_API_BASE_URL`, per `docs/API_CONTRACT.md`.
+
+The top bar always shows the origin. In fixture mode, a supervisor's
+decisions are kept in the browser only and are labelled "development session"
+wherever they appear. Figures quoted from repository reports live in
+`src/content/documented.ts` with their source path. Where the backend has no
+endpoint yet, pages show a labelled empty state instead of placeholder numbers.
 
 ## Commands
 
-Requires Node >= 24 (see `.nvmrc`).
+Requires Node 24 (`.nvmrc`).
 
 ```bash
 cd web
 npm ci
-npm run dev          # http://localhost:3000
-npm run check        # lint + typecheck + production build (what CI runs)
-npm run build && npm start
+npm run dev                  # http://localhost:3000, fixture mode
+npm run check                # lint + typecheck + production build (CI runs this)
+SAT_SA_BASE_URL=http://localhost:3000 npm run test:ui   # smoke tests against a running server
 
-# UI smoke tests against a running server (default http://localhost:3001).
-# Known stale: both tests fail against the live site too (they expect
-# `data-grainient-mode="light"` and one "Open Review Queue" button, which the
-# current UI no longer renders). They are not part of CI until updated.
-SAT_SA_BASE_URL=http://localhost:3000 npm run test:ui
+# regenerate the fixture (from the repository root, backend installed)
+python web/scripts/export-demo-fixture.py
 
-# Production container (the same image Render builds)
+# against the backend once the API contract is implemented
+SATSA_DATA_SOURCE=api SATSA_API_BASE_URL=http://127.0.0.1:8000 npm run dev
+
 docker build -t sat-sa-web . && docker run -p 3000:3000 sat-sa-web
 ```
 
 ## Layout
 
 ```
-src/app/                         routes (/, /workbench/*, /reference/*)
-src/components/sites/sat-sa-with-pqc/
-  root/                          landing page sections + content/*.ts (static copy + demo numbers)
-  workbench/data/                static workbench datasets
-  workbench/state/               client-side state (review decisions, filters)
-  workbench/ui/                  workbench components
-  shared/                        charts, gauges, icons
-src/components/reactbits/        visual effects (Grainient, Prism, MaskedHeading)
-src/components/sites/www-contentarchitecture-dev-80b3abaf/   template reference + shared helpers
-public/                          static assets
-docs/design-references/satsa-with-pqc/   screenshots of the Python UI used as design input
-tests/                           node:test smoke tests (need a running server)
+src/app/(public)/            public site (product, methodology, security)
+src/app/login/               sign-in (credential form, development session)
+src/app/workbench/           secure application, one folder per route
+src/components/ui/           design-system primitives (button, badges, data, dialog, layout, states, tooltip)
+src/components/shell/        app shell: sidebar, top bar, navigation icons
+src/components/domain/       SAT-SA components (finding row, evidence lifecycle, review panel, provenance chain, ...)
+src/components/public/       public chrome and the interactive evidence hero (canvas)
+src/lib/types/domain.ts      domain types mirroring the backend records
+src/lib/api/                 SatsaDataSource interface, fixture and HTTP adapters
+src/lib/auth/                roles and permissions, session, sign-in actions
+src/lib/domain/              labels, formatting, lifecycle and measure derivations
+src/lib/model.ts             server-side view models (joins only, no invented scores)
+src/lib/mocks/               development fixture (generated) and its adapter
+src/content/documented.ts    figures transcribed from repository reports, with source
+docs/API_CONTRACT.md         endpoints the backend implements for api mode
+scripts/export-demo-fixture.py  fixture generator (reads the backend, writes nothing to it)
 ```
+
+## Design tokens
+
+Defined in `src/app/globals.css`: white and near-white surfaces, navy ink,
+purple as the SAT-SA identity and trust colour, blue for analytical context,
+orange for attention, red only for critical or failed states. State is never
+shown by colour alone. Motion respects `prefers-reduced-motion`.
+
+The MIT `LICENSE` in this folder is from the Next.js starter the UI was
+originally scaffolded from.

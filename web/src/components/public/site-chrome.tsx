@@ -16,7 +16,7 @@ export function PublicNav() {
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-paper/90 backdrop-blur-md">
       <nav aria-label="Public" className="mx-auto flex h-16 max-w-[1320px] items-center gap-8 px-5 md:px-8">
-        <Link href="/" aria-label="SAT-SA home" className="rounded-sm">
+        <Link href="/" className="rounded-sm">
           <Wordmark />
         </Link>
         <ul className="hidden items-center gap-7 md:flex">

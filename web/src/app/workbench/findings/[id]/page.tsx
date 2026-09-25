@@ -262,10 +262,10 @@ export default async function FindingDetailPage({ params }: { params: Promise<{ 
                     <dd className="mt-0.5 text-ink-2">{v}</dd>
                   </div>
                 ))}
-                <p className="pt-1 text-[11.5px] leading-relaxed text-muted">
-                  Verification detects tampering at the time it runs. It does not make stored records tamper-proof.
-                </p>
               </dl>
+              <p className="text-[11.5px] leading-relaxed text-muted 2xl:col-start-2">
+                Verification detects tampering at the time it runs. It does not make stored records tamper-proof.
+              </p>
             </div>
           </Section>
         </div>
