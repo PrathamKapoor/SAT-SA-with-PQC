@@ -33,7 +33,7 @@ export default async function WorkbenchLayout({ children }: { children: ReactNod
     groups,
     signalFindingIds: findings.map((f) => f.id),
     decidedFindingIds: [...new Set(decisions.map((d) => d.findingId))],
-    user: { displayName: session.user.displayName, roleLabel: ROLE_LABEL[role] },
+    user: { displayName: session.user.displayName, roleLabel: ROLE_LABEL[role], principal: session.user.identityId },
     sessionMode: session.mode,
   };
 
@@ -47,7 +47,7 @@ export default async function WorkbenchLayout({ children }: { children: ReactNod
       ? {
           kind: "fixture",
           label: "Development fixture",
-          detail: `${o.notice} Generated ${fmtDate(o.generatedAt)} by SAT-SA ${o.satsaVersion}. ${session.mode === "development" ? "Session is a development role, not an authenticated identity." : ""}`,
+          detail: `${o.notice} Generated ${fmtDate(o.generatedAt)} by SAT-SA ${o.satsaVersion}.`,
         }
       : { kind: "api", label: "Live backend", detail: `Data from the SAT-SA API at ${o.baseUrl}.` };
 
@@ -59,7 +59,7 @@ export default async function WorkbenchLayout({ children }: { children: ReactNod
       <div className="relative flex h-dvh overflow-hidden bg-canvas">
         <Sidebar {...nav} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar nav={nav} period={period} origin={origin} />
+          <TopBar nav={nav} period={period} origin={origin} session={{ mode: session.mode, roleLabel: ROLE_LABEL[role], principal: session.user.identityId }} />
           <main id="main" tabIndex={-1} className="relative min-h-0 flex-1 overflow-y-auto focus:outline-none">
             {children}
           </main>

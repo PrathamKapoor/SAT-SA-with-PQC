@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, FileSearch, Gavel, Layers, ShieldCheck, X } from "lucide-react";
-import { SatSaHero } from "@/components/public/hero/SatSaHero";
+import { EvidenceHero } from "@/components/public/evidence-field/EvidenceHero";
 import { GITHUB_URL } from "@/components/public/site-chrome";
 import { buttonClass } from "@/components/ui/button";
 
@@ -9,15 +9,6 @@ export const metadata: Metadata = {
   title: { absolute: "SAT-SA · Supervisory Analytics for SOC Assessment" },
   description:
     "SAT-SA turns periodic CSE submissions into evidence-backed supervisory findings, prioritised for human review and verifiable with post-quantum signatures.",
-};
-
-const HERO = {
-  eyebrow: "SIH 26157 · Supervisory analytics",
-  titleLines: ["Supervisory", "analytics", "for SOC", "assessment."],
-  lede: ["Analyse periodic SOC evidence.", "Show supervisors where to look, and why."],
-  primaryCta: { label: "Sign in", href: "/login" },
-  secondaryCta: { label: "How it works", href: "#flow" },
-  steps: ["INGEST", "ANALYSE", "PRIORITISE", "REVIEW"],
 };
 
 const FLOW = [
@@ -61,7 +52,7 @@ const FACTS = [
 export default function HomePage() {
   return (
     <>
-      <SatSaHero content={HERO} />
+      <EvidenceHero />
 
       <section aria-labelledby="what-h" className="border-t border-line">
         <div className="mx-auto grid max-w-[1320px] gap-12 px-5 py-20 md:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] lg:py-28">

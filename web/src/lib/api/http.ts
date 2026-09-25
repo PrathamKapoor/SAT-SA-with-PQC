@@ -6,8 +6,10 @@
  * /api/entities/{id}/risk. Until the rest exist, run the UI with
  * SATSA_DATA_SOURCE=fixture (the default).
  *
- * Server-only: the session credential is forwarded from the incoming
- * request's cookie and never exposed to client JavaScript.
+ * Server-only: the backend credential is forwarded from the incoming
+ * request's cookie and never exposed to client JavaScript. A development
+ * session (satsa_dev_session) is never forwarded: development principals are
+ * not backend identities and must not be presented as authentication.
  */
 import "server-only";
 
