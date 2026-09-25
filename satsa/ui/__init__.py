@@ -42,6 +42,23 @@ def _loadjson(value):
 TEMPLATES.env.filters["loadjson"] = _loadjson
 
 
+def _fmtdate(value):
+    """Render a stored epoch-seconds timestamp (``occurred_at`` etc.) as a
+    readable UTC date; used only for display, never for comparisons."""
+    if value is None or value == "":
+        return "—"
+    try:
+        import datetime
+        return datetime.datetime.fromtimestamp(
+            float(value), tz=datetime.timezone.utc
+        ).strftime("%Y-%m-%d %H:%M UTC")
+    except (TypeError, ValueError, OSError):
+        return str(value)
+
+
+TEMPLATES.env.filters["fmtdate"] = _fmtdate
+
+
 def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
     """Build the FastAPI app bound to a ``SatsaService``. The
     trust key dir is the same directory passed to
@@ -203,11 +220,29 @@ def create_app(service, *, trust_key_dir: Optional[Path] = None) -> FastAPI:
         reviews = svc.review_history(finding_id)
         bundle = assemble_explanation(
             f, evidence_records=evidence, observation=obs)
+        # Real per-finding PQC verification (re-derives the live digest and
+        # checks the ML-DSA-65 signature) — reuses the same verify_run() the
+        # /system and /trust pages already call. Previously this page never
+        # checked anything and unconditionally printed "ML-DSA-65 signed".
+        trust_status = None
+        if obs and app.state.trust_key_dir is not None:
+            try:
+                run_report = svc.verify_run(obs["run_id"], app.state.trust_key_dir)
+                trust_status = next(
+                    (item for item in run_report.get("findings", [])
+                     if item.get("finding_id") == finding_id), None)
+            except Exception as exc:  # noqa: BLE001 — surface as an
+                # unverified state, not a 500; the page must still render.
+                trust_status = {"ok": False, "reason": str(exc)}
+        review_bindings = {
+            b["review_id"]: b for b in svc.verify_review_binding(finding_id)
+        }
         return TEMPLATES.TemplateResponse(request, "finding_detail.html", {
             "sat_version": SATSA_VERSION, "finding": f, "observation": obs,
             "evidence": evidence, "confidence": bundle.confidence,
             "reviews": reviews, "recommendation": bundle.recommendation,
-            "explanation": bundle,
+            "explanation": bundle, "trust_status": trust_status,
+            "review_bindings": review_bindings,
             "csrf_token": request.cookies.get(satsa_security.CSRF_COOKIE_NAME, ""),
         })
 
