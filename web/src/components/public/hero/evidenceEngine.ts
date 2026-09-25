@@ -44,10 +44,10 @@ const CATEGORY_LABEL: Record<Category, string> = {
   asset: "ASSET",
 };
 
-const INK = "15, 23, 42";
-const PURPLE = "124, 58, 237";
-const ORANGE = "234, 88, 12";
-const BLUE = "37, 99, 235";
+const INK = "12, 18, 34";
+const PURPLE = "82, 54, 201";
+const ORANGE = "180, 83, 9";
+const BLUE = "29, 89, 201";
 const CATEGORY_RGB: Record<Category, string> = {
   alert: "37, 99, 235",
   case: "71, 85, 105",
