@@ -33,6 +33,11 @@ decision. A new worker reconstructs the graph from its checkpoint and resumes
 using `Command(resume=<persisted decision ID>)`. The node checks the decision
 against the authoritative tenant-owned table before finalization. A repeated
 identical decision returns the same row; a changed decision is rejected.
+`AnalysisExecutionService.get_graph_progress(run_id)` first checks tenant
+ownership and returns only checkpoint presence, current stage and review
+status. It never exposes raw checkpoint values or a checkpoint ID as an
+authorization token. A run whose analytical stages all fail becomes failed
+without presenting a supervisory review checkpoint.
 Terminal run-level actions are `confirm`, `dismiss`, and `escalate` from the
 existing review vocabulary. `annotate` and `request_review` are finding-level
 review actions and cannot silently become a terminal supervisory decision.

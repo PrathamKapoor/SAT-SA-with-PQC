@@ -93,6 +93,8 @@ class AnalysisGraphRuntime:
         # skips completed stages on retry. Its existing risk result is unique.
         self.worker._execute(self.lease, self.context)
         self._check(state)
+        if self.worker._finish(self.lease) == "failed":
+            raise RuntimeError("all analytical stages failed; review is unavailable")
         return {"current_stage": "recommendations"}
 
     def recommendations(self, state: AnalysisGraphState) -> dict:
