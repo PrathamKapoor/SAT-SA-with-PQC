@@ -1,0 +1,330 @@
+.satsa-hero {
+  --hero-ink: #0f172a;
+  --hero-muted: #475569;
+  --hero-purple: #7c3aed;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  min-height: clamp(680px, calc(100svh - 64px), 980px);
+  overflow: hidden;
+  background:
+    radial-gradient(60% 70% at 70% 50%, rgba(124, 58, 237, 0.045), transparent 70%),
+    #fbfaf7;
+  color: var(--hero-ink);
+  touch-action: pan-y;
+}
+
+.satsa-hero__grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.satsa-hero-canvas {
+  z-index: 0;
+}
+
+.satsa-hero__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 56px 80px;
+  pointer-events: none;
+}
+
+.satsa-hero__copy {
+  width: fit-content;
+  max-width: min(36rem, 42vw);
+  pointer-events: auto;
+}
+
+.satsa-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 28px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--hero-muted);
+}
+
+.satsa-hero__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--hero-purple);
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12);
+}
+
+.satsa-hero__title {
+  margin: 0;
+  font-size: clamp(2.75rem, 5.2vw, 5.5rem);
+  font-weight: 600;
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+  color: var(--hero-ink);
+}
+
+.satsa-hero__lede {
+  margin: 28px 0 0;
+  font-size: clamp(1rem, 1.25vw, 1.1875rem);
+  line-height: 1.45;
+  color: var(--hero-muted);
+}
+
+.satsa-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin-top: 32px;
+}
+
+.satsa-hero__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: var(--hero-ink);
+  color: #fff;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: background-color 160ms ease;
+}
+
+.satsa-hero__cta:hover {
+  background: var(--hero-purple);
+}
+
+.satsa-hero__link {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hero-ink);
+  text-decoration: underline;
+  text-decoration-color: rgba(15, 23, 42, 0.25);
+  text-underline-offset: 5px;
+  transition: text-decoration-color 160ms ease, color 160ms ease;
+}
+
+.satsa-hero__link:hover {
+  color: var(--hero-purple);
+  text-decoration-color: var(--hero-purple);
+}
+
+.satsa-hero__instrument {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(15, 23, 42, 0.1);
+}
+
+.satsa-hero__analyse {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #6d28d9;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.satsa-hero__controls {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.satsa-hero__analyse:hover:not(:disabled) {
+  border-color: var(--hero-purple);
+  background: #f5f3ff;
+}
+
+.satsa-hero__analyse.is-primary {
+  border-color: var(--hero-purple);
+  background: var(--hero-purple);
+  color: #fff;
+}
+
+.satsa-hero__analyse.is-primary:hover:not(:disabled) {
+  border-color: #6d28d9;
+  background: #6d28d9;
+}
+
+.satsa-hero__analyse:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.satsa-hero :is(a, button):focus-visible {
+  outline: 2px solid var(--hero-purple);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+.satsa-hero__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--hero-muted);
+}
+
+.satsa-hero__status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.satsa-hero__status-dot.is-analysing,
+.satsa-hero__status-dot.is-prioritising {
+  background: var(--hero-purple);
+  animation: satsa-hero-ping 1.2s ease-in-out infinite;
+}
+
+.satsa-hero__status-dot.is-ready {
+  background: var(--hero-purple);
+}
+
+.satsa-hero__steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #94a3b8;
+}
+
+.satsa-hero__steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 240ms ease;
+}
+
+.satsa-hero__steps li.is-done {
+  color: var(--hero-muted);
+}
+
+.satsa-hero__steps li.is-active {
+  color: var(--hero-purple);
+}
+
+.satsa-hero__step-arrow {
+  width: 12px;
+  height: 12px;
+  color: #cbd5e1;
+}
+
+.satsa-hero__hint {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.satsa-hero__hint-touch {
+  display: none;
+}
+
+@media (hover: none) {
+  .satsa-hero__hint-pointer { display: none; }
+  .satsa-hero__hint-touch { display: inline; }
+}
+
+.satsa-texture {
+  z-index: 0;
+  color: rgba(15, 23, 42, 0.3);
+}
+
+.satsa-texture__micro {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  fill: rgba(15, 23, 42, 0.42);
+}
+
+.satsa-texture__stages {
+  opacity: calc(0.35 + var(--hero-analysis, 0) * 0.65);
+}
+
+.satsa-texture__rail {
+  stroke: rgba(15, 23, 42, 0.14);
+  stroke-width: 1;
+}
+
+.satsa-texture__tick {
+  stroke: rgba(15, 23, 42, 0.35);
+  stroke-width: 1;
+}
+
+.satsa-texture__signal {
+  stroke: var(--hero-purple);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 18;
+  opacity: calc(var(--hero-analysis, 0) * 0.9);
+  animation: satsa-hero-signal 2.4s linear infinite;
+}
+
+@keyframes satsa-hero-signal {
+  to { stroke-dashoffset: -48; }
+}
+
+@keyframes satsa-hero-ping {
+  50% { box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.18); }
+}
+
+@media (max-width: 1023px) {
+  .satsa-hero {
+    display: block;
+    min-height: 0;
+    padding-bottom: 440px;
+  }
+  .satsa-hero__inner {
+    padding: 40px 16px 0;
+  }
+  .satsa-hero__copy {
+    max-width: 40rem;
+  }
+  .satsa-hero__title {
+    font-size: clamp(2.5rem, 10vw, 4.5rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .satsa-texture__signal,
+  .satsa-hero__status-dot {
+    animation: none !important;
+  }
+  .satsa-hero__hint {
+    display: none;
+  }
+}

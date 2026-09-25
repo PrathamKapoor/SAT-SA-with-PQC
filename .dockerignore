@@ -1,0 +1,4 @@
+# Build context for the Python backend image (./Dockerfile).
+# The Next.js web UI has its own image (web/Dockerfile, deployed via
+# render.yaml) and is not part of the backend container.
+web/
