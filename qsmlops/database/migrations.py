@@ -772,6 +772,68 @@ MIGRATIONS = MIGRATIONS + (
 )
 
 
+# Phase 2 keeps validated canonical snapshots per immutable version. Legacy
+# assessment tables remain available for the offline analysis path; corrected
+# versions can repeat native IDs without overwriting an earlier snapshot.
+MIGRATIONS = MIGRATIONS + (
+    Migration(
+        11,
+        "satsa_versioned_ingestion",
+        (
+            "ALTER TABLE satsa_submissions ADD COLUMN created_by_user_id TEXT REFERENCES satsa_users(id)",
+            "ALTER TABLE satsa_submissions ADD COLUMN create_idempotency_key TEXT",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_submission_create_key ON satsa_submissions (organization_id, assessment_id, create_idempotency_key)",
+            "ALTER TABLE satsa_submission_versions ADD COLUMN created_by_user_id TEXT REFERENCES satsa_users(id)",
+            "ALTER TABLE satsa_submission_versions ADD COLUMN idempotency_key TEXT",
+            "ALTER TABLE satsa_submission_versions ADD COLUMN snapshot_digest TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE satsa_submission_versions ADD COLUMN content_digest TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE satsa_submission_versions ADD COLUMN validated_at REAL",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_version_create_key ON satsa_submission_versions (organization_id, submission_id, idempotency_key)",
+            "ALTER TABLE satsa_artifacts ADD COLUMN category TEXT",
+            "ALTER TABLE satsa_artifacts ADD COLUMN original_filename TEXT",
+            "ALTER TABLE satsa_artifacts ADD COLUMN upload_idempotency_key TEXT",
+            "ALTER TABLE satsa_artifacts ADD COLUMN format TEXT",
+            "ALTER TABLE satsa_artifacts ADD COLUMN uploaded_by_user_id TEXT REFERENCES satsa_users(id)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_artifact_category ON satsa_artifacts (organization_id, submission_version_id, category)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_artifact_upload_key ON satsa_artifacts (organization_id, submission_version_id, upload_idempotency_key)",
+            "ALTER TABLE satsa_source_records ADD COLUMN version_id TEXT REFERENCES satsa_submission_versions(id)",
+            "ALTER TABLE satsa_source_records ADD COLUMN artifact_id TEXT REFERENCES satsa_artifacts(id)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_source_version ON satsa_source_records (version_id, artifact_id)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_validation_reports (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                version_id TEXT NOT NULL UNIQUE,
+                status TEXT NOT NULL,
+                validator_version TEXT NOT NULL,
+                report_json TEXT NOT NULL,
+                content_digest TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                FOREIGN KEY (version_id, organization_id)
+                    REFERENCES satsa_submission_versions(id, organization_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_validation_org ON satsa_validation_reports (organization_id, version_id)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_version_records (
+                record_id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                version_id TEXT NOT NULL,
+                category TEXT NOT NULL,
+                source_record_id TEXT NOT NULL REFERENCES satsa_source_records(id),
+                payload_json TEXT NOT NULL,
+                content_digest TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                FOREIGN KEY (version_id, organization_id)
+                    REFERENCES satsa_submission_versions(id, organization_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_version_records_scope ON satsa_version_records (organization_id, version_id, category)",
+        ),
+    ),
+)
+
+
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
         self.engine = engine

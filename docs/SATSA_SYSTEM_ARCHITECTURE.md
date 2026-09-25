@@ -52,6 +52,19 @@ flowchart TB
     Decision --> Database
 ```
 
+## Phase 2 hosted submission boundary
+
+The diagram above remains the working offline SQLite analysis path. Phase 2 adds a separate tenant-bound intake path in `satsa/submissions/`:
+
+```text
+authenticated member + organization
+  → assessment → submission → immutable version
+  → streamed artifact → local or S3-compatible storage
+  → durable validation report → versioned canonical records
+```
+
+The service reuses `satsa.ingest.normalize.normalize_category` and the six existing evidence categories. Its canonical rows link to source record, artifact, version, submission, assessment, entity, and organization. Validation finishes at a valid version; it does not call the offline analytical worker pipeline. Hosted analysis requires the Phase 3 run/queue infrastructure and must select a version explicitly. The old offline `/ingest` route and SQLite table adapter are unchanged. See [DATABASE.md](DATABASE.md) for lifecycle, limits, storage, and migration details.
+
 ## Component responsibilities
 
 | Layer | Primary implementation | Responsibility |
