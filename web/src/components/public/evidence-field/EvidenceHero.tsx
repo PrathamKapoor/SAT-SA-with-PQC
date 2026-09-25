@@ -22,14 +22,13 @@ export function EvidenceHero() {
         <div className="relative z-10 flex flex-col justify-center px-5 pt-14 pb-8 md:px-8 lg:py-12 lg:pr-4 lg:pl-10 xl:pl-14 [@media(min-width:1024px)_and_(max-height:820px)]:py-7">
           <p className="label flex items-center gap-2 text-ink-2">
             <span aria-hidden="true" className="size-1.5 rounded-full bg-brand" />
-            SAT-SA · Supervisory Analytics for SOC Assessment
+            SAT-SA
           </p>
           <h1 id="hero-title" className="mt-5 text-[40px] leading-[1.02] font-semibold tracking-[-0.035em] text-ink sm:text-[48px] xl:text-[56px] [@media(min-width:1024px)_and_(max-height:820px)]:mt-4 [@media(min-width:1024px)_and_(max-height:820px)]:text-[42px]">
-            Periodic SOC evidence, organised for supervisory review.
+            Supervisory Analytics for SOC Assessment.
           </h1>
           <p className="mt-5 max-w-[34rem] text-[16px] leading-relaxed text-muted xl:text-[17px] [@media(min-width:1024px)_and_(max-height:820px)]:mt-4 [@media(min-width:1024px)_and_(max-height:820px)]:text-[15px]">
-            SAT-SA analyses each entity&rsquo;s submitted records to surface execution gaps, missing evidence, anomalies and peer deviations, then puts evidence-backed findings in
-            front of a human supervisor.
+            Periodic evidence is analysed for execution gaps, missing expected evidence, anomalies and peer deviations. Human supervisors make the final decision.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3 [@media(min-width:1024px)_and_(max-height:820px)]:mt-6">
             <Link href="/login" className={buttonClass("primary", "lg")}>

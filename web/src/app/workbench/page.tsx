@@ -1,173 +1,170 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ChevronRight, ShieldCheck, ShieldAlert } from "lucide-react";
-import { AttentionQueue, AwaitingHeadline } from "@/components/domain/attention-queue";
 import { toRowData } from "@/components/domain/finding-row";
-import { PipelineStrip, type PipelineStage } from "@/components/domain/pipeline-strip";
-import { Meter } from "@/components/ui/data";
+import { AwaitingValue, NextReviewCard, SopCard, WorkbenchTile } from "@/components/domain/workbench-home";
 import { getSource } from "@/lib/api";
-import { DIMENSION_LABEL } from "@/lib/domain/labels";
-import { fmtDateTime, fmtNum } from "@/lib/domain/format";
+import { can } from "@/lib/auth/permissions";
+import { getSession } from "@/lib/auth/session";
+import { fmtDate, fmtNum } from "@/lib/domain/format";
 import { byPriority, loadCore, loadEntityViews, loadFindingViews } from "@/lib/model";
+import type { RiskDimensionName } from "@/lib/types/domain";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Workbench" };
 
-function PanelTitle({ children, href, linkLabel }: { children: React.ReactNode; href?: string; linkLabel?: string }) {
-  return (
-    <div className="flex h-11 shrink-0 items-center justify-between border-b border-line px-5">
-      <h2 className="text-[13.5px] font-semibold text-ink">{children}</h2>
-      {href && (
-        <Link href={href} className="inline-flex items-center gap-0.5 text-[12.5px] text-muted hover:text-ink">
-          {linkLabel}
-          <ChevronRight className="size-3.5" aria-hidden="true" />
-        </Link>
-      )}
-    </div>
-  );
-}
+/**
+ * Capabilities named in the supervisory review cycle. Only three map to a
+ * risk dimension the backend actually scores; the rest are shown as not
+ * assessed rather than given a number.
+ */
+const CAPABILITIES: Array<{ label: string; dimension: RiskDimensionName | null }> = [
+  { label: "Threat Detection", dimension: "detection_gap" },
+  { label: "Investigation Depth", dimension: "investigation_quality" },
+  { label: "Escalation Discipline", dimension: "escalation_discipline" },
+  { label: "Incident Response", dimension: null },
+  { label: "Security Operations", dimension: null },
+  { label: "Governance and Oversight", dimension: null },
+  { label: "Operational Discipline", dimension: null },
+  { label: "Cyber Resilience", dimension: null },
+];
 
-export default async function WorkbenchPage() {
+const MONTH = new Intl.DateTimeFormat("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
+
+export default async function WorkbenchPage({ searchParams }: { searchParams: Promise<{ cohort?: string; period?: string }> }) {
+  const { cohort, period } = await searchParams;
+  const session = (await getSession())!;
   const src = getSource();
-  const [core, findings, entities, audit] = await Promise.all([loadCore(), loadFindingViews(), loadEntityViews(), src.getMetaAudit()]);
-  const signal = findings.filter((f) => f.state === "signal").sort(byPriority);
+  const [core, findings, entities, receipts] = await Promise.all([loadCore(), loadFindingViews(), loadEntityViews(), src.listTrustReceipts()]);
+
+  const inPeriod = (assessmentId: string) => {
+    if (!period) return true;
+    const a = core.assessments.find((x) => x.id === assessmentId);
+    return a ? `${a.periodStart}-${a.periodEnd}` === period : false;
+  };
+  const scoped = entities.filter((e) => (!cohort || e.entity.sector === cohort) && (!e.assessment || inPeriod(e.assessment.id)));
+  const ids = new Set(scoped.map((e) => e.entity.id));
+  const signal = findings.filter((f) => f.state === "signal" && ids.has(f.entityId)).sort(byPriority);
   const rows = signal.map(toRowData);
+  const high = signal.filter((f) => f.severity === "high");
+  const submissions = scoped.map((e) => e.submission).filter((s) => s !== null);
+  const incomplete = scoped.filter((e) => e.completeness.missing.length).length;
+  const highEntities = scoped.filter((e) => e.findings.some((f) => f.severity === "high")).length;
+  const families = new Set(signal.map((f) => f.family)).size;
+  const verified = signal.filter((f) => f.trust === "verified").length;
+  const failed = signal.filter((f) => f.trust === "failed").length;
+  const decided = new Set(core.decisions.filter((d) => ids.has(signal.find((f) => f.id === d.findingId)?.entityId ?? "")).map((d) => d.findingId)).size;
 
-  const accepted = core.submissions.filter((s) => s.ingestStatus === "accepted").length;
-  const records = core.submissions.reduce((n, s) => n + Object.values(s.declaredCounts).reduce((a, b) => a + (b ?? 0), 0), 0);
-  const failedJobs = (await src.listJobs()).filter((j) => j.status === "failed").length;
-  const jobs = core.runs.reduce((n, r) => n + (r.summary.workers?.length ?? 0), 0);
-  const receipts = (await src.listTrustReceipts()).length;
-  const completedRuns = core.runs.filter((r) => r.status === "completed").length;
+  const a0 = scoped[0]?.assessment;
+  const periodLabel = a0
+    ? MONTH.format(a0.periodStart * 1000) === MONTH.format(a0.periodEnd * 1000)
+      ? MONTH.format(a0.periodStart * 1000)
+      : `${MONTH.format(a0.periodStart * 1000)} to ${MONTH.format(a0.periodEnd * 1000)}`
+    : "No period";
 
-  const pipeline: PipelineStage[] = [
-    { key: "sub", label: "Submissions accepted", value: `${accepted}/${core.submissions.length}`, state: accepted === core.submissions.length ? "ok" : "attention" },
-    { key: "rec", label: "Records normalized", value: records, state: "ok" },
-    { key: "run", label: "Analysis runs completed", value: `${completedRuns}/${core.runs.length}`, state: completedRuns === core.runs.length ? "ok" : "attention" },
-    { key: "job", label: "Worker jobs", value: jobs, detail: failedJobs ? `${failedJobs} failed` : "none failed", state: failedJobs ? "failed" : "ok" },
-    { key: "fnd", label: "Signal findings", value: signal.length, state: "ok" },
-    { key: "sig", label: "Trust receipts signed", value: receipts, state: "ok" },
-    { key: "dec", label: "Recorded decisions", value: core.decisions.length, detail: "backend record", state: core.decisions.length ? "ok" : "idle" },
-  ];
+  const capability = CAPABILITIES.map((c) => {
+    if (!c.dimension) return { ...c, value: null as number | null, weight: 0 };
+    const ds = scoped.map((e) => e.risk?.dimensions.find((d) => d.name === c.dimension)).filter((d) => d !== undefined);
+    return { ...c, value: ds.length ? ds.reduce((n, d) => n + d.score, 0) / ds.length : null, weight: ds[0]?.weight ?? 0 };
+  });
 
-  const trustOk = audit?.fully_compliant ?? false;
-  const verifiedAt = Math.max(0, ...[...core.verifications.values()].map((v) => v?.verifiedAt ?? 0));
+  const canIngest = can(session.user.role, "analysis.run");
 
   return (
-    <div className="flex flex-col gap-4 p-4 md:p-5 lg:h-full lg:min-h-0 lg:overflow-hidden">
-      <section aria-labelledby="posture" className="flex shrink-0 flex-wrap items-end justify-between gap-x-8 gap-y-3">
-        <div className="min-w-0">
-          <p className="label">Supervisory posture</p>
-          <h1 id="posture" className="mt-1 text-[24px] leading-tight font-semibold tracking-[-0.025em] text-ink xl:text-[28px]">
-            <AwaitingHeadline findings={rows} entities={entities.length} />
-          </h1>
+    <div className="flex flex-col gap-4 p-4 md:p-6 lg:grid lg:h-full lg:min-h-0 lg:grid-rows-[auto_minmax(0,1.2fr)_minmax(0,1fr)] lg:overflow-hidden xl:gap-5 [@media(min-width:1024px)_and_(max-height:820px)]:gap-3 [@media(min-width:1024px)_and_(max-height:820px)]:py-4">
+      <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+        <div>
+          <p className="font-mono text-[11.5px] tracking-[0.14em] uppercase">
+            <span className="font-semibold text-brand">Supervisory workbench</span>
+            <span className="text-faint"> / {periodLabel}</span>
+          </p>
+          <h1 className="mt-2 text-[32px] leading-none font-semibold tracking-[-0.035em] text-ink xl:text-[38px] [@media(min-width:1024px)_and_(max-height:820px)]:mt-1.5 [@media(min-width:1024px)_and_(max-height:820px)]:text-[30px]">Supervisory intelligence.</h1>
+          <p className="mt-2 text-[15px] text-muted [@media(min-width:1024px)_and_(max-height:820px)]:mt-1 [@media(min-width:1024px)_and_(max-height:820px)]:text-[14px]">Analyse. Prioritise. Review. Decide.</p>
         </div>
-        <dl className="flex gap-7">
-          {[
-            ["Entities", entities.length],
-            ["Signal findings", signal.length],
-            ["High severity", signal.filter((f) => f.severity === "high").length],
-          ].map(([k, v]) => (
-            <div key={k}>
-              <dt className="label">{k}</dt>
-              <dd className="num mt-0.5 text-[22px] leading-none font-semibold text-ink">{v}</dd>
-            </div>
-          ))}
-        </dl>
+        <NextReviewCard findings={rows} />
+      </header>
+
+      <section aria-label="Primary destinations" className="grid gap-3 sm:grid-cols-2 lg:min-h-0 lg:grid-cols-3 lg:grid-rows-2 xl:gap-4 [@media(min-width:1024px)_and_(max-height:820px)]:gap-3">
+        <WorkbenchTile
+          href={canIngest ? "/workbench/ingest" : "/workbench/submissions"}
+          icon={canIngest ? "ingest" : "submissions"}
+          title={canIngest ? "Ingest data" : "Submissions"}
+          description={canIngest ? "Validate CSE submissions" : "Review CSE submissions"}
+          value={submissions.length}
+          flag={incomplete ? { label: `${incomplete} incomplete`, tone: "attention" } : undefined}
+        />
+        <WorkbenchTile
+          href="/workbench/entities"
+          icon="entities"
+          title="Entities"
+          description="Rank CSEs by supervisory risk"
+          value={scoped.length}
+          flag={highEntities ? { label: `${highEntities} high`, tone: "attention" } : undefined}
+        />
+        <WorkbenchTile
+          href="/workbench/findings"
+          icon="findings"
+          title="Findings"
+          description="Inspect evidence-backed signals"
+          value={signal.length}
+          flag={high.length ? { label: `${high.length} high`, tone: "attention" } : undefined}
+        />
+        <WorkbenchTile
+          href="/workbench/review-queue"
+          icon="queue"
+          title="Review queue"
+          description={can(session.user.role, "decision.record") ? "Record supervisory decisions" : "Findings awaiting a decision"}
+          value={<AwaitingValue findings={rows} />}
+          valueTone="brand"
+        />
+        <WorkbenchTile href="/workbench/analytics" icon="analytics" title="Analytics" description="Detector families that signalled" value={families} />
+        <WorkbenchTile
+          href="/workbench/trust"
+          icon="trust"
+          title="TRUST-SAT"
+          description="Verified findings and receipts"
+          value={verified}
+          flag={failed ? { label: `${failed} failed`, tone: "critical" } : { label: `${receipts.length} receipts`, tone: "brand", icon: "shield" }}
+        />
       </section>
 
-      <div className="grid gap-4 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,0.72fr)]">
-        <section aria-label="Attention queue" className="relative flex min-h-[26rem] flex-col overflow-hidden rounded-md border border-line bg-paper lg:min-h-0">
-          <PanelTitle href="/workbench/findings" linkLabel="Findings">
-            Attention queue
-          </PanelTitle>
-          <div className="min-h-0 flex-1">
-            <AttentionQueue findings={rows} limit={12} />
+      <div className="grid grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:gap-5">
+        <section aria-labelledby="sop-h" className="flex min-h-0 min-w-0 flex-col rounded-md border border-line bg-paper px-5 pt-4 pb-2">
+          <div className="flex items-baseline justify-between">
+            <h2 id="sop-h" className="text-[15px] font-semibold text-ink">
+              SOP
+            </h2>
+            <span className="label">Review cycle</span>
           </div>
+          <SopCard findings={rows} backendDecided={decided} verifyHref="/workbench/trust" />
         </section>
 
-        <section aria-label="Entities requiring attention" className="relative flex flex-col overflow-hidden rounded-md border border-line bg-paper lg:min-h-0">
-          <PanelTitle href="/workbench/entities" linkLabel="Entities">
-            Entities by priority
-          </PanelTitle>
-          <ol className="relative min-h-0 flex-1 overflow-hidden">
-            {entities.map((e) => {
-              const top = e.risk?.dimensions.filter((d) => d.score > 0).sort((a, b) => b.score - a.score).slice(0, 2) ?? [];
-              return (
-                <li key={e.entity.id} className="border-b border-line/80 last:border-0">
-                  <Link href={`/workbench/entities/${e.entity.id}`} className="group grid grid-cols-[1.25rem_minmax(0,1fr)_auto] items-center gap-x-3 px-5 py-3 hover:bg-canvas">
-                    <span className="num text-[11.5px] text-faint">{String(e.priorityRank ?? "").padStart(2, "0")}</span>
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-[13.5px] font-medium text-ink group-hover:text-brand-strong">{e.entity.displayName}</span>
-                        {e.trust === "verified" ? (
-                          <ShieldCheck className="size-3.5 shrink-0 text-brand" aria-label="Trust verified" />
-                        ) : (
-                          <ShieldAlert className="size-3.5 shrink-0 text-critical" aria-label="Trust not verified" />
-                        )}
-                      </span>
-                      <span className="mt-1 block truncate text-[12px] text-muted">
-                        {top.length ? top.map((d) => DIMENSION_LABEL[d.name]).join(", ") : "No weighted risk"}
-                      </span>
-                    </span>
-                    <span className="w-24 text-right">
-                      <span className="num text-[15px] font-semibold text-ink">{fmtNum(e.risk?.total_score ?? null, 1)}</span>
-                      <span className="text-[11px] text-muted">/100</span>
-                      <Meter value={e.risk?.total_score ?? null} max={100} label={`${e.entity.displayName} risk score`} tone={(e.risk?.total_score ?? 0) >= 30 ? "attention" : "brand"} className="mt-1" />
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ol>
-          <p className="shrink-0 border-t border-line px-5 py-2.5 text-[11.5px] text-muted">
-            Order is the backend entity priority: risk, confidence, recency and high-severity count.
+        <section aria-labelledby="cap-h" className="flex min-h-0 min-w-0 flex-col rounded-md border border-line bg-paper px-5 pt-4 pb-3">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 id="cap-h" className="text-[15px] font-semibold text-ink">
+              Capability overview
+            </h2>
+            <span className="label" title="Mean of the backend risk dimension of the same name across the entities in scope">Observed risk, lower is better</span>
+          </div>
+          <ul className="mt-2 flex min-h-0 flex-1 flex-col justify-between" aria-label="Capabilities">
+            {capability.map((c) => (
+              <li key={c.label} className="grid grid-cols-[minmax(0,11rem)_minmax(0,1fr)_4rem] items-center gap-4">
+                <span className={cn("truncate text-[13.5px]", c.dimension ? "text-ink" : "text-muted")}>{c.label}</span>
+                {c.value == null ? (
+                  <span className="truncate text-[12px] text-faint">Not assessed</span>
+                ) : (
+                  <span className="h-1.5 rounded-[1px] bg-sunken" role="meter" aria-label={`${c.label} observed risk`} aria-valuemin={0} aria-valuemax={c.weight} aria-valuenow={c.value}>
+                    <span className="block h-full rounded-[1px] bg-attention" style={{ width: `${c.weight ? (c.value / c.weight) * 100 : 0}%` }} />
+                  </span>
+                )}
+                <span className="num text-right text-[13px] font-semibold text-ink">
+                  {c.value == null ? <span className="font-normal text-faint">n/a</span> : `${fmtNum(c.value, 1)}/${c.weight}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 truncate text-[11.5px] text-muted [@media(min-width:1024px)_and_(max-height:820px)]:sr-only">
+            Mean of the backend risk dimension across {scoped.length} entities{a0 ? `, ${fmtDate(a0.periodStart)} to ${fmtDate(a0.periodEnd)}` : ""}.
           </p>
         </section>
-
-        <div className="flex flex-col gap-4 lg:col-span-2 lg:grid lg:grid-cols-2 lg:min-h-0 xl:col-span-1 xl:flex xl:flex-col">
-          <section aria-label="Pipeline state" className="flex flex-col rounded-md border border-line bg-paper xl:min-h-0 xl:flex-1">
-            <PanelTitle href="/workbench/pipeline" linkLabel="Pipeline">
-              Pipeline
-            </PanelTitle>
-            <div className="px-5 py-4">
-              <PipelineStrip stages={pipeline} orientation="vertical" label="Assessment cycle" />
-            </div>
-          </section>
-
-          <section aria-label="Trust state" className="rounded-md border border-line bg-paper">
-            <PanelTitle href="/workbench/trust" linkLabel="TRUST-SAT">
-              Trust
-            </PanelTitle>
-            <div className="px-5 py-4">
-              <p className={cn("flex items-center gap-2 text-[14px] font-semibold", trustOk ? "text-brand-strong" : "text-critical")}>
-                {trustOk ? <ShieldCheck className="size-4" aria-hidden="true" /> : <ShieldAlert className="size-4" aria-hidden="true" />}
-                {trustOk ? "All records verify" : "Verification exceptions"}
-              </p>
-              {audit && (
-                <dl className="mt-3 grid grid-cols-3 gap-2 text-[12px]">
-                  <div>
-                    <dt className="text-muted">Runs</dt>
-                    <dd className="num font-semibold text-ink">
-                      {audit.runs_ok}/{audit.runs_checked}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted">Findings</dt>
-                    <dd className="num font-semibold text-ink">
-                      {audit.findings_ok}/{audit.findings_checked}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-muted">Ledger</dt>
-                    <dd className="font-semibold text-ink">{audit.ledger_integrity?.chain_ok ? "Intact" : "Broken"}</dd>
-                  </div>
-                </dl>
-              )}
-              <p className="mt-3 text-[11.5px] text-muted">ML-DSA-65 over SHA3-256 · checked {fmtDateTime(verifiedAt)}</p>
-            </div>
-          </section>
-        </div>
       </div>
     </div>
   );

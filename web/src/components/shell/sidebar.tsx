@@ -140,8 +140,13 @@ export function Sidebar(props: SidebarProps) {
       className={cn("no-print hidden h-dvh shrink-0 flex-col border-r border-line bg-paper transition-[width] duration-200 lg:flex", collapsed ? "w-[60px]" : "w-[232px]")}
     >
       <div className={cn("flex h-14 items-center border-b border-line", collapsed ? "justify-center" : "justify-between px-4")}>
-        <Link href="/workbench" className="rounded-sm">
-          {collapsed ? (<><BrandMark /><span className="sr-only">SAT·SA workbench</span></>) : <Wordmark sub />}
+        <Link
+          href="/"
+          title="Return to SAT-SA public site"
+          className="-mx-1.5 rounded-sm px-1.5 py-1 transition-colors hover:bg-sunken focus-visible:outline-2 focus-visible:outline-brand"
+        >
+          <span className="sr-only">Return to SAT-SA public site: </span>
+          {collapsed ? <BrandMark /> : <Wordmark sub />}
         </Link>
         {!collapsed && (
           <button type="button" onClick={toggle} aria-label="Collapse navigation" title="Collapse navigation" className="rounded-sm p-1 text-faint hover:bg-sunken hover:text-ink">
@@ -177,7 +182,10 @@ export function MobileNav(props: SidebarProps) {
       <Drawer open={open} onClose={() => setOpen(false)} title="Navigation" side="left">
         <div className="flex h-full flex-col">
           <div className="flex h-14 items-center border-b border-line px-4">
-            <Wordmark sub />
+            <Link href="/" title="Return to SAT-SA public site" className="-mx-1.5 rounded-sm px-1.5 py-1 hover:bg-sunken" onClick={() => setOpen(false)}>
+              <span className="sr-only">Return to SAT-SA public site: </span>
+              <Wordmark sub />
+            </Link>
           </div>
           <NavList groups={props.groups} collapsed={false} awaiting={awaiting} onNavigate={() => setOpen(false)} />
           <SessionFooter user={props.user} sessionMode={props.sessionMode} collapsed={false} />

@@ -14,9 +14,8 @@ import { CredentialForm, DevelopmentIdentities, type IdentityCard } from "./form
 
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
 
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
+export default async function LoginPage() {
   if (await getSession()) redirect("/workbench");
-  const { next } = await searchParams;
   const mode = sessionMode();
 
   // Areas each role opens beyond the read-only set every role shares (existing permissions only).
@@ -63,13 +62,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <h1 className="mt-3 text-[26px] font-semibold tracking-[-0.02em] text-ink">Sign in to SAT-SA</h1>
 
           {mode === "development" ? (
-            <DevelopmentIdentities cards={cards} next={next} />
+            <DevelopmentIdentities cards={cards} />
           ) : (
             <>
               <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
                 Use the credential issued to your identity by a SAT-SA administrator. Access is limited to your assigned role.
               </p>
-              <CredentialForm next={next} configured={backendAuthConfigured()} />
+              <CredentialForm configured={backendAuthConfigured()} />
               <p className="mt-10 text-[12px] leading-relaxed text-faint">
                 Sessions use an HttpOnly cookie. Credentials are verified by the SAT-SA service, never in the browser.
               </p>

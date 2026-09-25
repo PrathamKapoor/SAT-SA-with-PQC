@@ -18,11 +18,10 @@ function Submit({ children }: { children: React.ReactNode }) {
 }
 
 /** Backend adapter: the production sign-in. */
-export function CredentialForm({ next, configured }: { next?: string; configured: boolean }) {
+export function CredentialForm({ configured }: { configured: boolean }) {
   const [state, action] = useActionState<SignInState, FormData>(signInWithCredential, { error: null });
   return (
     <form action={action} className="mt-8 space-y-4" noValidate>
-      <input type="hidden" name="next" value={next ?? ""} />
       <div>
         <label htmlFor="credential" className="block text-[13px] font-medium text-ink">
           Issued credential
@@ -99,7 +98,7 @@ function IdentityButton({ card }: { card: IdentityCard }) {
 }
 
 /** Development adapter: frontend-only identities for previewing each role. */
-export function DevelopmentIdentities({ cards, next }: { cards: IdentityCard[]; next?: string }) {
+export function DevelopmentIdentities({ cards }: { cards: IdentityCard[] }) {
   return (
     <section aria-labelledby="dev-h" className="mt-5">
       <div className="rounded-md border border-attention/30 bg-attention-tint/60 px-4 py-3">
@@ -112,7 +111,6 @@ export function DevelopmentIdentities({ cards, next }: { cards: IdentityCard[]; 
         </p>
       </div>
       <form action={startDevelopmentSession} className="mt-5">
-        <input type="hidden" name="next" value={next ?? ""} />
         <p className="label mb-2">Choose a development identity</p>
         <ul className="space-y-2">
           {cards.map((c) => (
