@@ -140,8 +140,8 @@ export function Sidebar(props: SidebarProps) {
       className={cn("no-print hidden h-dvh shrink-0 flex-col border-r border-line bg-paper transition-[width] duration-200 lg:flex", collapsed ? "w-[60px]" : "w-[232px]")}
     >
       <div className={cn("flex h-14 items-center border-b border-line", collapsed ? "justify-center" : "justify-between px-4")}>
-        <Link href="/workbench" aria-label="SAT-SA workbench" className="rounded-sm">
-          {collapsed ? <BrandMark /> : <Wordmark sub />}
+        <Link href="/workbench" className="rounded-sm">
+          {collapsed ? (<><BrandMark /><span className="sr-only">SAT·SA workbench</span></>) : <Wordmark sub />}
         </Link>
         {!collapsed && (
           <button type="button" onClick={toggle} aria-label="Collapse navigation" title="Collapse navigation" className="rounded-sm p-1 text-faint hover:bg-sunken hover:text-ink">

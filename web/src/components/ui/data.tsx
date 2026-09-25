@@ -14,7 +14,7 @@ export function Meter({ value, max = 1, tone = "brand", className, label }: { va
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={max}
-      aria-valuenow={value ?? undefined}
+      aria-valuenow={value ?? 0}
       aria-valuetext={value == null ? "not applicable" : undefined}
       className={cn("h-1.5 w-full overflow-hidden rounded-[1px] bg-sunken", className)}
     >
@@ -50,13 +50,13 @@ export function ConfidenceDisplay({ confidence }: { confidence: ConfidenceVector
       </div>
       <dl className="mt-4 space-y-3">
         {rows.map(([label, value, hint]) => (
-          <div key={label}>
-            <div className="flex items-baseline justify-between gap-3">
-              <dt className="text-[13px] text-ink-2">{label}</dt>
-              <dd className={cn("num text-[13px] font-medium", value == null ? "text-faint" : "text-ink")}>{value == null ? "n/a" : fmtPct(value)}</dd>
-            </div>
-            <Meter value={value} label={label} tone="ink" className="mt-1.5" />
-            <p className="mt-1 text-[12px] text-muted">{hint}</p>
+          <div key={label} className="grid grid-cols-[1fr_auto] items-baseline gap-x-3">
+            <dt className="text-[13px] text-ink-2">{label}</dt>
+            <dd className={cn("num text-[13px] font-medium", value == null ? "text-faint" : "text-ink")}>{value == null ? "n/a" : fmtPct(value)}</dd>
+            <dd className="col-span-2">
+              <Meter value={value} label={label} tone="ink" className="mt-1.5" />
+              <span className="mt-1 block text-[12px] text-muted">{hint}</span>
+            </dd>
           </div>
         ))}
       </dl>

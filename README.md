@@ -265,15 +265,15 @@ This repository contains two UIs. Both live on `main`:
 
 | | Web UI (`web/`) | Backend UI (`satsa/ui/`) |
 |---|---|---|
-| What | Public landing page + supervisory workbench | Operator dashboard over the real pipeline |
+| What | Public site + secure supervisory application | Operator dashboard over the real pipeline |
 | Stack | Next.js 16 / React 19 / Tailwind 4 | FastAPI + Jinja2 + vanilla JS |
-| Data | Static demo data in TypeScript (no backend calls) | Live SQLite database: real ingest, findings, verification, reviews |
+| Data | Typed data layer: a development fixture generated from a real backend run, or the backend API (`web/docs/API_CONTRACT.md`) | Live SQLite database: real ingest, findings, verification, reviews |
 | Run | `cd web && npm ci && npm run dev` | `python scripts/serve_ui.py` |
 | Hosted | https://sat-sa-with-pqc-81gi.onrender.com/ | Local / air-gapped only |
 
-The web UI was developed on the separate `feat/sat-sa-site` branch and
-copied into `web/`. Render (`render.yaml`) still deploys that branch, so the
-two must be kept in sync until hosting is pointed at `web/`. See
+`web/` holds the current, redesigned UI. Render (`render.yaml`) still
+deploys the older UI from the `feat/sat-sa-site` branch, so the live site
+shows that version until hosting is pointed at `web/`. See
 [`web/README.md`](web/README.md).
 
 The backend UI is FastAPI + Jinja2 + vanilla JS, all local: Overview (command center) ·
@@ -312,8 +312,8 @@ satsa/                 # SAT-SA supervisory analytics (the product)
   security.py          # identity/RBAC wiring for the UI + CLI
   ui/                  # FastAPI app, templates (incl. /login, /ingest), demo loader
   cli.py               # sat-sa entry point (incl. `doctor`)
-web/                   # Next.js web UI (landing page + workbench, static demo
-                       # data) -- same code as the Render site; see web/README.md
+web/                   # Next.js web UI (public site + secure application,
+                       # typed data layer) -- see web/README.md
 qsmlops/               # reusable MLOps trust infrastructure (retained):
                        # crypto (ML-DSA/ML-KEM/SHA3), evidence ledger,
                        # passports, registry, identity/RBAC, 9 agents,
