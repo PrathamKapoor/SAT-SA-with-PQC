@@ -43,9 +43,7 @@ class ApiSettings:
 
 @dataclass
 class DatabaseSettings:
-    """Connection descriptor. Only the SQLite dialect is implemented in
-    Phase 1; the URL form keeps the door open for a quantum-safe or managed
-    database in later phases without API changes."""
+    """Connection descriptor for SQLite offline or PostgreSQL hosted storage."""
 
     url: str = ""
 

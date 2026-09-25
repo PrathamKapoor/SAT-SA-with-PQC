@@ -281,12 +281,12 @@ class TestDatabase:
         # Re-inserting the same mirror must not raise.
         repo.insert_mirror(event, "deadbeef")
 
-    def test_engine_rejects_bad_url(self, tmp_path):
+    def test_engine_rejects_unsupported_url(self, tmp_path):
         from qsmlops.core.errors import StorageError
         from qsmlops.database.engine import create_engine
 
         with pytest.raises(StorageError):
-            create_engine("postgres://nope")
+            create_engine("mysql://nope")
 
 
 # ---------------------------------------------------------------------------

@@ -1,9 +1,8 @@
 """Database service layer: engine + migrations + repository access.
 
-one stop for the platform's SQL state. Instantiate with Settings (or a URL);
-the service applies migrations lazily on first use. Migrations are dialect-
-neutral so the same flow works if the engine is swapped for the production
-quantum-safe database adapter.
+One stop for the platform's SQL state. Instantiate with Settings (or a URL);
+the service applies migrations lazily on first use. The migration history is
+shared by SQLite and PostgreSQL, with an explicit PostgreSQL DDL mapping.
 """
 from __future__ import annotations
 

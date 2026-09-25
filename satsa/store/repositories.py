@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 
 from qsmlops.crypto.hashing import digest_document
+from satsa.tenancy import require_offline_store
 from satsa.domain.entities import Assessment, Asset, Entity, Submission
 from satsa.domain.evidence import SourceRecord
 from satsa.domain.workflow import (
@@ -38,6 +39,7 @@ def _jd(value) -> str:
 
 class EntityStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, e: Entity, *, created_at: float) -> None:
@@ -65,6 +67,7 @@ class EntityStore:
 
 class AssessmentStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, a: Assessment, *, created_at: float) -> None:
@@ -93,6 +96,7 @@ class AssessmentStore:
 
 class SubmissionStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, s: Submission, *, entity_id: str, ingest_status: str,
@@ -141,6 +145,7 @@ class SubmissionStore:
 
 class SourceRecordStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, sr: SourceRecord) -> None:
@@ -159,6 +164,7 @@ class SourceRecordStore:
 
 class AlertStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, a: Alert, *, submission_id: str) -> None:
@@ -184,6 +190,7 @@ class AlertStore:
 
 class CaseStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, c: Case, *, submission_id: str) -> None:
@@ -207,6 +214,7 @@ class CaseStore:
 
 class InvestigationStepStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, s: InvestigationStep, *, submission_id: str) -> None:
@@ -227,6 +235,7 @@ class InvestigationStepStore:
 
 class EscalationStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, e: Escalation, *, submission_id: str) -> None:
@@ -247,6 +256,7 @@ class EscalationStore:
 
 class DispositionStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, d: Disposition, *, submission_id: str) -> None:
@@ -268,6 +278,7 @@ class DispositionStore:
 
 class AssetStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, a: Asset, *, assessment_id: str, submission_id: str) -> None:
