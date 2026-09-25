@@ -9,6 +9,7 @@ diverge.
 Every recorded event also gets its ledger entry hash (`ledger_entry_hash`)
 so an event read back through the mirror can be proven to exist on-chain.
 """
+
 from __future__ import annotations
 
 from qsmlops.core.logging import get_logger
@@ -32,8 +33,24 @@ class AuditService:
         """Append the event to the ledger and mirror it (if a DB is present)."""
         doc = event.to_dict()
         doc["audit_type"] = AUDIT_ACTION_PREFIX
-        entry = self._ledger.append(doc)
-        self._mirror(event, entry["entry_hash"])
+        if self._database is None:
+            entry = self._ledger.append(doc)
+        else:
+            # The ledger's own lock coordinates threads in one process. API
+            # and worker processes also need a shared lock or two appenders
+            # can select the same chain head. Serialize appends through the
+            # existing database transaction: SQLite's immediate transaction
+            # lock handles offline processes; PostgreSQL's advisory lock
+            # coordinates hosted API/worker instances.
+            database = self._database
+            if hasattr(database, "ensure_ready"):
+                database.ensure_ready()
+                database = database.engine
+            with database.transaction():
+                if getattr(database, "dialect", "") == "postgresql":
+                    database.query_one("SELECT pg_advisory_xact_lock(703144062)")
+                entry = self._ledger.append(doc)
+                self._mirror(event, entry["entry_hash"])
         return event
 
     def _mirror(self, event: AuditEvent, entry_hash: str) -> None:
@@ -43,7 +60,7 @@ class AuditService:
             from qsmlops.database.repositories import AuditEventRepository
 
             AuditEventRepository(self._database).insert_mirror(event, entry_hash)
-        except Exception as exc:  # pragma: no cover - mirror is best-effort
+        except Exception as exc:  # noqa: BLE001 - ledger stays authoritative if mirror fails
             log.warning("audit mirror write failed: %s", exc)
 
     # -------------------- query path --------------------

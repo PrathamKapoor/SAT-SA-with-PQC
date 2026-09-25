@@ -10,14 +10,16 @@ cryptographic identity columns, immutable audit) are satisfied then.
 
 URL forms: ``sqlite:///<file-path>`` and ``postgresql://...``.
 """
+
 from __future__ import annotations
 
 import sqlite3
 import threading
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from qsmlops.core.errors import DuplicateEntryError, StorageError
 
@@ -120,12 +122,14 @@ class SQLiteDatabaseEngine(DatabaseEngine):
                 raise self._translate(exc, sql) from exc
 
     def query_one(self, sql: str, params: Sequence[Any] = ()) -> dict | None:
-        row = self._connection.execute(sql, tuple(params)).fetchone()
-        return dict(row) if row is not None else None
+        with self._lock:
+            row = self._connection.execute(sql, tuple(params)).fetchone()
+            return dict(row) if row is not None else None
 
     def query_all(self, sql: str, params: Sequence[Any] = ()) -> list[dict]:
-        rows = self._connection.execute(sql, tuple(params)).fetchall()
-        return [dict(r) for r in rows]
+        with self._lock:
+            rows = self._connection.execute(sql, tuple(params)).fetchall()
+            return [dict(r) for r in rows]
 
     def close(self) -> None:
         with self._lock:
@@ -136,7 +140,7 @@ class SQLiteDatabaseEngine(DatabaseEngine):
     @contextmanager
     def transaction(self):
         self.connect()  # ensure connected *before* taking the lock, so a
-                         # lazy connect never needs to reacquire it
+        # lazy connect never needs to reacquire it
         with self._lock:
             if self._in_transaction:
                 # Nested `with transaction():` on the same thread: join the
@@ -166,5 +170,6 @@ def create_engine(url: str) -> DatabaseEngine:
         return SQLiteDatabaseEngine(path)
     if dialect == "postgresql":
         from qsmlops.database.postgres import PostgresDatabaseEngine
+
         return PostgresDatabaseEngine(str(path))
     raise StorageError(f"no engine implementation for dialect {dialect!r}")

@@ -36,6 +36,7 @@ s3 = ["boto3>=1.35,<2"]
 [project.scripts]
 qsmlops = "qsmlops.cli:cli"
 sat-sa = "satsa.cli:main"
+sat-sa-worker = "satsa.analysis.execution:worker_main"
 
 [tool.setuptools.packages.find]
 # `satsa.ui.demo` resolves its committed input set from the installed
