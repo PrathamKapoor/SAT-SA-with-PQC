@@ -12,10 +12,8 @@ export interface SignInState {
   error: string | null;
 }
 
-function safeNext(value: FormDataEntryValue | null): string {
-  const next = typeof value === "string" ? value : "";
-  return next.startsWith("/workbench") ? next : "/workbench";
-}
+/** Every role, development or backend, enters the same Workbench. */
+const HOME = "/workbench";
 
 /** Backend adapter only: exchange an issued credential for a session. */
 export async function signInWithCredential(_prev: SignInState, form: FormData): Promise<SignInState> {
@@ -32,7 +30,7 @@ export async function signInWithCredential(_prev: SignInState, form: FormData): 
     path: "/",
     secure: process.env.NODE_ENV === "production",
   });
-  redirect(safeNext(form.get("next")));
+  redirect(HOME);
 }
 
 /** Development adapter only: enter the application as a fixed development principal. */
@@ -43,7 +41,7 @@ export async function startDevelopmentSession(form: FormData): Promise<void> {
   const jar = await cookies();
   jar.delete(SESSION_COOKIE);
   writeDevelopmentSession(jar, id);
-  redirect(safeNext(form.get("next")));
+  redirect(HOME);
 }
 
 /** Ends either kind of session. */

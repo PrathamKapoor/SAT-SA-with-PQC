@@ -28,6 +28,8 @@ interface ClusterDef {
   tone: Tone;
   /** risk marks shown at high order: 1..3 */
   risk: number;
+  /** supervisory priority once risk is assessed (1 = first) */
+  priority: number;
   annotation: string;
   /** hover text for the cluster key record */
   keyText: string;
@@ -51,6 +53,17 @@ interface Rec {
   vy: number;
   boost: number;
   stagger: number;
+  /** resting depth (0.55 far .. 1.15 near) and the live depth used to draw */
+  z: number;
+  dz: number;
+}
+
+interface Dust {
+  x: number;
+  y: number;
+  z: number;
+  vx: number;
+  vy: number;
 }
 
 interface Link {
@@ -88,10 +101,10 @@ const C = {
 const TONE_RGB: Record<Tone, string> = { attention: C.attention, info: C.info, critical: C.critical };
 
 const CLUSTERS: ClusterDef[] = [
-  { label: "EXECUTION GAP", cx: 0.3, cy: 0.3, tone: "attention", risk: 3, annotation: "NO ESCALATION", keyText: "closed, no escalation" },
-  { label: "NEGATIVE SPACE", cx: 0.68, cy: 0.24, tone: "attention", risk: 2, annotation: "0 ALERTS", keyText: "critical, no alerts" },
-  { label: "ANOMALY", cx: 0.32, cy: 0.72, tone: "info", risk: 2, annotation: "OUTLIER", keyText: "case" },
-  { label: "PEER DEVIATION", cx: 0.68, cy: 0.7, tone: "info", risk: 1, annotation: "PEER MEDIAN", keyText: "peer" },
+  { label: "EXECUTION GAP", cx: 0.3, cy: 0.3, tone: "attention", risk: 3, priority: 1, annotation: "NO ESCALATION", keyText: "closed, no escalation" },
+  { label: "NEGATIVE SPACE", cx: 0.68, cy: 0.24, tone: "attention", risk: 2, priority: 2, annotation: "0 ALERTS", keyText: "critical, no alerts" },
+  { label: "ANOMALY", cx: 0.32, cy: 0.72, tone: "info", risk: 2, priority: 3, annotation: "OUTLIER", keyText: "case" },
+  { label: "PEER DEVIATION", cx: 0.68, cy: 0.7, tone: "info", risk: 1, priority: 4, annotation: "PEER MEDIAN", keyText: "peer" },
 ];
 const REVIEW = { x: 0.94, y: 0.48 };
 
@@ -113,7 +126,7 @@ function rng(seed: number) {
 }
 
 /** The structured shape of each finding, in cluster radii. */
-function clusterMembers(): Array<Omit<Rec, "hx" | "hy" | "phase" | "speed" | "x" | "y" | "vx" | "vy" | "boost" | "stagger">> {
+function clusterMembers(): Array<Omit<Rec, "hx" | "hy" | "phase" | "speed" | "x" | "y" | "vx" | "vy" | "boost" | "stagger" | "z" | "dz">> {
   const m: ReturnType<typeof clusterMembers> = [];
   const add = (cluster: number, kind: Kind, ox: number, oy: number, role: Rec["role"] = "member") => m.push({ kind, cluster, ox, oy, role });
   // 0 execution gap: three critical alerts closed through one case, one thin investigation, no escalation
@@ -150,6 +163,10 @@ export class EvidenceField {
   private hover = -1;
   /** right edge and vertical centre of each finding frame, updated while drawing */
   private frames: Array<{ right: number; cy: number }> = [];
+  private dust: Dust[] = [];
+  private px = 0;
+  private py = 0;
+  private pointer: FieldPointer = { x: 0, y: 0, inside: false };
   order = 0;
   target = 0;
 
@@ -171,12 +188,18 @@ export class EvidenceField {
 
   private build() {
     const rand = rng(this.seed);
-    const noiseCount = this.density === "full" ? 46 : this.density === "medium" ? 30 : 18;
+    const noiseCount = this.density === "full" ? 58 : this.density === "medium" ? 36 : 20;
+    const dustCount = this.density === "full" ? 110 : this.density === "medium" ? 64 : 34;
+    for (let i = 0; i < dustCount; i++) {
+      const a = rand() * Math.PI * 2;
+      const v = 0.004 + rand() * 0.008;
+      this.dust.push({ x: rand(), y: rand(), z: 0.25 + rand() * 0.4, vx: Math.cos(a) * v, vy: Math.sin(a) * v });
+    }
     const members = clusterMembers();
     const spread = () => ({ hx: 0.06 + rand() * 0.88, hy: 0.08 + rand() * 0.84 });
     for (const m of members) {
       const home = spread();
-      this.recs.push({ ...m, ...home, phase: rand() * Math.PI * 2, speed: 0.25 + rand() * 0.35, x: 0, y: 0, vx: 0, vy: 0, boost: 0, stagger: rand() * 0.18 });
+      this.recs.push({ ...m, ...home, phase: rand() * Math.PI * 2, speed: 0.25 + rand() * 0.35, x: 0, y: 0, vx: 0, vy: 0, boost: 0, stagger: rand() * 0.18, z: 0.8 + rand() * 0.3, dz: 1 });
     }
     for (let i = 0; i < noiseCount; i++) {
       const home = spread();
@@ -196,6 +219,8 @@ export class EvidenceField {
         vy: 0,
         boost: 0,
         stagger: 0.1 + rand() * 0.2,
+        z: 0.55 + rand() * 0.55,
+        dz: 1,
       });
     }
     for (const r of this.recs) {
@@ -255,7 +280,9 @@ export class EvidenceField {
 
   /** Effective order for one record: global order plus a local pull near the pointer. */
   private local(r: Rec) {
-    return clamp((this.order - r.stagger * (1 - this.order)) / (1 - r.stagger * 0.5) + r.boost * 0.45);
+    // execution gap resolves first, peer deviation last; the lag vanishes at full order
+    const lag = r.cluster >= 0 ? r.cluster * 0.07 * (1 - this.order) : 0;
+    return clamp((this.order - r.stagger * (1 - this.order) - lag) / (1 - r.stagger * 0.5) + r.boost * 0.45);
   }
 
   step(dt: number, pointer: FieldPointer, reduced: boolean) {
@@ -263,6 +290,17 @@ export class EvidenceField {
     this.time += reduced ? 0 : d;
     this.order += (this.target - this.order) * (reduced ? 1 : 1 - Math.exp(-d * 2.2));
     const sigma = Math.min(this.w, this.h) * 0.2;
+    this.pointer = pointer;
+    // smoothed pointer offset from centre drives a depth parallax
+    const tpx = pointer.inside ? (pointer.x / this.w - 0.5) * 2 : 0;
+    const tpy = pointer.inside ? (pointer.y / this.h - 0.5) * 2 : 0;
+    this.px += (tpx - this.px) * (1 - Math.exp(-d * 3));
+    this.py += (tpy - this.py) * (1 - Math.exp(-d * 3));
+    if (!reduced)
+      for (const p of this.dust) {
+        p.x = (p.x + p.vx * d + 1) % 1;
+        p.y = (p.y + p.vy * d + 1) % 1;
+      }
     let nearest = -1;
     let best = 16 * 16;
     for (let i = 0; i < this.recs.length; i++) {
@@ -272,8 +310,12 @@ export class EvidenceField {
       const e = smooth(0, 1, this.local(r));
       const a = this.chaos(r);
       const b = this.structured(r);
-      const tx = lerp(a.x, b.x, e);
-      const ty = lerp(a.y, b.y, e);
+      // evidence comes forward as it resolves; noise recedes
+      r.dz = lerp(r.z, r.cluster >= 0 ? 1.1 : 0.5, e);
+      const par = reduced ? 0 : (r.dz - 0.8) * 14;
+      const breathe = reduced ? 0 : e * 1.3;
+      const tx = lerp(a.x, b.x, e) - this.px * par + Math.sin(this.time * 0.7 + r.phase) * breathe;
+      const ty = lerp(a.y, b.y, e) - this.py * par + Math.cos(this.time * 0.6 + r.phase) * breathe;
       if (reduced) {
         r.x = tx;
         r.y = ty;
@@ -320,6 +362,42 @@ export class EvidenceField {
     const o = this.order;
     ctx.clearRect(0, 0, this.w, this.h);
     const font = (size: number, weight = 500) => `${weight} ${size}px var(--font-geist-mono), ui-monospace, monospace`;
+
+    // far layer: record dust, parallaxed least
+    for (const p of this.dust) {
+      ctx.fillStyle = `rgba(${C.muted}, ${0.1 + p.z * 0.12})`;
+      const x = p.x * this.w - this.px * p.z * 6;
+      const y = p.y * this.h - this.py * p.z * 6;
+      ctx.fillRect(x, y, 1.2, 1.2);
+    }
+
+    // tentative relationships between records that happen to drift close;
+    // brighter under the pointer, where analysis is probing
+    const probe = 1 - smooth(0.12, 0.55, o);
+    if (probe > 0.01) {
+      const D = Math.min(this.w, this.h) * 0.13;
+      const sigma = Math.min(this.w, this.h) * 0.2;
+      for (let i = 0; i < this.recs.length; i++) {
+        const A = this.recs[i];
+        for (let j = i + 1; j < this.recs.length; j++) {
+          const B = this.recs[j];
+          const dx = A.x - B.x;
+          const dy = A.y - B.y;
+          if (Math.abs(dx) > D || Math.abs(dy) > D) continue;
+          const dist = Math.hypot(dx, dy);
+          if (dist > D) continue;
+          const near = this.pointer.inside ? Math.exp(-(((A.x + B.x) / 2 - this.pointer.x) ** 2 + ((A.y + B.y) / 2 - this.pointer.y) ** 2) / (2 * sigma * sigma)) : 0;
+          const alpha = (1 - dist / D) * probe * (0.16 + 0.5 * near) * Math.min(A.dz, B.dz);
+          if (alpha < 0.02) continue;
+          ctx.strokeStyle = near > 0.3 ? `rgba(${C.brand}, ${alpha})` : `rgba(${C.ink}, ${alpha * 0.8})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(A.x, A.y);
+          ctx.lineTo(B.x, B.y);
+          ctx.stroke();
+        }
+      }
+    }
 
     // spurious links weaken; real ones strengthen
     for (const l of this.links) {
@@ -404,6 +482,11 @@ export class EvidenceField {
           const bh = 4 + k * 2.5;
           ctx.fillRect(x0 + lw + 8 + k * 4, y0 - 6 - bh, 2.5, bh);
         }
+        const prA = smooth(0.84, 0.94, o);
+        if (prA > 0.01) {
+          ctx.fillStyle = `rgba(${rgb}, ${prA})`;
+          ctx.fillText(`P${def.priority}`, x0 + lw + 24, y0 - 5);
+        }
       }
       this.drawAnnotation(ctx, c, members, frameA, rgb, font);
     }
@@ -466,7 +549,7 @@ export class EvidenceField {
       ctx.textBaseline = "top";
       this.text(ctx, "SUPERVISORY REVIEW", rx + 16, ry + 22, `rgba(${C.brand}, ${revA})`, revA);
       ctx.font = font(9.5, 500);
-      this.text(ctx, "HUMAN DECIDES", rx + 16, ry + 36, `rgba(${C.muted}, ${revA})`, revA);
+      this.text(ctx, `${CLUSTERS.length} FINDINGS · HUMAN DECIDES`, rx + 16, ry + 36, `rgba(${C.muted}, ${revA})`, revA);
       ctx.textAlign = "left";
     }
 
@@ -579,8 +662,9 @@ export class EvidenceField {
     const tone = r.cluster >= 0 ? TONE_RGB[CLUSTERS[r.cluster].tone] : C.muted;
     const important = settled && (r.role === "key" || r.role === "outlier" || r.role === "deviant");
     const rgb = important ? tone : noise ? C.muted : settled ? C.ink : r.kind === "alert" ? C.info : C.ink;
-    const alpha = (noise ? 0.55 : 0.8) * fade * (hovered ? 1.25 : 1);
-    const s = (r.role === "key" ? 5 : 3.6) * (hovered ? 1.4 : 1);
+    const depth = clamp(r.dz, 0.4, 1.2);
+    const alpha = (noise ? 0.55 : 0.8) * fade * (0.45 + 0.55 * depth) * (hovered ? 1.25 : 1);
+    const s = (r.role === "key" ? 5 : 3.6) * (0.72 + 0.35 * depth) * (hovered ? 1.4 : 1);
     ctx.fillStyle = `rgba(${rgb}, ${Math.min(1, alpha)})`;
     ctx.strokeStyle = `rgba(${rgb}, ${Math.min(1, alpha)})`;
     ctx.lineWidth = 1.2;

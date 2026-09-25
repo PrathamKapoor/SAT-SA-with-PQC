@@ -20,10 +20,11 @@ export default async function WorkbenchLayout({ children }: { children: ReactNod
   if (!session) redirect("/login");
 
   const source = getSource();
-  const [findings, decisions, assessments] = await Promise.all([
+  const [findings, decisions, assessments, entities] = await Promise.all([
     source.listFindings({ state: "signal" }),
     source.listReviewDecisions(),
     source.listAssessments(),
+    source.listEntities(),
   ]);
 
   const role = session.user.role;
@@ -40,6 +41,16 @@ export default async function WorkbenchLayout({ children }: { children: ReactNod
   const periods = new Set(assessments.map((a) => `${a.periodStart}-${a.periodEnd}`));
   const period =
     assessments.length && periods.size === 1 ? fmtPeriod(assessments[0].periodStart, assessments[0].periodEnd) : assessments.length ? `${periods.size} periods` : null;
+
+  const MONTH = new Intl.DateTimeFormat("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
+  const scope = {
+    periods: [...new Map(assessments.map((a) => [`${a.periodStart}-${a.periodEnd}`, a])).values()].map((a) => {
+      const s = MONTH.format(a.periodStart * 1000);
+      const e = MONTH.format(a.periodEnd * 1000);
+      return { value: `${a.periodStart}-${a.periodEnd}`, label: s === e ? s : `${s} to ${e}` };
+    }),
+    cohorts: [...new Set(entities.map((e) => e.sector).filter(Boolean))].sort().map((s) => ({ value: s, label: `${s.charAt(0).toUpperCase()}${s.slice(1)} cohort` })),
+  };
 
   const o = source.origin();
   const origin: OriginInfo =
@@ -59,7 +70,13 @@ export default async function WorkbenchLayout({ children }: { children: ReactNod
       <div className="relative flex h-dvh overflow-hidden bg-canvas">
         <Sidebar {...nav} />
         <div className="flex min-w-0 flex-1 flex-col">
-          <TopBar nav={nav} period={period} origin={origin} session={{ mode: session.mode, roleLabel: ROLE_LABEL[role], principal: session.user.identityId }} />
+          <TopBar
+            nav={nav}
+            period={period}
+            origin={origin}
+            session={{ mode: session.mode, roleLabel: ROLE_LABEL[role], principal: session.user.identityId, displayName: session.user.displayName }}
+            scope={scope}
+          />
           <main id="main" tabIndex={-1} className="relative min-h-0 flex-1 overflow-y-auto focus:outline-none">
             {children}
           </main>

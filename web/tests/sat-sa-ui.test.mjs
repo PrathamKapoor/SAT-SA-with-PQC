@@ -79,6 +79,30 @@ for (const [principal, { has, lacks }] of Object.entries(EXPECT)) {
   });
 }
 
+test("every development identity lands on the same Workbench", async () => {
+  const login = await text("/login");
+  assert.doesNotMatch(login, /name="next"/, "sign-in must not carry a per-role destination");
+  for (const p of Object.keys(ROLE)) {
+    const res = await get("/workbench", as(p));
+    assert.equal(res.status, 200, p);
+    const html = await res.text();
+    assert.match(html, /Supervisory intelligence\./, p);
+    for (const tile of ["Entities", "Findings", "Review queue", "Analytics", "TRUST-SAT"]) assert.match(html, new RegExp(`>${tile}<`), `${p}: ${tile} tile`);
+    assert.match(html, /Capability overview/, p);
+  }
+});
+
+test("the SAT-SA identity returns to the public site", async () => {
+  const html = await text("/workbench", as("dev-analyst"));
+  assert.match(html, /<a[^>]*href="\/"[^>]*title="Return to SAT-SA public site"|<a[^>]*title="Return to SAT-SA public site"[^>]*href="\/"/);
+});
+
+test("capability overview never invents a score", async () => {
+  const html = await text("/workbench", as("dev-viewer"));
+  assert.match(html, /Not assessed/);
+  for (const n of ["82", "72", "75", "85", "79", "87", "77", "84"]) assert.doesNotMatch(html, new RegExp(`>${n}<`), `no legacy capability score ${n}`);
+});
+
 test("role gates hold on direct URLs", async () => {
   assert.match(await text("/workbench/admin", as("dev-viewer")), /requires the administrator role/);
   assert.match(await text("/workbench/audit", as("dev-analyst")), /requires the auditor or administrator role/);
