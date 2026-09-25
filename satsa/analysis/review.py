@@ -116,6 +116,8 @@ class ReviewService:
             self._db = database.engine
         else:
             self._db = database
+        from satsa.tenancy import require_offline_store
+        require_offline_store(self._db)
         # Optional: when provided, every recorded decision is also
         # mirrored into this independent hash-chained ledger — see
         # this module's docstring ("Deletion / reordering"). None by

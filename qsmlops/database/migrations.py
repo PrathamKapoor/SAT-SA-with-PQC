@@ -316,7 +316,6 @@ MIGRATIONS = MIGRATIONS + (
     ),
 )
 
-
 MIGRATIONS = MIGRATIONS + (
     Migration(
         4,
@@ -676,17 +675,115 @@ MIGRATIONS = MIGRATIONS + (
 )
 
 
+# Phase 1 SaaS foundation. Existing offline rows remain unassigned (NULL
+# organization_id) until an explicit, validated ownership import maps them.
+# Hosted repository operations require a non-null organization and never
+# select these legacy rows implicitly.
+MIGRATIONS = MIGRATIONS + (
+    Migration(
+        10,
+        "satsa_tenant_foundation",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS satsa_organizations (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at REAL NOT NULL,
+                UNIQUE(name)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS satsa_users (
+                id TEXT PRIMARY KEY,
+                identity_id TEXT NOT NULL UNIQUE REFERENCES identities(identity_id),
+                email TEXT NOT NULL UNIQUE,
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at REAL NOT NULL
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS satsa_memberships (
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                user_id TEXT NOT NULL REFERENCES satsa_users(id),
+                role TEXT NOT NULL CHECK(role IN (
+                    'satsa_viewer', 'satsa_analyst', 'satsa_supervisor',
+                    'satsa_auditor', 'satsa_admin')),
+                status TEXT NOT NULL DEFAULT 'active',
+                created_at REAL NOT NULL,
+                PRIMARY KEY (organization_id, user_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_memberships_user ON satsa_memberships (user_id, organization_id)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_sessions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES satsa_users(id),
+                token_digest TEXT NOT NULL UNIQUE,
+                created_at REAL NOT NULL,
+                expires_at REAL NOT NULL,
+                last_activity_at REAL NOT NULL,
+                revoked_at REAL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_sessions_user ON satsa_sessions (user_id, expires_at)",
+            "ALTER TABLE satsa_entities ADD COLUMN organization_id TEXT REFERENCES satsa_organizations(id)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_entities_org ON satsa_entities (organization_id, display_name)",
+            "ALTER TABLE satsa_assessments ADD COLUMN organization_id TEXT REFERENCES satsa_organizations(id)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_assessments_org ON satsa_assessments (organization_id, entity_id)",
+            "ALTER TABLE satsa_submissions ADD COLUMN organization_id TEXT REFERENCES satsa_organizations(id)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_submissions_org ON satsa_submissions (organization_id, assessment_id)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_submissions_id_org ON satsa_submissions (id, organization_id)",
+            "ALTER TABLE satsa_runs ADD COLUMN organization_id TEXT REFERENCES satsa_organizations(id)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_runs_org ON satsa_runs (organization_id, assessment_id)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_submission_versions (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                submission_id TEXT NOT NULL,
+                version INTEGER NOT NULL CHECK(version > 0),
+                status TEXT NOT NULL DEFAULT 'created',
+                created_at REAL NOT NULL,
+                UNIQUE(submission_id, version),
+                FOREIGN KEY (submission_id, organization_id)
+                    REFERENCES satsa_submissions(id, organization_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_versions_org ON satsa_submission_versions (organization_id, submission_id)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_versions_id_org ON satsa_submission_versions (id, organization_id)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_artifacts (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                submission_version_id TEXT NOT NULL,
+                storage_key TEXT NOT NULL,
+                content_type TEXT NOT NULL,
+                size_bytes INTEGER NOT NULL CHECK(size_bytes >= 0),
+                sha3_256_digest TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                UNIQUE(organization_id, storage_key),
+                FOREIGN KEY (submission_version_id, organization_id)
+                    REFERENCES satsa_submission_versions(id, organization_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_artifacts_version ON satsa_artifacts (organization_id, submission_version_id)",
+        ),
+    ),
+)
+
+
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
         self.engine = engine
 
     def _ensure_table(self) -> None:
+        timestamp_type = "DOUBLE PRECISION" if self.engine.dialect == "postgresql" else "REAL"
         self.engine.execute(
             f"""
             CREATE TABLE IF NOT EXISTS {MIGRATION_TABLE} (
                 version INTEGER PRIMARY KEY,
                 name TEXT NOT NULL,
-                applied_at REAL NOT NULL
+                applied_at {timestamp_type} NOT NULL
             )
             """
         )
@@ -702,6 +799,8 @@ class MigrationRunner:
         """Apply all pending migrations; returns names applied this call."""
         self.engine.connect()
         self._ensure_table()
+        if self.engine.dialect == "postgresql":
+            return self._migrate_postgres()
         applied = set(self.applied_versions())
         result: list[str] = []
         for migration in sorted(MIGRATIONS, key=lambda m: m.version):
@@ -714,4 +813,25 @@ class MigrationRunner:
                 (migration.version, migration.name, time.time()),
             )
             result.append(f"{migration.version:03d}_{migration.name}")
+        return result
+
+    def _migrate_postgres(self) -> list[str]:
+        from qsmlops.database.postgres_migrations import postgres_statement
+
+        result: list[str] = []
+        # An advisory transaction lock serializes startup migrations across
+        # API/worker processes without holding an application connection open.
+        with self.engine.transaction():
+            self.engine.query_one("SELECT pg_advisory_xact_lock(703144061)")
+            applied = set(self.applied_versions())
+            for migration in sorted(MIGRATIONS, key=lambda m: m.version):
+                if migration.version in applied:
+                    continue
+                for statement in migration.statements:
+                    self.engine.execute(postgres_statement(statement))
+                self.engine.execute(
+                    f"INSERT INTO {MIGRATION_TABLE} (version, name, applied_at) VALUES (?,?,?)",
+                    (migration.version, migration.name, time.time()),
+                )
+                result.append(f"{migration.version:03d}_{migration.name}")
         return result

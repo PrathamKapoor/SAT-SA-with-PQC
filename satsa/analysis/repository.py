@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 import time
 
+from satsa.tenancy import require_offline_store
+
 from qsmlops.crypto.hashing import canonical_json, digest_document
 from satsa.domain.evidence import (
     ConfidenceVector,
@@ -90,6 +92,7 @@ def _d(obj) -> str:
 
 class RunStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, run: AnalysisRun, *, created_at: float) -> None:
@@ -141,6 +144,7 @@ class RunStore:
 
 class ObservationStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, obs: Observation, *, created_at: float) -> None:
@@ -166,6 +170,7 @@ class ObservationStore:
 
 class FindingStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, f: Finding, *, created_at: float) -> None:
@@ -189,6 +194,7 @@ class FindingStore:
 
 class JobStore:
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def insert(self, j, *, created_at: float) -> None:
@@ -213,6 +219,7 @@ class SourceRecordRefStore:
     can attach evidence_refs (SourceRecord IDs) to Findings."""
 
     def __init__(self, engine) -> None:
+        require_offline_store(engine)
         self._db = engine
 
     def find_by_locator(self, submission_id: str, locator: str) -> str | None:

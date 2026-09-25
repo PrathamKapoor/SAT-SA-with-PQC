@@ -93,6 +93,8 @@ class TrustService:
 
     def __init__(self, engine, key_dir: Path,
                  algorithm_id: str = DEFAULT_ALGORITHM) -> None:
+        from satsa.tenancy import require_offline_store
+        require_offline_store(engine)
         self._db = engine
         self._key_dir = Path(key_dir)
         self._key_dir.mkdir(parents=True, exist_ok=True)

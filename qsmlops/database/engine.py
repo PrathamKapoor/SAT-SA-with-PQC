@@ -8,7 +8,7 @@ the local SQLite file in a later phase without touching repositories or
 services — the production database requirements (encrypted at rest,
 cryptographic identity columns, immutable audit) are satisfied then.
 
-URL form: ``sqlite:///<file-path>``. The path may be absolute.
+URL forms: ``sqlite:///<file-path>`` and ``postgresql://...``.
 """
 from __future__ import annotations
 
@@ -22,12 +22,14 @@ from typing import Any, Sequence
 from qsmlops.core.errors import DuplicateEntryError, StorageError
 
 
-def parse_database_url(url: str) -> tuple[str, Path]:
-    """Split a database URL into (dialect, path)."""
+def parse_database_url(url: str) -> tuple[str, Path | str]:
+    """Split a database URL into its dialect and connection target."""
     if url.startswith("sqlite:///"):
         return "sqlite", Path(url[len("sqlite:///") :])
+    if url.startswith(("postgresql://", "postgres://")):
+        return "postgresql", url
     raise StorageError(
-        f"unsupported database URL {url!r}; expected sqlite:///<file>"
+        "unsupported database URL; expected sqlite:///<file> or postgresql://..."
     )
 
 
@@ -162,4 +164,7 @@ def create_engine(url: str) -> DatabaseEngine:
     dialect, path = parse_database_url(url)
     if dialect == "sqlite":
         return SQLiteDatabaseEngine(path)
+    if dialect == "postgresql":
+        from qsmlops.database.postgres import PostgresDatabaseEngine
+        return PostgresDatabaseEngine(str(path))
     raise StorageError(f"no engine implementation for dialect {dialect!r}")

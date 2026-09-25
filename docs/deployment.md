@@ -1,5 +1,7 @@
 # SAT-SA Deployment — reproducible offline path
 
+This page describes the existing SQLite offline deployment. The Phase 1 PostgreSQL tenant foundation is documented in [DATABASE.md](DATABASE.md); it is not a hosted application deployment yet.
+
 No cloud. No SaaS. No external AI. No remote fonts, CDN, or telemetry.
 Everything below runs on an air-gapped host.
 
