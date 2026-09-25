@@ -350,6 +350,33 @@ class AnalysisExecutionService:
             (self.org, run_id),
         )
 
+    def get_graph_progress(self, run_id: str) -> dict:
+        """Return small authorized checkpoint references, never raw graph state."""
+        run = self.get_run(run_id)
+        if not run["graph_enabled"]:
+            raise DomainValidationError("run is not graph supervised")
+        from satsa.analysis.graph import durable_checkpointer
+
+        with durable_checkpointer(self.db) as saver:
+            checkpoint = saver.get_tuple(
+                {"configurable": {"thread_id": f"satsa:{run_id}"}}
+            )
+        if checkpoint is None:
+            return {"run_id": run_id, "checkpointed": False, "current_stage": "queued"}
+        state = checkpoint.checkpoint.get("channel_values", {})
+        if (
+            state.get("run_id") != run_id
+            or state.get("organization_id") != self.org
+            or state.get("submission_version_id") != run["submission_version_id"]
+        ):
+            raise PermissionDeniedError("checkpoint scope does not match owned run")
+        return {
+            "run_id": run_id,
+            "checkpointed": True,
+            "current_stage": state.get("current_stage", ""),
+            "awaiting_review": run["status"] == "awaiting_review",
+        }
+
     def decide(self, run_id: str, *, action: str, reason: str = "") -> dict:
         """Record one attributable run-level supervisory decision and requeue.
 
