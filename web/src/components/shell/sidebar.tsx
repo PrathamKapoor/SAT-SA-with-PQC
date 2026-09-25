@@ -137,7 +137,7 @@ export function Sidebar(props: SidebarProps) {
   return (
     <aside
       aria-label="Primary"
-      className={cn("hidden h-dvh shrink-0 flex-col border-r border-line bg-paper transition-[width] duration-200 lg:flex", collapsed ? "w-[60px]" : "w-[232px]")}
+      className={cn("no-print hidden h-dvh shrink-0 flex-col border-r border-line bg-paper transition-[width] duration-200 lg:flex", collapsed ? "w-[60px]" : "w-[232px]")}
     >
       <div className={cn("flex h-14 items-center border-b border-line", collapsed ? "justify-center" : "justify-between px-4")}>
         <Link href="/workbench" aria-label="SAT-SA workbench" className="rounded-sm">

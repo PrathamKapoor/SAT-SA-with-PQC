@@ -130,6 +130,9 @@
     .no-print { display: none !important; }
     .print-page { box-shadow: none !important; border: 0 !important; }
     body { background: white; }
+    .h-dvh { height: auto !important; overflow: visible !important; }
+    main { overflow: visible !important; }
+    @page { margin: 16mm; }
   }
 }
 
