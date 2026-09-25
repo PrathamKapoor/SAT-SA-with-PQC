@@ -834,6 +834,96 @@ MIGRATIONS = MIGRATIONS + (
 )
 
 
+# Phase 3: link durable execution records to one validated tenant submission
+# version and add a leased, recoverable run queue. Existing synchronous rows
+# remain valid and retain their original status values.
+MIGRATIONS = MIGRATIONS + (
+    Migration(
+        12,
+        "satsa_async_analysis_execution",
+        (
+            "ALTER TABLE satsa_runs ADD COLUMN requested_at REAL",
+            "ALTER TABLE satsa_runs ADD COLUMN requested_by_user_id TEXT REFERENCES satsa_users(id)",
+            "ALTER TABLE satsa_runs ADD COLUMN correlation_id TEXT",
+            "ALTER TABLE satsa_runs ADD COLUMN progress_total INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE satsa_runs ADD COLUMN progress_completed INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE satsa_runs ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE satsa_runs ADD COLUMN error_code TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE satsa_runs ADD COLUMN internal_error TEXT NOT NULL DEFAULT ''",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_runs_id_org ON satsa_runs (id, organization_id)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_versions_id_org_submission ON satsa_submission_versions (id, organization_id, submission_id)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_submissions_id_org_assessment_entity ON satsa_submissions (id, organization_id, assessment_id, entity_id)",
+            "ALTER TABLE satsa_jobs ADD COLUMN attempt INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE satsa_jobs ADD COLUMN retryable INTEGER NOT NULL DEFAULT 0",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_jobs_run_worker ON satsa_jobs (run_id, worker_name)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_jobs_status ON satsa_jobs (status, created_at)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_run_context (
+                run_id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                submission_id TEXT NOT NULL,
+                submission_version_id TEXT NOT NULL,
+                idempotency_key TEXT NOT NULL,
+                requested_by_user_id TEXT NOT NULL REFERENCES satsa_users(id),
+                requested_at REAL NOT NULL,
+                correlation_id TEXT NOT NULL UNIQUE,
+                UNIQUE (run_id, organization_id),
+                UNIQUE (organization_id, submission_version_id, idempotency_key),
+                FOREIGN KEY (run_id, organization_id)
+                    REFERENCES satsa_runs(id, organization_id),
+                FOREIGN KEY (submission_id, organization_id)
+                    REFERENCES satsa_submissions(id, organization_id),
+                FOREIGN KEY (submission_version_id, organization_id, submission_id)
+                    REFERENCES satsa_submission_versions(id, organization_id, submission_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_run_context_org ON satsa_run_context (organization_id, requested_at)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_execution_jobs (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                run_id TEXT NOT NULL UNIQUE,
+                status TEXT NOT NULL CHECK(status IN (
+                    'queued','running','retry_wait','completed','failed',
+                    'cancel_requested','cancelled')),
+                attempt_count INTEGER NOT NULL DEFAULT 0 CHECK(attempt_count >= 0),
+                max_attempts INTEGER NOT NULL CHECK(max_attempts > 0),
+                available_at REAL NOT NULL,
+                lease_owner TEXT NOT NULL DEFAULT '',
+                lease_generation INTEGER NOT NULL DEFAULT 0 CHECK(lease_generation >= 0),
+                lease_expires_at REAL,
+                heartbeat_at REAL,
+                cancel_requested_at REAL,
+                error_code TEXT NOT NULL DEFAULT '',
+                internal_error TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                completed_at REAL,
+                UNIQUE(id, organization_id, run_id),
+                FOREIGN KEY (run_id, organization_id)
+                    REFERENCES satsa_run_context(run_id, organization_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_execution_claim ON satsa_execution_jobs (status, available_at, created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_execution_expired ON satsa_execution_jobs (status, lease_expires_at)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_run_risk (
+                run_id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                profile_json TEXT NOT NULL,
+                content_digest TEXT NOT NULL,
+                algorithm_version TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                FOREIGN KEY (run_id, organization_id)
+                    REFERENCES satsa_run_context(run_id, organization_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_run_risk_org ON satsa_run_risk (organization_id, created_at)",
+        ),
+    ),
+)
+
+
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
         self.engine = engine
