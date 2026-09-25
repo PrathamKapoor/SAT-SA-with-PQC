@@ -87,8 +87,48 @@ test("every development identity lands on the same Workbench", async () => {
     assert.equal(res.status, 200, p);
     const html = await res.text();
     assert.match(html, /Supervisory intelligence\./, p);
-    for (const tile of ["Entities", "Findings", "Review queue", "Analytics", "TRUST-SAT"]) assert.match(html, new RegExp(`>${tile}<`), `${p}: ${tile} tile`);
-    assert.match(html, /Capability overview/, p);
+    assert.equal([...html.matchAll(/data-tile="/g)].length, 6, `${p}: six primary destinations`);
+    for (const tile of ["Entities", "Findings", "Analytics", "TRUST-SAT"]) assert.match(html, new RegExp(`data-tile="${tile}"`), `${p}: ${tile} tile`);
+    assert.match(html, /id="ov-h"/, `${p}: overview panel`);
+    assert.match(html, /id="flow-h"/, `${p}: workflow panel`);
+  }
+});
+
+/** One Workbench, role-aware priority: tile order, context card, overview and view label per role. */
+const WORKBENCH = {
+  "dev-admin": { tiles: ["Entities", "Findings", "TRUST-SAT", "Analytics", "Ingest data", "Review queue"], context: "Next platform check", overview: "Platform posture", view: "Administrator view" },
+  "dev-supervisor": { tiles: ["Findings", "Review queue", "Entities", "TRUST-SAT", "Analytics", "Ingest data"], context: "Next review", overview: "Capability overview", view: "Supervisor view" },
+  "dev-analyst": { tiles: ["Ingest data", "Submissions", "Analytics", "Findings", "Entities", "TRUST-SAT"], context: "Next analysis", overview: "Analytical coverage", view: "Analyst view" },
+  "dev-auditor": { tiles: ["TRUST-SAT", "Findings", "Entities", "Reports", "Analytics", "Submissions"], context: "Next verification", overview: "Trust and traceability", view: "Auditor view" },
+  "dev-viewer": { tiles: ["Entities", "Findings", "Analytics", "TRUST-SAT", "Review queue", "Submissions"], context: "Current assessment", overview: "Capability overview", view: "Viewer view" },
+};
+const mainOf = (html) => html.slice(html.indexOf('id="main"'));
+
+for (const [principal, want] of Object.entries(WORKBENCH)) {
+  test(`workbench perspective for ${principal}`, async () => {
+    const res = await get("/workbench", as(principal));
+    assert.equal(res.status, 200, "same route for every role, no redirect");
+    const html = mainOf(await res.text());
+    const tiles = [...html.matchAll(/data-tile="([^"]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(tiles, want.tiles, "tile priority order");
+    assert.match(html, new RegExp(`data-context="${want.context}"`), "context card");
+    assert.match(html, new RegExp(`>${want.overview}<`), "overview");
+    assert.match(html, new RegExp(want.view), "view label");
+    assert.match(html, /Supervisory intelligence\./);
+  });
+}
+
+test("workbench actions follow the role", async () => {
+  const sup = mainOf(await text("/workbench", as("dev-supervisor")));
+  assert.match(sup, /Review now/, "supervisor is led to review");
+  assert.match(sup, /Record supervisory decisions|Findings awaiting your decision/);
+  const analyst = mainOf(await text("/workbench", as("dev-analyst")));
+  assert.doesNotMatch(analyst, /Review now|Record supervisory decisions|Record decision/, "analyst gets no decision controls");
+  assert.match(analyst, /href="\/workbench\/ingest"/, "analyst can reach ingestion");
+  for (const p of ["dev-auditor", "dev-viewer"]) {
+    const html = mainOf(await text("/workbench", as(p)));
+    assert.doesNotMatch(html, /href="\/workbench\/ingest"/, `${p} gets no ingest action`);
+    assert.doesNotMatch(html, /Review now|Record supervisory decisions/, `${p} gets no decision controls`);
   }
 });
 
