@@ -71,4 +71,7 @@ Thumbs.db
 # track it as nested content — it does not remove, move, or otherwise
 # touch the existing clone on disk. Its disposition (keep, relocate
 # outside the project root, or delete) is the repository owner's call.
-SAT-SA-with-PQC/
+# Anchored with a leading "/" so it only matches the root-level clone:
+# unanchored, it also matched web/**/sat-sa-with-pqc/ (git on Windows
+# ignores case) and silently hid the web UI's components and assets.
+/SAT-SA-with-PQC/

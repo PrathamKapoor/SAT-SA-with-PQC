@@ -1,0 +1,584 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+ * Design system: contentarchitecture.dev (extracted 2026-09-11 from its compiled Tailwind v4 CSS).
+ * Shared by the SAT-SA landing page (/) and the CA reference clone (/reference/contentarchitecture).
+ * Spacing unit is 1px (0.0625rem), so `p-16` = 16px, `h-48` = 48px, `pt-160` = 160px.
+ */
+@theme static {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --spacing: 0.0625rem;
+
+  --color-black-deep: #000;
+  --color-black: #232323;
+  --color-white: #fff;
+  --color-off-white: #f1eee7;
+  --color-dark-grey: #5b5a56;
+  --color-ghost-grey: #dedede;
+  --color-mid-grey: #cbcbcb;
+  --color-accent: #ff9100;
+
+  /* shadcn semantic aliases (kept so src/components/ui keeps compiling; mapped onto the CA palette) */
+  --color-background: #f1eee7;
+  --color-foreground: #232323;
+  --color-primary: #232323;
+  --color-primary-foreground: #fff;
+  --color-secondary: #dedede;
+  --color-secondary-foreground: #232323;
+  --color-muted: #dedede;
+  --color-muted-foreground: #5b5a56;
+  --color-accent-foreground: #232323;
+  --color-destructive: #d92d20;
+  --color-border: #cbcbcb;
+  --color-input: #cbcbcb;
+  --color-ring: #ff9100;
+
+  --layout-min-w: 375;
+  --layout-max-w: 1600;
+  --fluid-min-w: var(--layout-min-w, 375);
+  --fluid-max-w: var(--layout-max-w, 1600);
+  --fluid-slope: calc((100vw - calc(var(--spacing) * var(--fluid-min-w))) / (var(--fluid-max-w) - var(--fluid-min-w)));
+
+  --text-ui: calc(var(--spacing) * 12);
+  --text-ui--font-weight: 400;
+  --text-ui--line-height: 1.25;
+  --text-ui--letter-spacing: normal;
+  --text-caption-10: clamp(calc(var(--spacing) * 12), calc(var(--spacing) * 12) + (14 - 12) * var(--fluid-slope), calc(var(--spacing) * 14));
+  --text-caption-10--font-weight: 400;
+  --text-caption-10--line-height: 1.25;
+  --text-caption-10--letter-spacing: normal;
+  --text-caption-20: clamp(calc(var(--spacing) * 14), calc(var(--spacing) * 14) + (16 - 14) * var(--fluid-slope), calc(var(--spacing) * 16));
+  --text-caption-20--font-weight: 400;
+  --text-caption-20--line-height: 1.25;
+  --text-caption-20--letter-spacing: normal;
+  --text-body-10: clamp(calc(var(--spacing) * 14), calc(var(--spacing) * 14) + (16 - 14) * var(--fluid-slope), calc(var(--spacing) * 16));
+  --text-body-10--font-weight: 400;
+  --text-body-10--line-height: 1.25;
+  --text-body-10--letter-spacing: normal;
+  --text-body-20: clamp(calc(var(--spacing) * 14), calc(var(--spacing) * 14) + (18 - 14) * var(--fluid-slope), calc(var(--spacing) * 18));
+  --text-body-20--font-weight: 400;
+  --text-body-20--line-height: 1.25;
+  --text-body-20--letter-spacing: normal;
+  --text-body-30: clamp(calc(var(--spacing) * 16), calc(var(--spacing) * 16) + (24 - 16) * var(--fluid-slope), calc(var(--spacing) * 24));
+  --text-body-30--font-weight: 400;
+  --text-body-30--line-height: 1.25;
+  --text-body-30--letter-spacing: normal;
+  --text-headline-10: clamp(calc(var(--spacing) * 32), calc(var(--spacing) * 32) + (48 - 32) * var(--fluid-slope), calc(var(--spacing) * 48));
+  --text-headline-10--font-weight: 400;
+  --text-headline-10--line-height: 1.1;
+  --text-headline-10--letter-spacing: normal;
+  --text-headline-20: clamp(calc(var(--spacing) * 40), calc(var(--spacing) * 40) + (80 - 40) * ((100vw - calc(var(--spacing) * 1400)) / (1920 - 1400)), calc(var(--spacing) * 80));
+  --text-headline-20--font-weight: 400;
+  --text-headline-20--line-height: 1;
+  --text-headline-20--letter-spacing: normal;
+
+  --radius-2: calc(var(--spacing) * 2);
+  --radius-4: calc(var(--spacing) * 4);
+  --radius-8: calc(var(--spacing) * 8);
+  --radius-full: 9999px;
+
+  --animate-fade-in: fadeIn 0.4s ease-in-out;
+  --animate-cursor-blink: cursorBlink 0.9s steps(1, end) infinite;
+  --animate-status-ping: statusPing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-hero-scroll-cue: heroScrollCue 1.4s steps(7, end) infinite;
+  --animate-minimap-scan: minimapScan 5s ease-in-out infinite;
+  --animate-minimap-scan-counter: minimapScanCounter 5s ease-in-out infinite;
+  --animate-marquee-left: marqueeLeft var(--marquee-duration, 20s) linear infinite;
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes cursorBlink {
+    0%, 49.9% { opacity: 1; }
+    50%, to { opacity: 0; }
+  }
+  @keyframes statusPing {
+    0% { opacity: 0.5; transform: scale(1); }
+    75%, to { opacity: 0; transform: scale(2.6); }
+  }
+  @keyframes heroScrollCue {
+    0% { transform: translateY(-8px); }
+    to { transform: translateY(48px); }
+  }
+  @keyframes minimapScan {
+    0% { opacity: 1; transform: translateY(-101%); }
+    30% { opacity: 1; transform: translateY(0); }
+    38%, to { opacity: 0; transform: translateY(0); }
+  }
+  @keyframes minimapScanCounter {
+    0% { transform: translateY(101%); }
+    30%, to { transform: translateY(0); }
+  }
+  @keyframes marqueeLeft {
+    0% { transform: translate(0, 0); }
+    to { transform: translate(-100%); }
+  }
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff38 transparent;
+  &::-webkit-scrollbar { width: 10px; height: 10px; }
+  &::-webkit-scrollbar-track { background: 0 0; }
+  &::-webkit-scrollbar-thumb {
+    background-color: #ffffff2e;
+    background-clip: content-box;
+    border: 2px solid #0000;
+    border-radius: 9999px;
+  }
+  &::-webkit-scrollbar-thumb:hover { background-color: #ffffff52; }
+  &::-webkit-scrollbar-corner { background: 0 0; }
+}
+
+/* Dithered 2px checker used by CA's framed panels (nav pill, IDE, terminal cards). */
+@utility bg-dither {
+  background-image: repeating-conic-gradient(rgba(255, 255, 255, 0.22) 0% 25%, transparent 0% 50%);
+  background-size: 4px 4px;
+}
+
+@layer base {
+  :where(a[href], button, select, summary, [tabindex]:not([tabindex="-1"]), [contenteditable="true"]:not([contenteditable="false"])):focus-visible {
+    --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
+    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    --tw-ring-color: var(--color-accent);
+    --tw-outline-style: none;
+    --tw-ring-inset: inset;
+    outline-style: none;
+  }
+}
+
+html,
+body {
+  background-color: var(--color-off-white);
+  position: relative;
+  overflow-x: clip;
+}
+
+html[data-scroll-locked] {
+  scrollbar-gutter: stable;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-30);
+  line-height: var(--text-body-30--line-height);
+  letter-spacing: var(--text-body-30--letter-spacing);
+  font-weight: var(--text-body-30--font-weight);
+  color: var(--color-black);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  flex-direction: column;
+  flex: 1;
+  display: flex;
+}
+
+main {
+  flex: 1;
+}
+
+img {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+::selection {
+  background-color: currentColor;
+}
+
+[data-odometer-glyph]::before {
+  content: attr(data-odometer-glyph);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cursor-blink {
+    animation: none;
+  }
+  [data-marquee-track] {
+    animation: none !important;
+  }
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis:not(.lenis-autoToggle).lenis-stopped {
+  overflow: clip;
+}
+.lenis [data-lenis-prevent],
+.lenis [data-lenis-prevent-wheel],
+.lenis [data-lenis-prevent-touch],
+.lenis [data-lenis-prevent-vertical],
+.lenis [data-lenis-prevent-horizontal] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+.lenis.lenis-autoToggle {
+  transition-behavior: allow-discrete;
+  transition-property: overflow;
+  transition-duration: 1ms;
+}
+
+/*
+ * SAT-SA page ("/") background texture: a 56px graph-paper grid, faded toward the edges with a
+ * radial mask. Plain properties only (no custom-property redeclaration; see the git history of
+ * this file for why: redeclaring a --color-* theme token outside @theme gets silently dropped).
+ */
+.satsa-grid-texture::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(70% 60% at 50% 30%, black 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, black 30%, transparent 75%);
+}
+
+/* SAT-SA light presentation. Scoped so the contentarchitecture reference route remains untouched. */
+.satsa-light {
+  --satsa-page: #f7f9fc;
+  --satsa-surface: rgba(255, 255, 255, 0.88);
+  --satsa-surface-muted: rgba(241, 245, 249, 0.88);
+  --satsa-border: #dbe3ee;
+  --satsa-ink: #0f172a;
+  --satsa-muted: #526079;
+  background-color: var(--satsa-page);
+  color: var(--satsa-ink);
+  color-scheme: light;
+}
+
+/* Workbench components use Tailwind's standard quarter-rem spacing scale. */
+.satsa-workbench {
+  --spacing: 0.25rem;
+}
+
+.satsa-light .bg-black-deep,
+.satsa-light .bg-\[\#080f1c\],
+.satsa-light .bg-\[\#0a0a0a\],
+.satsa-light .bg-\[\#0a0a0a\]\/85,
+.satsa-light .bg-\[\#0a0a0a\]\/90,
+.satsa-light .bg-\[\#0a1222\],
+.satsa-light .bg-\[\#0a1222\]\/95,
+.satsa-light .bg-\[\#0c1424\],
+.satsa-light .bg-\[\#0c1628\],
+.satsa-light .bg-\[\#0c172a\],
+.satsa-light .bg-\[\#0e192f\],
+.satsa-light .bg-\[\#0f1726\],
+.satsa-light .bg-\[\#121624\],
+.satsa-light .bg-\[\#14151e\],
+.satsa-light .bg-\[\#191118\],
+.satsa-light .bg-slate-900,
+.satsa-light .bg-slate-900\/40,
+.satsa-light .bg-slate-900\/50,
+.satsa-light .bg-slate-900\/60,
+.satsa-light .bg-slate-900\/80,
+.satsa-light .bg-slate-900\/90,
+.satsa-light .bg-slate-950,
+.satsa-light .bg-slate-950\/40,
+.satsa-light .bg-slate-950\/60,
+.satsa-light .bg-slate-900\/5,
+.satsa-light .bg-slate-900\/10,
+.satsa-light .bg-slate-900\/20,
+.satsa-light .bg-slate-900\/25,
+.satsa-light .bg-slate-900\/30,
+.satsa-light .bg-slate-900\/70,
+.satsa-light .bg-slate-900\/75,
+.satsa-light .bg-slate-900\/95,
+.satsa-light .bg-slate-950\/5,
+.satsa-light .bg-slate-950\/10,
+.satsa-light .bg-slate-950\/20,
+.satsa-light .bg-slate-950\/25,
+.satsa-light .bg-slate-950\/30,
+.satsa-light .bg-slate-950\/70,
+.satsa-light .bg-slate-950\/75,
+.satsa-light .bg-slate-950\/95,
+.satsa-light .bg-slate-950\/90 {
+  background-color: var(--satsa-surface);
+}
+
+.satsa-light .bg-slate-800,
+.satsa-light .bg-slate-800\/60,
+.satsa-light .bg-slate-800\/80,
+.satsa-light .bg-slate-800\/90,
+.satsa-light .bg-white\/10,
+.satsa-light .bg-white\/15 {
+  background-color: var(--satsa-surface-muted);
+}
+
+.satsa-light .bg-blue-950\/20,
+.satsa-light .bg-blue-950\/50,
+.satsa-light .bg-blue-950\/60 {
+  background-color: rgba(219, 234, 254, 0.8);
+}
+
+.satsa-light .bg-emerald-950\/20 {
+  background-color: rgba(209, 250, 229, 0.72);
+}
+
+.satsa-light .bg-red-950\/10 {
+  background-color: rgba(254, 226, 226, 0.72);
+}
+
+.satsa-light .text-white,
+.satsa-light .text-slate-100 {
+  color: var(--satsa-ink);
+}
+
+.satsa-light .text-white\/30,
+.satsa-light .text-white\/60,
+.satsa-light .text-white\/70,
+.satsa-light .text-ghost-grey,
+.satsa-light .text-slate-200,
+.satsa-light .text-slate-300,
+.satsa-light .text-slate-400 {
+  color: var(--satsa-muted);
+}
+
+.satsa-light .text-slate-500,
+.satsa-light .text-slate-600 {
+  color: #64748b;
+}
+
+.satsa-light .text-blue-200,
+.satsa-light .text-blue-300,
+.satsa-light .text-blue-400 {
+  color: #1d4ed8;
+}
+
+.satsa-light .text-amber-200,
+.satsa-light .text-amber-300,
+.satsa-light .text-amber-400 {
+  color: #a16207;
+}
+
+.satsa-light .text-red-200,
+.satsa-light .text-red-300,
+.satsa-light .text-red-400 {
+  color: #b91c1c;
+}
+
+.satsa-light .text-emerald-200,
+.satsa-light .text-emerald-300,
+.satsa-light .text-emerald-400 {
+  color: #047857;
+}
+
+.satsa-light .border-\[\#15233c\],
+.satsa-light .border-\[\#1b2b48\],
+.satsa-light .border-\[\#1d2f50\],
+.satsa-light .border-slate-700,
+.satsa-light .border-slate-700\/50,
+.satsa-light .border-slate-700\/60,
+.satsa-light .border-slate-700\/80,
+.satsa-light .border-slate-800,
+.satsa-light .border-slate-800\/60,
+.satsa-light .border-slate-800\/80,
+.satsa-light .border-white\/10,
+.satsa-light .border-white\/15,
+.satsa-light .border-white\/20 {
+  border-color: var(--satsa-border);
+}
+
+.satsa-light .divide-slate-800\/60 > :not(:last-child),
+.satsa-light .divide-white\/10 > :not(:last-child),
+.satsa-light .divide-white\/5 > :not(:last-child) {
+  border-color: var(--satsa-border);
+}
+
+.satsa-light .hover\:bg-slate-800:hover,
+.satsa-light .hover\:bg-slate-800\/30:hover,
+.satsa-light .hover\:bg-slate-800\/40:hover,
+.satsa-light .hover\:bg-slate-900\/40:hover,
+.satsa-light .hover\:bg-white\/5:hover,
+.satsa-light .hover\:bg-\[\#0e192f\]:hover,
+.satsa-light .hover\:bg-\[\#101f38\]:hover,
+.satsa-light .hover\:bg-\[\#121f36\]:hover,
+.satsa-light .hover\:bg-\[\#152545\]:hover,
+.satsa-light .hover\:bg-\[\#181a26\]:hover,
+.satsa-light .hover\:bg-\[\#20141f\]:hover {
+  background-color: #eef4fb;
+}
+
+.satsa-light .hover\:text-white:hover,
+.satsa-light .hover\:text-slate-200:hover {
+  color: var(--satsa-ink);
+}
+
+.satsa-light .bg-blue-600.text-white,
+.satsa-light .bg-blue-600 .text-white,
+.satsa-light .bg-amber-600.text-white,
+.satsa-light .bg-red-600.text-white {
+  color: #fff;
+}
+
+
+/* Legacy dark-era violet shades read as primary purple on the light surface. */
+.satsa-light .text-violet-200,
+.satsa-light .text-violet-300,
+.satsa-light .text-violet-400 {
+  color: #6d28d9;
+}
+
+.satsa-light .bg-violet-950\/20,
+.satsa-light .bg-violet-950\/50,
+.satsa-light .bg-violet-950\/60 {
+  background-color: rgba(237, 233, 254, 0.8);
+}
+
+.satsa-light .bg-violet-600.text-white,
+.satsa-light .bg-violet-600 .text-white {
+  color: #fff;
+}
+
+.satsa-light .satsa-grid-texture::before {
+  background-image:
+    linear-gradient(to right, rgba(124, 58, 237, 0.07) 1px, transparent 1px),
+    linear-gradient(rgba(124, 58, 237, 0.07) 1px, transparent 1px);
+}
+
+.satsa-workbench main {
+  background:
+    radial-gradient(circle at 78% 0%, rgba(124, 58, 237, 0.06), transparent 30rem),
+    #f7f7fb;
+}
+
+.satsa-workbench :is(a, button, select, input, textarea):focus-visible {
+  outline: 2px solid rgba(124, 58, 237, 0.6);
+  outline-offset: 2px;
+}
+
+.satsa-workbench aside {
+  box-shadow: 8px 0 32px rgba(15, 23, 42, 0.035);
+}
+
+/*
+ * Workbench launchpad: every vertical measure scales with viewport height so the
+ * whole decision surface fits the first screen from 720px tall upward.
+ */
+.workbench-main {
+  padding-block: clamp(1rem, 3vh, 2rem);
+}
+
+.workbench-launch {
+  gap: clamp(0.75rem, 2.2vh, 2rem);
+}
+
+.workbench-launch__title {
+  font-size: clamp(1.75rem, 4.2vh, 2.75rem);
+  line-height: 1.05;
+}
+
+.workbench-launch__lede {
+  font-size: clamp(0.9375rem, 1.9vh, 1.125rem);
+}
+
+.workbench-launch__actions,
+.workbench-launch__panels {
+  gap: clamp(0.625rem, 1.6vh, 1rem);
+}
+
+.workbench-action {
+  min-height: clamp(6.5rem, 15vh, 10.5rem);
+  padding: clamp(0.875rem, 2vh, 1.375rem);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.workbench-action__inner {
+  gap: clamp(0.5rem, 1.4vh, 1rem);
+}
+
+.workbench-action:hover {
+  box-shadow: 0 12px 32px rgba(76, 29, 149, 0.1);
+}
+
+.workbench-action__metric {
+  font-size: clamp(1.625rem, 3.6vh, 2.25rem);
+}
+
+.workbench-launch-panel {
+  padding: clamp(0.875rem, 2vh, 1.375rem) clamp(1rem, 2vh, 1.5rem);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.workbench-sop__step {
+  min-height: clamp(2.625rem, 5.6vh, 3.625rem);
+}
+
+.workbench-capabilities {
+  row-gap: clamp(0.3rem, 1.05vh, 0.8rem);
+}
+
+.workbench-action,
+.workbench-launch-panel {
+  container-type: inline-size;
+}
+
+/* Optional one-line descriptions yield first when a card or panel gets narrow (kept in the title tooltip). */
+@container (max-width: 17rem) {
+  .workbench-action__desc { display: none !important; }
+}
+
+@container (max-width: 26rem) {
+  .workbench-sop__desc { display: none; }
+}
+
+/* Short laptop screens: action cards collapse to a single row so nothing scrolls. */
+@media (max-width: 639px), (min-width: 640px) and (max-height: 820px) {
+  .workbench-action {
+    min-height: 0;
+    padding: 0.75rem 0.875rem;
+  }
+  .workbench-action__inner {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .workbench-action__top { display: contents; }
+  .workbench-action__icon { order: 0; }
+  .workbench-action__body { order: 1; flex: 1 1 auto; align-items: center; }
+  .workbench-action__arrow { order: 2; }
+  .workbench-action__desc {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    line-height: 1.25rem;
+  }
+}
+
+/* Cards too narrow for a single row keep the stacked layout. */
+@container (max-width: 17rem) {
+  .workbench-action__inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .workbench-action__top { display: flex; }
+  .workbench-action__body { align-items: flex-end; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workbench-action { transition: none; }
+  .workbench-action:hover { transform: none; }
+}
+
+.coverage-gauge__ring {
+  width: clamp(7rem, 11vw, 9.25rem);
+  container-type: inline-size;
+}
+
+/* Sized against the ring's own width so "92.5%" always sits inside the stroke. */
+.coverage-gauge__value {
+  font-size: 14cqi;
+}

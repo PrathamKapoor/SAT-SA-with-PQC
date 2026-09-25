@@ -87,6 +87,24 @@ jobs:
           pip install -e .
           python -c "import satsa, qsmlops; import satsa.cli, satsa.ui, satsa.service; print('import ok:', satsa.__version__)"
 
+  web:
+    name: web UI (lint, typecheck, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Lint, typecheck and production build
+        run: npm run check
+
   docker-build-smoke:
     name: Docker build/smoke
     runs-on: ubuntu-latest
