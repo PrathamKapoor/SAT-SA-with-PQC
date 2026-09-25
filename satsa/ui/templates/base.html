@@ -7,8 +7,9 @@
 <meta name="theme-color" content="#0a0a0c">
 <meta name="color-scheme" content="dark">
 <link rel="stylesheet" href="/static/style.css">
+{% block extra_head %}{% endblock %}
 </head>
-<body class="app">
+<body class="app {% block body_class %}{% endblock %}">
 <div class="app-frame">
   <header class="topbar">
     <a href="/" class="brand">

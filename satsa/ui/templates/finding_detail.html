@@ -1,164 +1,328 @@
 {% extends "base.html" %}
 {% block title %}Finding · {{ finding.rule_or_category }}{% endblock %}
+{% block body_class %}theme-light{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="/static/finding-detail.css">{% endblock %}
 {% block content %}
+{% set rule_parts = (finding.rule_or_category or '').split('.') %}
+{% set rule_family = rule_parts[0] if rule_parts else '' %}
+{% set rule_family_label = rule_family.replace('_', ' ')|upper if rule_family else 'FINDING' %}
+{% set overall = confidence.get('overall') if confidence and confidence.get else none %}
+{% set worker_label = (observation.worker_name if observation else '') or finding.worker_name or 'unknown worker' %}
+{% set entity_id = (observation.entity_id if observation else '') or explanation.drill_down.get('entity_id', '') %}
+{% set conf_labels = {
+  'analytical_support': 'Analytical support',
+  'evidence_completeness': 'Evidence completeness',
+  'peer_confidence': 'Peer confidence',
+} %}
 
-<section class="hero" style="padding: 3em 0 2em;">
-  <div class="hero-text">
-    <div class="hero-eyebrow">
-      <span class="chip {{ 'sig' if finding.state == 'signal' else '' }}">{{ finding.state }}</span>
-      · {{ finding.worker_name or '—' }}
-    </div>
-    <h1 class="hero-title">{{ explanation.what if explanation else finding.rule_or_category }}</h1>
-    <p class="meta"><code>{{ finding.rule_or_category }}</code></p>
-    <p class="hero-lede">{{ finding.rationale }}</p>
-  </div>
-  <div class="hero-status">
-    {% if confidence.overall is defined or confidence.get is defined %}
-    {% set overall = confidence.get('overall', 0) if confidence.get else 0 %}
-    {% else %}
-    {% set overall = 0 %}
-    {% endif %}
-    <div class="stat">
-      <div class="stat-value">{{ "%.0f" % (overall * 100) }}<span class="scale">%</span></div>
-      <div class="stat-label">Confidence</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">{{ evidence|length }}</div>
-      <div class="stat-label">Evidence</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">{{ reviews|length }}</div>
-      <div class="stat-label">Reviews</div>
-    </div>
-    <div class="stat">
-      <div class="stat-value">ML-DSA-65</div>
-      <div class="stat-label">Trust</div>
-    </div>
-  </div>
-</section>
+<div class="finding-workspace">
+  <a href="/findings" class="fw-back">&larr; Findings</a>
 
-<section class="section">
-  <div class="section-num">01 / Why</div>
-  <h2>Why was this finding emitted?</h2>
-  <p class="section-sub">The analytical rule that fired, the thresholds it compared against, and the observed value.</p>
-  <table class="data">
-    <thead><tr><th>Field</th><th>Value</th></tr></thead>
-    <tbody>
+  <header class="fw-header">
+    <div>
+      <div class="fw-eyebrow">{{ rule_family_label }} <span class="fw-worker">&middot; {{ worker_label }}</span></div>
+      <h1 class="fw-title">{{ explanation.what if explanation else finding.rule_or_category }}</h1>
+      <div class="fw-subline">
+        {% if entity_id %}<a href="/entities/{{ entity_id }}">{{ entity_id }}</a> &middot;{% endif %}
+        <code>{{ finding.rule_or_category }}</code>
+      </div>
+    </div>
+    <div class="fw-stats">
+      <div class="fw-stat">
+        <div class="fw-stat-value">{{ "%.0f" % (overall * 100) if overall is not none else '—' }}{{ '%' if overall is not none else '' }}</div>
+        <div class="fw-stat-label">Confidence</div>
+      </div>
+      <a href="#evidence" class="fw-stat" style="color:inherit;">
+        <div class="fw-stat-value">{{ evidence|length }}</div>
+        <div class="fw-stat-label">Evidence</div>
+      </a>
+      <a href="#review" class="fw-stat" style="color:inherit;">
+        <div class="fw-stat-value">{{ reviews|length }}</div>
+        <div class="fw-stat-label">Reviews</div>
+      </a>
+      <div>
+        {% if trust_status and trust_status.ok %}
+        <span class="fw-trust-badge">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5 13.5 3.7v3.9c0 3.4-2.3 6.5-5.5 7.4C4.8 14.1 2.5 11 2.5 7.6V3.7L8 1.5Z" stroke="currentColor" stroke-width="1.3"/><path d="M5.6 8.1 7.3 9.8l3.1-3.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Trust verified
+        </span>
+        {% elif trust_status %}
+        <span class="fw-trust-badge is-bad">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M6 6l4 4m0-4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          Verification failed
+        </span>
+        {% else %}
+        <span class="fw-trust-badge is-unknown">Not verified</span>
+        {% endif %}
+        <span class="fw-trust-sub">ML-DSA-65</span>
+      </div>
+    </div>
+  </header>
+
+  {% if finding.rationale %}
+  <div class="fw-insight">
+    <div class="fw-insight-label">Why this matters</div>
+    <p>{{ finding.rationale }}</p>
+  </div>
+  {% endif %}
+
+  <section class="fw-section" aria-label="Investigation path">
+    <div class="fw-provenance">
+      <span class="fw-prov-node">Evidence &middot; {{ evidence|length }}</span>
+      <span class="fw-prov-arrow" aria-hidden="true">&rarr;</span>
+      <span class="fw-prov-node">Analysis &middot; {{ worker_label }}</span>
+      <span class="fw-prov-arrow" aria-hidden="true">&rarr;</span>
+      <span class="fw-prov-node is-current">Finding</span>
+      <span class="fw-prov-arrow" aria-hidden="true">&rarr;</span>
+      <span class="fw-prov-node">Recommendation</span>
+      <span class="fw-prov-arrow" aria-hidden="true">&rarr;</span>
+      <span class="fw-prov-node">Human review &middot; {{ reviews|length }}</span>
+    </div>
+  </section>
+
+  <section class="fw-section">
+    <div class="fw-section-head">
+      <div>
+        <div class="fw-section-title">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 12V4a1 1 0 0 1 1-1h5l2 2h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1Z" stroke="currentColor" stroke-width="1.2"/></svg>
+          Why this was flagged
+        </div>
+        <p class="fw-section-sub">The analytical rule, threshold, and observed value that produced this finding.</p>
+      </div>
+    </div>
+    <div class="fw-analysis-grid">
       {% if finding.statistic is not none %}
-      <tr><td>Observed statistic</td><td>{{ "%.4f" % finding.statistic }}</td></tr>
-      {% endif %}
-      {% if finding.effect is not none %}
-      <tr><td>Effect (deviation)</td><td>{{ "%.4f" % finding.effect }}</td></tr>
+      <div class="fw-analysis-cell"><div class="fw-analysis-value">{{ "%.2f" % finding.statistic }}</div><div class="fw-analysis-label">Observed</div></div>
       {% endif %}
       {% if finding.threshold is not none %}
-      <tr><td>Threshold</td><td>{{ "%.4f" % finding.threshold }}</td></tr>
+      <div class="fw-analysis-cell"><div class="fw-analysis-value">{{ "%.2f" % finding.threshold }}</div><div class="fw-analysis-label">Threshold</div></div>
       {% endif %}
-      {% for k, v in confidence.items() %}
-        <tr><td>Confidence · {{ k }}</td><td>{{ "%.3f" % v if v is not none else '—' }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
+      {% if finding.effect is not none %}
+      <div class="fw-analysis-cell is-deviation"><div class="fw-analysis-value">{{ "%.2f" % finding.effect }}</div><div class="fw-analysis-label">Deviation</div></div>
+      {% endif %}
+      {% if overall is not none %}
+      <div class="fw-analysis-cell"><div class="fw-analysis-value">{{ "%.0f" % (overall * 100) }}%</div><div class="fw-analysis-label">Confidence</div></div>
+      {% endif %}
+    </div>
+    {% if finding.statistic is not none or finding.effect is not none or finding.threshold is not none %}
+    <details class="fw-exact-toggle">
+      <summary>Exact values</summary>
+      <table class="data">
+        <tbody>
+          {% if finding.statistic is not none %}<tr><td>Observed statistic</td><td>{{ "%.4f" % finding.statistic }}</td></tr>{% endif %}
+          {% if finding.effect is not none %}<tr><td>Effect (deviation)</td><td>{{ "%.4f" % finding.effect }}</td></tr>{% endif %}
+          {% if finding.threshold is not none %}<tr><td>Threshold</td><td>{{ "%.4f" % finding.threshold }}</td></tr>{% endif %}
+        </tbody>
+      </table>
+    </details>
+    {% endif %}
+  </section>
 
-<section class="section">
-  <div class="section-num">02 / Evidence</div>
-  <h2>What evidence supports this finding?</h2>
-  <p class="section-sub">Source-record pointers that the finding was built from. Click an ID to inspect the full record.</p>
-  {% if evidence %}
-  <table class="data">
-    <thead><tr><th>Source record</th><th>Submission</th><th>Format</th><th>Locator</th><th>File digest</th></tr></thead>
-    <tbody>
-      {% for e in evidence %}
-        <tr>
-          <td><code>{{ e.id[:24] }}…</code></td>
-          <td><code>{{ e.submission_id[:16] }}…</code></td>
-          <td>{{ e.format }}</td>
-          <td>{{ e.locator }}</td>
-          <td><code>{{ e.file_digest[:16] }}…</code></td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="empty">No source records attached.</p>
-  {% endif %}
-</section>
-
-<section class="section">
-  <div class="section-num">03 / What to inspect next</div>
-  <h2>Recommendation</h2>
-  <p class="section-sub">A SAT-SA recommendation is a hint, not a supervisory decision. The examiner remains responsible for the final determination.</p>
-  {% if recommendation %}
-  <div class="recommendation">
-    <div class="rec-action">{{ recommendation.action.replace('_', ' ') }}</div>
-    <p>{{ recommendation.reason }}</p>
-    <p class="rec-limitations">{{ recommendation.limitations }}</p>
-  </div>
-  {% endif %}
-</section>
-
-<section class="section">
-  <div class="section-num">04 / Trust</div>
-  <h2>Is this evidence verified?</h2>
-  <p class="section-sub">Cryptographic integrity of the finding's evidence and review history. The signature covers the canonical content digest.</p>
-  <div class="trust">
-    <span class="dot"></span>
-    ML-DSA-65 signed
-  </div>
-</section>
-
-<section class="section">
-  <div class="section-num">05 / Human review</div>
-  <h2>Review history</h2>
-  {% if reviews %}
-  <ol class="roster-list">
-    {% for r in reviews %}
-    <li class="roster-row">
-      <div class="roster-rank">{{ "%02d" % loop.index }}</div>
-      <div class="roster-name">
-        <strong>{{ r.action }}</strong> by <code>{{ r.principal_identity_id }}</code>
-        {% if r.previous_revision_id %}<div class="roster-concern">replaces <code>{{ r.previous_revision_id[:16] }}…</code></div>{% endif %}
-        {% if r.reason %}<div class="roster-concern">{{ r.reason }}</div>{% endif %}
+  <section class="fw-section">
+    <div class="fw-section-head">
+      <div>
+        <div class="fw-section-title">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 13V3M2 13h12M5 13V8m3.5 5V5M12 13V7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Confidence
+        </div>
+        <p class="fw-section-sub">How the analytical rule supports this finding.</p>
       </div>
-      <div class="roster-score"></div>
-      <div class="roster-confidence">{{ r.occurred_at }}</div>
-      <div></div>
-    </li>
-    {% endfor %}
-  </ol>
-  {% else %}
-  <p class="empty">No human review recorded yet.</p>
+    </div>
+    <div class="fw-confidence-overall">
+      <span class="fw-analysis-value">{{ "%.0f" % (overall * 100) if overall is not none else '—' }}{{ '%' if overall is not none else '' }}</span>
+      <span class="fw-analysis-label">Overall</span>
+    </div>
+    {% if confidence %}
+    <div class="fw-conf-rows">
+      {% for key in ['analytical_support', 'evidence_completeness', 'peer_confidence'] %}
+        {% if key in confidence %}
+        {% set v = confidence.get(key) %}
+        <div class="fw-conf-row">
+          <span class="fw-conf-name">{{ conf_labels.get(key, key) }}</span>
+          {% if v is not none %}
+          <span class="fw-conf-bar"><span style="width: {{ "%.0f" % (v * 100) }}%;"></span></span>
+          <span class="fw-conf-pct">{{ "%.0f" % (v * 100) }}%</span>
+          {% else %}
+          <span class="fw-conf-bar"></span>
+          <span class="fw-conf-pct fw-conf-na">N/A</span>
+          {% endif %}
+        </div>
+        {% endif %}
+      {% endfor %}
+      {% for k, v in confidence.items() %}
+        {% if k not in ['overall', 'analytical_support', 'evidence_completeness', 'peer_confidence'] %}
+        <div class="fw-conf-row">
+          <span class="fw-conf-name">{{ k.replace('_', ' ')|capitalize }}</span>
+          {% if v is not none %}
+          <span class="fw-conf-bar"><span style="width: {{ "%.0f" % (v * 100) }}%;"></span></span>
+          <span class="fw-conf-pct">{{ "%.0f" % (v * 100) }}%</span>
+          {% else %}
+          <span class="fw-conf-bar"></span>
+          <span class="fw-conf-pct fw-conf-na">N/A</span>
+          {% endif %}
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="fw-empty">No confidence breakdown recorded for this finding.</p>
+    {% endif %}
+  </section>
+
+  <section class="fw-section" id="evidence">
+    <div class="fw-section-head">
+      <div>
+        <div class="fw-section-title">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 2h6l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 8h5M5.5 10.5h5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+          Evidence
+        </div>
+        <p class="fw-section-sub">Source records supporting this supervisory signal.</p>
+      </div>
+    </div>
+    {% if evidence %}
+    <div class="fw-evidence-grid">
+      {% for e in evidence %}
+      <div class="fw-evidence-card">
+        <span class="fw-evidence-format">{{ e.format }}</span>
+        <div class="fw-evidence-locator">{{ e.locator }}</div>
+        <div class="fw-evidence-meta">
+          <span>Submission <code>{{ e.submission_id[:16] }}&hellip;</code></span>
+          <span>Source record <code>{{ e.id[:16] }}&hellip;</code></span>
+          <span>File digest <code>{{ e.file_digest[:16] }}&hellip;</code></span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="fw-empty">No source records attached to this finding.</p>
+    {% endif %}
+  </section>
+
+  <section class="fw-section">
+    <div class="fw-section-head">
+      <div>
+        <div class="fw-section-title">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2a4 4 0 0 0-2 7.5V11h4V9.5A4 4 0 0 0 8 2Z" stroke="currentColor" stroke-width="1.2"/><path d="M6.5 13h3M7 14.5h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Recommendation
+        </div>
+        <p class="fw-section-sub">A hint for the examiner, not a supervisory decision.</p>
+      </div>
+    </div>
+    {% if recommendation and recommendation.action %}
+    <div class="fw-recommendation">
+      <div class="fw-rec-eyebrow">SAT-SA recommends</div>
+      <div class="fw-rec-action">{{ recommendation.action.replace('_', ' ')|capitalize }}</div>
+      <p class="fw-rec-reason">{{ recommendation.reason }}</p>
+      {% if recommendation.limitations %}<p class="fw-rec-limits">{{ recommendation.limitations }}</p>{% endif %}
+    </div>
+    {% else %}
+    <p class="fw-empty">No recommendation was generated for this finding.</p>
+    {% endif %}
+  </section>
+
+  <section class="fw-section" id="review">
+    <div class="fw-section-head">
+      <div>
+        <div class="fw-section-title">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="5.5" r="2.3" stroke="currentColor" stroke-width="1.2"/><path d="M3 14c.6-2.8 2.6-4.5 5-4.5s4.4 1.7 5 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Supervisory review
+        </div>
+        <p class="fw-section-sub">SAT-SA identifies evidence requiring attention. The examiner makes the decision.</p>
+      </div>
+    </div>
+
+    {% if reviews %}
+    <ol class="fw-review-history">
+      {% for r in reviews %}
+      <li class="fw-review-item">
+        <div class="fw-review-item-head">
+          <span class="fw-review-action">{{ r.action }}</span>
+          <span class="fw-review-who">by <code>{{ r.principal_identity_id }}</code></span>
+          {% set binding = review_bindings.get(r.id) if review_bindings else none %}
+          {% if binding %}
+            {% if binding.ok %}
+            <span class="fw-review-binding" title="{{ binding.reason }}">&#10003; binding intact</span>
+            {% else %}
+            <span class="fw-review-binding is-bad" title="{{ binding.reason }}">&#10007; binding mismatch</span>
+            {% endif %}
+          {% endif %}
+          <span class="fw-review-when">{{ r.occurred_at|fmtdate }}</span>
+        </div>
+        {% if r.previous_revision_id %}<div class="fw-review-reason">Replaces <code>{{ r.previous_revision_id[:16] }}&hellip;</code></div>{% endif %}
+        {% if r.reason %}<div class="fw-review-reason">{{ r.reason }}</div>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="fw-review-intro">No human review recorded yet.</p>
+    {% endif %}
+
+    <div class="fw-review-form">
+      <h4>Record a review decision</h4>
+      <form method="post" action="/findings/{{ finding.id }}/review">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <div class="fw-action-group" role="radiogroup" aria-label="Review action">
+          {% for value, label in [
+            ('confirm', 'Confirm'),
+            ('dismiss', 'Dismiss'),
+            ('escalate', 'Escalate'),
+            ('annotate', 'Annotate'),
+            ('request_review', 'Request review'),
+          ] %}
+          <label class="fw-action-btn">
+            <input type="radio" name="action" value="{{ value }}" {{ 'checked' if loop.first }} style="position:absolute; opacity:0; pointer-events:none;">
+            {{ label }}
+          </label>
+          {% endfor %}
+        </div>
+        <div class="fw-reason-row">
+          <input type="text" name="reason" class="fw-reason-input" placeholder="Rationale / context for this decision">
+          <button type="submit" class="cta fw-submit">Record decision</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="fw-section">
+    <div class="fw-section-head">
+      <div>
+        <div class="fw-section-title">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.5 13.5 3.7v3.9c0 3.4-2.3 6.5-5.5 7.4C4.8 14.1 2.5 11 2.5 7.6V3.7L8 1.5Z" stroke="currentColor" stroke-width="1.2"/></svg>
+          TRUST-SAT
+        </div>
+        <p class="fw-section-sub">Cryptographic integrity of this finding's evidence and review history.</p>
+      </div>
+    </div>
+    <div class="fw-trust-grid">
+      <div class="fw-trust-cell">
+        <div class="fw-trust-cell-label">Signature</div>
+        <div class="fw-trust-cell-value">ML-DSA-65</div>
+      </div>
+      <div class="fw-trust-cell">
+        <div class="fw-trust-cell-label">Digest</div>
+        <div class="fw-trust-cell-value">SHA3-256</div>
+      </div>
+      <div class="fw-trust-cell">
+        <div class="fw-trust-cell-label">Verification</div>
+        <div class="fw-trust-cell-value">
+          {% if trust_status and trust_status.ok %}Verified{% elif trust_status %}Failed{% else %}Not checked{% endif %}
+        </div>
+      </div>
+      <div class="fw-trust-cell">
+        <div class="fw-trust-cell-label">Content digest</div>
+        <div class="fw-trust-cell-value"><code>{{ (finding.content_digest or '—')[:16] }}{{ '…' if finding.content_digest }}</code></div>
+      </div>
+    </div>
+    {% if trust_status and not trust_status.ok and trust_status.reason %}<p class="fw-trust-reason">{{ trust_status.reason }}</p>{% endif %}
+    {% if not trust_status %}<p class="fw-trust-reason">Trust key directory not configured for this deployment; verification was not performed.</p>{% endif %}
+  </section>
+
+  {% if finding.limitations %}
+  <section class="fw-section">
+    <div class="fw-section-title">What this finding cannot tell you</div>
+    <p class="fw-section-sub" style="margin-top:0.6em;">{{ finding.limitations }}</p>
+  </section>
   {% endif %}
-
-  <div style="margin-top: 2em; border-top: 1px solid var(--line); padding-top: 2em;">
-    <h4>Record a review decision</h4>
-    <form method="post" action="/findings/{{ finding.id }}/review" style="display: flex; gap: 1em; align-items: end; flex-wrap: wrap;">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-      <label style="display: flex; flex-direction: column; font-size: 0.78em; color: var(--fg-3); letter-spacing: 0.08em; text-transform: uppercase;">
-        Action
-        <select name="action" style="margin-top: 0.4em; padding: 0.6em 0.8em; background: var(--bg-2); color: var(--fg); border: 1px solid var(--line-2); font-family: var(--font);">
-          <option value="confirm">confirm</option>
-          <option value="dismiss">dismiss</option>
-          <option value="escalate">escalate</option>
-          <option value="annotate">annotate</option>
-          <option value="request_review">request_review</option>
-        </select>
-      </label>
-      <label style="display: flex; flex-direction: column; font-size: 0.78em; color: var(--fg-3); letter-spacing: 0.08em; text-transform: uppercase; flex: 1; min-width: 240px;">
-        Reason
-        <input type="text" name="reason" placeholder="justification / context" style="margin-top: 0.4em; padding: 0.6em 0.8em; background: var(--bg-2); color: var(--fg); border: 1px solid var(--line-2); font-family: var(--font);">
-      </label>
-      <button type="submit" class="cta">Record</button>
-    </form>
-  </div>
-</section>
-
-<section class="section">
-  <div class="section-num">06 / Limitations</div>
-  <h2>What this finding cannot tell you</h2>
-  <p>{{ finding.limitations or '—' }}</p>
-</section>
-
-<p style="margin: 3em 0;"><a href="/findings">← back to findings</a></p>
+</div>
 
 {% endblock %}
