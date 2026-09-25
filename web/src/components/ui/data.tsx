@@ -68,10 +68,12 @@ export function ConfidenceDisplay({ confidence }: { confidence: ConfidenceVector
 export function RiskScore({ score, bucket, size = "md" }: { score: number | null; bucket?: string; size?: "sm" | "md" | "lg" }) {
   const scale = { sm: "text-[18px]", md: "text-[28px]", lg: "text-[48px]" }[size];
   return (
-    <span className="inline-flex items-baseline gap-1.5">
-      <span className={cn("num leading-none font-semibold tracking-[-0.03em] text-ink", scale)}>{score == null ? "n/a" : fmtNum(score, 1)}</span>
-      <span className="text-[12px] text-muted">/100</span>
-      {bucket && <span className="label ml-1">{CONFIDENCE_BUCKET_LABEL[bucket] ?? bucket} conf.</span>}
+    <span className="inline-flex flex-col">
+      <span className="inline-flex items-baseline gap-1">
+        <span className={cn("num leading-none font-semibold tracking-[-0.03em] text-ink", scale)}>{score == null ? "n/a" : fmtNum(score, 1)}</span>
+        <span className="text-[12px] text-muted">/100</span>
+      </span>
+      {bucket && <span className="mt-1 text-[11.5px] text-muted">{CONFIDENCE_BUCKET_LABEL[bucket] ?? bucket} confidence</span>}
     </span>
   );
 }

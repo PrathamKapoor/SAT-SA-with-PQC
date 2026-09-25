@@ -209,6 +209,16 @@ export interface RiskDimension {
 
 export type ConfidenceBucket = "very_low" | "low" | "medium" | "high";
 
+/** satsa.analysis.correlation: findings from different detectors that reference one subject. */
+export interface CorrelationCluster {
+  subject: string;
+  finding_ids: string[];
+  rule_families: string[];
+  /** true when two or more distinct detector families agree */
+  corroborated: boolean;
+  rationale: string;
+}
+
 export interface EntityRiskProfile {
   entity_id: string;
   run_id: string | null;
@@ -216,7 +226,7 @@ export interface EntityRiskProfile {
   confidence_bucket: ConfidenceBucket;
   dimensions: RiskDimension[];
   weights: Record<RiskDimensionName, number>;
-  [key: string]: unknown;
+  correlation_clusters?: CorrelationCluster[];
 }
 
 export interface EntityPriority {
