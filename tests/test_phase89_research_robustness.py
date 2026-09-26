@@ -132,6 +132,7 @@ def test_valid_duplicates_and_conflicts_reach_analysis(mixed_result):
         assert row["paired_delta_vs_control"] is not None, name
         metrics = row["catalog_family_metrics"]
         assert metrics["labels_apply_to"] == "unperturbed fixture"
+        assert row["withheld_invalid_findings"] == {}, name
 
 
 def test_staleness_is_observational_and_aggregates_are_consistent(mixed_result):
