@@ -60,6 +60,7 @@ def _scenario_level(root: Path) -> dict[str, Any]:
         corpus_micro_metrics,
         scenario_family_metrics,
     )
+    from evaluation.research.hosted import catalog_fixture
     from qsmlops.database.engine import SQLiteDatabaseEngine
     from qsmlops.database.migrations import MigrationRunner
     from satsa.analysis.compval import SCENARIO_MAP
@@ -70,17 +71,18 @@ def _scenario_level(root: Path) -> dict[str, Any]:
     from satsa.service import SatsaService
 
     labels = {case.case_id: case for case in synthetic_ground_truth()}
-    configurations = [None, *_worker_names()]
+    worker_names = _worker_names()
+    configurations: list[str | None] = [None, *worker_names]
     per_config: dict[str, list[dict[str, Any]]] = {
         str(name): [] for name in configurations
     }
-    for scenario, builder in SCENARIO_MAP.items():
+    for scenario in SCENARIO_MAP:
         engine = SQLiteDatabaseEngine(root / f"scenario-{scenario}.sqlite3")
         engine.connect()
         try:
             MigrationRunner(engine).migrate()
             service = SatsaService(engine)
-            cse, _ = builder()
+            cse = catalog_fixture(scenario)
             with tempfile.TemporaryDirectory(dir=root) as temporary:
                 source = Path(temporary) / scenario
                 _write_cse(cse, source)
@@ -97,12 +99,13 @@ def _scenario_level(root: Path) -> dict[str, Any]:
                     entity.id, assessment.id, workers=_workers_without(excluded)
                 )
                 families = sorted(_emitted_families(engine, run.run_id))
-                count = engine.query_one(
+                counted = engine.query_one(
                     "SELECT COUNT(*) AS n FROM satsa_findings WHERE state='signal'"
                     " AND observation_id IN (SELECT id FROM satsa_observations"
                     " WHERE run_id=?)",
                     (run.run_id,),
-                )["n"]
+                )
+                count = counted["n"] if counted else 0
                 risk = compute_entity_risk(engine, entity.id, run_id=run.run_id)
                 per_config[str(excluded)].append(
                     {
@@ -121,7 +124,7 @@ def _scenario_level(root: Path) -> dict[str, Any]:
     full_rows = per_config["None"]
     full_micro = corpus_micro_metrics(full_rows)
     workers: list[dict[str, Any]] = []
-    for name in configurations[1:]:
+    for name in worker_names:
         rows = per_config[name]
         micro = corpus_micro_metrics(rows)
         lost = {
@@ -172,7 +175,8 @@ def _population_level(
     from satsa.analysis.prioritize import prioritize_entities
     from satsa.analysis.run import RunService
 
-    configurations = [None, *_worker_names()]
+    worker_names = _worker_names()
+    configurations: list[str | None] = [None, *worker_names]
     scores: dict[str, dict[str, list[float]]] = {
         str(name): {"precision": [], "recall": [], "ndcg": []}
         for name in configurations
@@ -226,7 +230,7 @@ def _population_level(
 
     full = scores["None"]
     workers = []
-    for name in configurations[1:]:
+    for name in worker_names:
         workers.append(
             {
                 "worker_removed": name,
