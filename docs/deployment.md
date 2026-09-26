@@ -1,5 +1,52 @@
 # SAT-SA Deployment — reproducible offline path
 
+## Phase 6 API/worker container topology
+
+`docker-compose.saas.yml` adds a separately hosted API and worker, PostgreSQL,
+and shared persistent key/artifact/ledger volume. Both processes run the same
+migrations and use `SATSA_DATABASE_URL`, `SATSA_LEDGER_PATH`, and
+`SATSA_TRUST_KEY_DIR`; the worker handles TERM by finishing its current safe
+boundary, and expired leases recover work if the container is forcibly stopped.
+The API is bound to host loopback and should sit behind a TLS-terminating reverse
+proxy. The proxy must set a configured host and must be listed explicitly in
+`SATSA_TRUSTED_PROXIES` before forwarded headers are trusted. Secure cookies are
+on by default. For an isolated local HTTP setup only, set `SATSA_COOKIE_SECURE=false`.
+
+```powershell
+Copy-Item .env.saas.example .env.saas
+# Replace the database placeholder with a fresh URL-safe 64-character secret.
+docker compose --env-file .env.saas -f docker-compose.saas.yml up --build -d
+```
+
+First bootstrap is a deliberate operator command (run from a trusted machine
+with the same database and persistent audit ledger); its credential prints once:
+
+```powershell
+$env:SATSA_DATABASE_URL = "postgresql://satsa:<password>@localhost:5432/satsa"
+python scripts/bootstrap_satsa_admin.py --database-url $env:SATSA_DATABASE_URL `
+  --ledger .satsa-api/evidence-ledger.jsonl --name "Platform Administrator" `
+  --email admin@example.org --organization "Example CSE"
+```
+
+For a browser or frontend using a different origin, list only that exact HTTPS
+origin in `SATSA_ALLOWED_ORIGINS`. The API/worker must share one durable evidence
+ledger and software-key directory. The compose local artifact volume is a
+durable starting configuration; operators can set the documented S3-compatible
+storage variables and boto credential chain instead. Never use ephemeral
+container storage for hosted artifacts, keys, or the ledger. Set S3 encryption,
+retention, backup, and TLS at the object-storage service.
+
+Liveness is `/health/live`; readiness checks the database migration version,
+trust-key configuration, and configured bucket reachability. Compose starts a
+PostgreSQL service and two SAT-SA processes; it is a deployable topology, not a
+claim that this repository has been deployed or production-validated. Configure
+backups, TLS proxy, secret distribution, monitoring, storage lifecycle, and
+PostgreSQL recovery policy for the target environment before hosted use.
+
+Phase 6 uses the backend API contract in [API_CONTRACT.md](API_CONTRACT.md).
+For actual routes and authentication see that contract rather than the legacy
+HTML deployment below.
+
 This page describes the existing SQLite offline deployment. The Phase 1 PostgreSQL tenant foundation is documented in [DATABASE.md](DATABASE.md); it is not a hosted application deployment yet.
 
 No cloud. No SaaS. No external AI. No remote fonts, CDN, or telemetry.

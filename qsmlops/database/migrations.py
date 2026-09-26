@@ -1006,6 +1006,28 @@ MIGRATIONS = MIGRATIONS + (
 )
 
 
+MIGRATIONS += (
+    Migration(
+        version=15,
+        name="satsa_api_sessions_and_limits",
+        statements=(
+            "ALTER TABLE satsa_sessions ADD COLUMN auth_key_id TEXT",
+            (
+                "CREATE TABLE IF NOT EXISTS satsa_api_rate_limits ("
+                "scope_hash TEXT NOT NULL, window_id INTEGER NOT NULL, count INTEGER NOT NULL, "
+                "PRIMARY KEY(scope_hash,window_id))"
+            ),
+            (
+                "CREATE TABLE IF NOT EXISTS satsa_api_bootstrap ("
+                "id INTEGER PRIMARY KEY CHECK(id=1), initialized INTEGER NOT NULL DEFAULT 0 "
+                "CHECK(initialized IN (0,1)))"
+            ),
+            "INSERT INTO satsa_api_bootstrap(id,initialized) VALUES (1,0) ON CONFLICT(id) DO NOTHING",
+        ),
+    ),
+)
+
+
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
         self.engine = engine

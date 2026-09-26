@@ -1,0 +1,59 @@
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: satsa
+      POSTGRES_USER: satsa
+      POSTGRES_PASSWORD: ${SATSA_POSTGRES_PASSWORD:?set a URL-safe random database password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U satsa -d satsa"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: .
+    command: ["python", "-m", "satsa.api.server"]
+    environment: &satsa_environment
+      SATSA_DATABASE_URL: postgresql://satsa:${SATSA_POSTGRES_PASSWORD}@database:5432/satsa
+      SATSA_DATA_DIR: /data
+      SATSA_ARTIFACTS_DIR: /data/artifacts
+      SATSA_LEDGER_PATH: /data/evidence-ledger.jsonl
+      SATSA_TRUST_KEY_DIR: /data/keys
+      SATSA_API_HOST: 0.0.0.0
+      SATSA_API_PORT: "8000"
+      SATSA_COOKIE_SECURE: "true"
+      SATSA_ALLOWED_HOSTS: ${SATSA_ALLOWED_HOSTS:?set the API hostname}
+      SATSA_ALLOWED_ORIGINS: ${SATSA_ALLOWED_ORIGINS:-}
+    volumes:
+      - satsa_durable_data:/data
+    ports:
+      - "127.0.0.1:${SATSA_API_PORT_PUBLIC:-8000}:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: ["sat-sa-worker"]
+    environment: *satsa_environment
+    volumes:
+      - satsa_durable_data:/data
+    depends_on:
+      database:
+        condition: service_healthy
+    stop_grace_period: 2m
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  satsa_durable_data:

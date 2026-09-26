@@ -90,3 +90,14 @@ its DB hash link are recoverable across the file/DB boundary. Live verification
 reconstructs the decision, results and input relationships instead of relying
 on `state='verified'`. SQLite and PostgreSQL use the same protocol. See
 [TRUST_MODEL.md](TRUST_MODEL.md#supervisory-finalization-phase-5).
+
+## Phase 6 API state
+
+Migration 15 adds `auth_key_id` to persistent sessions so revoking/rotating the
+backing bearer credential invalidates derived sessions. `satsa_api_rate_limits`
+stores hashed fixed-window scopes with a unique window key; the atomic upsert
+shares rate counts across API processes. `satsa_api_bootstrap` is a one-time,
+row-locked initialization guard; the provisioning command refuses to create a
+second first administrator. API product reads use tenant-bound repositories
+and explicit response schemas. The frontend does not receive arbitrary database
+rows or storage keys.

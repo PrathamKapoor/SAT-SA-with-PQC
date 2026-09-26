@@ -153,3 +153,18 @@ remain the append-only chain and audit infrastructure. No analytical worker,
 frontend or model lifecycle is replaced. See
 [TRUST_MODEL.md](TRUST_MODEL.md#supervisory-finalization-phase-5) for canonical
 binding, recovery, verification and residual limits.
+# Phase 6 hosted API boundary
+
+`satsa.api` is the authenticated `/api/v1` application, separate from the
+legacy local HTML/demo FastAPI app. QSMLOps IdentityService credentials resolve
+human identities; API browser sessions use the persistent tenant session table.
+The organization header selects an active membership, and tenant services and
+repositories enforce permissions and object ownership below route handlers.
+PostgreSQL/SQLite migration 15 backs revocation and shared fixed-window limits.
+
+The API submits validated version IDs to the Phase 3 queue and never runs
+analysis in the request process. A separate `sat-sa-worker` and the API share
+database, key directory, and evidence ledger paths. Both graph and standard API
+runs pause for human review and enter Phase 5 finalization before completion.
+See [API_CONTRACT.md](API_CONTRACT.md) for routes, schemas and deliberate
+differences from the frontend proposal.
