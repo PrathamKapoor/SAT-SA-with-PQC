@@ -35,10 +35,14 @@ requests.
    the final receipt verifies. This single-run mechanism measurement is
    implemented; missing-reference perturbation and examiner reviewability
    studies remain unexecuted.
-4. **RQ4, incomplete evidence:** the benchmark includes one missing-evidence
-   scenario. Controlled 10/25/50 percent omission and duplicate/stale/conflict
-   sweeps remain future experiments; no interpolation from the one case is
-   valid.
+4. **RQ4, imperfect evidence:** `run_evidence_robustness_experiment.py`
+   perturbs every executable catalog scenario across five families
+   (missingness at 10/25/50 percent with five seeds, duplication,
+   malformation, staleness, cross-record conflict) through hosted validation
+   and the analysis worker, comparing each condition with its paired control
+   (EXP-R01b in [EXPERIMENTS.md](EXPERIMENTS.md)). Staleness and
+   cross-record contradictions are measured as undetected limitations, not
+   as detectors.
 5. **RQ5, TRUST-SAT integrity:** run a real isolated SQLite submission,
    analysis, authorized supervisory decision and finalization, verify the
    valid state, then mutate decision, finding, risk, recommendation, source
@@ -54,6 +58,15 @@ requests.
    the 30-second subject was 1.9 MAD from the peer median, below the configured
    2-MAD threshold. These are controlled mechanism observations, not evidence
    about real population distributions.
+
+Phase 9 added seed-replicated prioritization with matched data-only
+baselines (EXP-PR01), scenario- and population-level ablation (EXP-A01), a
+factorial peer sweep (EXP-P01), an expanded TRUST-SAT mutation matrix with a
+negative control (EXP-T01), and direct-vs-LangGraph overhead and recovery
+experiments (EXP-O01/O02). Paired comparisons use
+`evaluation/research/statistics.py`: medians, p95 only when n ≥ 20, and a
+seeded percentile bootstrap interval only when n ≥ 10; smaller samples are
+labelled exploratory. No p-values are produced.
 
 RQ1/RQ2/RQ3/RQ5/RQ6 runs are descriptive pilot evidence. Five fixtures, one
 synthetic population, and one trust/traceability run are not adequate for
@@ -125,9 +138,10 @@ cohort.
 The existing scaling script evaluates a legacy local SQLite path. The
 controlled benchmark records local synchronous submission, analysis,
 baseline, workload and ablation timings. The trust integrity runner records
-verification latency per mutation. Neither measures multi-service hosted
-performance. Production API latency, PostgreSQL pool behavior, worker
-throughput, S3 transfer, LangGraph overhead and recovery latency remain
-unmeasured. Docker and live services were unavailable during Phase 7
+verification latency per mutation. The orchestration experiments (EXP-O01,
+EXP-O02) measure LangGraph overhead, TRUST-SAT finalization/verification cost
+and in-process recovery on local SQLite. None of these measures multi-service
+hosted performance: production API latency, PostgreSQL pool behavior, worker
+throughput and S3 transfer remain unmeasured. Docker and live services were unavailable during Phase 7
 verification; Phase 8 does not claim deployment or production performance
 evidence.

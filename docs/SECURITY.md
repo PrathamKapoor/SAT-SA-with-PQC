@@ -86,6 +86,17 @@ absolutely tamper-proof. Artifact bytes are separately checked against their
 server-recorded digest during validation; the current TRUST-SAT receipt verifier
 does not fetch each physical S3 object during every receipt verification.
 
+Evaluated behaviour (EXP-T01, one controlled synthetic workflow, see
+[EXPERIMENTS.md](EXPERIMENTS.md)): the verifier rejected each of 13 tested
+single-field mutations of canonical state — decision action and reason,
+finding, risk, recommendation, observation scope, source provenance,
+submission record payload, artifact digest, canonical payload, receipt
+signature, receipt public key and ledger chain — and still verified after a
+change to an unsigned operational queue field. This is "detected all tested
+mutations", not a detection rate: coordinated replacement of database, key
+and ledger together was not tested. Measured cost on one machine (EXP-O01):
+finalization median 0.288 s, verification median 0.062 s.
+
 ## Reporting and response
 
 Errors returned to clients use the documented bounded error envelope and do

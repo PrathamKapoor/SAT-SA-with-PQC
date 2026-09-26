@@ -33,8 +33,8 @@ methods are not claimed as SAT-SA inventions.
 | Prioritization captures synthetic pathological entities above random review order | Tests ordering on generator-defined conditions | Entity prioritization | Recall@K; lift over seeded random mean; entity population is unit | Seeded pathological/clean profiles vs 200 seeded random permutations | Raw result + seed/config manifest | Synthetic profiles may favor known rules; a 6-entity pilot is only a smoke experiment |
 | Evidence/provenance allows findings to be traced through an authorized decision and receipt | Makes examiner review auditable | Evidence, provenance, review, TRUST-SAT | Finding-level recommendation coverage, resolvable evidence-reference coverage, decision existence, receipt verification; finding is unit | One complete controlled synthetic workflow | `trust-integrity-*` traceability section | One workflow; limited reference checklist, not a human reviewability result |
 | TRUST-SAT detects controlled changes to the finalized supervisory record | Tests integrity verification, not truth of evidence | Finalization, decision binding, ledger verification | Verified/tampered outcomes by mutation class; receipt is unit | Valid state then one-at-a-time mutation of decision, finding, risk, recommendation, source provenance, canonical payload, receipt signature, ledger chain | `trust-integrity-*` immutable bundle; verification categories and timings | One synthetic SQLite run; not a population detection-rate or resistance-to-coordinated-replacement claim |
-| Evidence incompleteness changes validation and analytical outputs in a measurable way | Tests robustness to partial submissions | Submission validation and negative-space workers | Acceptance/rejection, findings, risk and completeness by perturbation level; submission is unit | Complete control vs controlled missing/duplicate/stale/conflicting conditions | Raw submissions, perturbation manifest, metrics | Current corpus contains a `missing-evidence` case only; percentage sweep not executed |
-| Stateful orchestration has acceptable overhead and resumes without repeating committed stages | Quantifies orchestration trade-off | Phase 3 worker + LangGraph | Paired latency, recovery completion, duplicate side effects; analysis run is unit | Direct execution vs graph execution on same input/config, repeated seeds | Run-level timings and recovery results | No Phase 8 measurement exists; graph functionality tests alone are not performance evidence |
+| Evidence incompleteness changes validation and analytical outputs in a measurable way | Tests robustness to partial submissions | Submission validation and negative-space workers | Acceptance/rejection, findings, risk and completeness by perturbation level; submission is unit | Complete control vs controlled missing/duplicate/stale/conflicting/malformed conditions | `EXP-R01b-evidence-robustness` bundle | Measured on five authored fixtures: validation matched its contract in 245/245 conditions; stale and contradictory records are accepted silently (limitation) |
+| Stateful orchestration has acceptable overhead and resumes without repeating committed stages | Quantifies orchestration trade-off | Phase 3 worker + LangGraph | Paired latency, recovery completion, duplicate side effects; analysis run is unit | Direct vs graph on the same fixture, 30 rotated trials; 6 injected interruption points × 2 modes × 3 trials | `EXP-O01` and `EXP-O02` bundles | Measured on one machine with SQLite: median +0.096 s (interval includes 0), +38 DB calls, 36/36 recoveries; not production topology |
 | Peer deviation behavior responds to cohort sufficiency and configured deviation threshold | Tests implemented peer baseline rules in a controlled population | Peer benchmark worker | Peer-baseline count, median/MAD and actual emitted finding; cohort is unit | Synthetic peer counts 2/3/4 and subject closure times 30/400/750s; same worker threshold | `peer-sensitivity-*` immutable bundle | Pilot executed: count 2 and 3 cases did not emit; count 4 emitted; fixed n=4 magnitude sweep flagged 30s only. Small engineered closure-only cohorts; no field-population inference |
 
 ## Research questions
@@ -108,8 +108,12 @@ negative-space signals where defined.
 - Unit: paired submission from the same seed/profile.
 - Statistics: paired differences; bootstrap intervals only after enough
   independent seeds and with the seed as the replication unit.
-- Status: one missing-evidence scenario exists; the perturbation matrix and
-  missingness percentages are not implemented/executed.
+- Status: implemented and executed as EXP-R01b (five families, 10/25/50%
+  omission with five seeds each, paired controls). Results are descriptive
+  counts over authored fixtures; see [EXPERIMENTS.md](EXPERIMENTS.md). The
+  evaluation exposed and fixed one defect (a withheld sequence-chronology
+  finding). Staleness has no implemented detector, so it is reported as an
+  observed limitation.
 
 ### RQ5 — Cryptographic decision integrity
 
@@ -127,7 +131,10 @@ will reject the specified one-at-a-time mutations.
 - Statistics: report detected/attempted counts and individual outcomes; no
   estimate of general tamper-detection probability or significance.
 - Artifact: `run_trust_integrity_experiment.py` bundle, containing raw mutation
-  outcomes and timings.
+  outcomes and timings. EXP-T01 expanded the matrix to 13 canonical-state
+  mutations with declared expected outcomes and target objects, plus an
+  unsigned operational-field negative control; all 13 were detected and the
+  control verified.
 - Threats: single database, local key and ledger; no external trust anchor or
   coordinated database+key+ledger replacement.
 
