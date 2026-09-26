@@ -30,7 +30,6 @@ import io
 import json
 import logging
 import random
-import time
 from dataclasses import dataclass
 from pathlib import Path
 from time import perf_counter
@@ -731,76 +730,18 @@ def _risk_summary(risk: dict | None) -> dict[str, Any] | None:
 
 def run_condition(scratch: Path, cse, condition: Condition) -> dict[str, Any]:
     """Submit and (if valid) analyze one fixture in an isolated tenant."""
-    from qsmlops.database.engine import SQLiteDatabaseEngine
-    from qsmlops.database.migrations import MigrationRunner
-    from qsmlops.evidence.ledger import EvidenceLedger
-    from qsmlops.security.audit.service import AuditService
-    from satsa.analysis.execution import (
-        AnalysisExecutionService,
-        AnalysisExecutionWorker,
-    )
-    from satsa.analysis.synth import PERIOD_END, PERIOD_START
-    from satsa.submissions import LocalArtifactStorage, SubmissionService
-    from satsa.tenancy import TenantAdministration, TenantRepository
+    from evaluation.research.hosted import scratch_tenant
 
-    root = Path(scratch)
-    root.mkdir(parents=True, exist_ok=True)
-    engine = SQLiteDatabaseEngine(root / "research-robustness.sqlite3")
-    engine.connect()
-    MigrationRunner(engine).migrate()
-    try:
-        admin = TenantAdministration(engine)
-        organization_id = admin.create_organization("Research robustness tenant")
-        now = time.time()
-        engine.execute(
-            "INSERT INTO identities (identity_id,kind,name,owner,status,created_at,updated_at)"
-            " VALUES (?,?,?,?,?,?,?)",
-            (
-                "research-analyst",
-                "human",
-                "Research analyst",
-                "research",
-                "active",
-                now,
-                now,
-            ),
-        )
-        analyst_id = admin.create_user("research-analyst", "analyst@example.test")
-        admin.add_membership(organization_id, analyst_id, "satsa_analyst")
-        tenant = TenantRepository(engine, organization_id, analyst_id)
-        entity_id = tenant.create_entity(f"Research {cse.name}", sector=cse.sector)
-        assessment_id = tenant.create_assessment(entity_id, PERIOD_START, PERIOD_END)
-        audit = AuditService(EvidenceLedger(root / "audit.jsonl"), database=engine)
-        submissions = SubmissionService(
-            engine,
-            organization_id,
-            analyst_id,
-            storage=LocalArtifactStorage(root / "artifacts"),
-            audit=audit,
-        )
-        submission_id = submissions.create_submission(
-            assessment_id, idempotency_key="research-robustness-submission"
-        )
-        version_id = submissions.create_version(
-            submission_id, idempotency_key="research-robustness-version"
-        )
-        uploaded: list[str] = []
+    with scratch_tenant(
+        scratch, entity_name=f"Research {cse.name}", sector=cse.sector
+    ) as tenant:
+        files = {
+            category: data
+            for category in _CSE_FIELD
+            if (data := _category_csv(cse, category, condition)) is not None
+        }
         started = perf_counter()
-        for category in _CSE_FIELD:
-            data = _category_csv(cse, category, condition)
-            if data is None:
-                continue
-            submissions.upload(
-                version_id,
-                category=category,
-                stream=io.BytesIO(data),
-                filename=f"{category}.csv",
-                content_type="text/csv",
-                idempotency_key=f"research-robustness-{category}",
-            )
-            uploaded.append(category)
-        submissions.complete_uploads(version_id)
-        report = submissions.validate(version_id)
+        version_id, report, uploaded = tenant.submit(files, key="research-robustness")
         validation_seconds = perf_counter() - started
         result: dict[str, Any] = {
             "uploaded_categories": uploaded,
@@ -821,16 +762,9 @@ def run_condition(scratch: Path, cse, condition: Condition) -> dict[str, Any]:
             result["status"] = "rejected_by_validation"
             return result
 
-        service = AnalysisExecutionService(
-            engine, organization_id, analyst_id, audit=audit
-        )
+        service = tenant.analyst_service()
         run = service.create_run(version_id, idempotency_key="research-robustness-run")
-        worker = AnalysisExecutionWorker(
-            engine,
-            worker_id="research-robustness-worker",
-            audit=audit,
-            trust_key_dir=str(root / "signing-keys"),
-        )
+        worker = tenant.worker("research-robustness-worker")
         withheld = _WithheldFindingCounter()
         execution_log = logging.getLogger("qsmlops.satsa.analysis.execution")
         execution_log.addHandler(withheld)
@@ -860,8 +794,6 @@ def run_condition(scratch: Path, cse, condition: Condition) -> dict[str, Any]:
             }
         )
         return result
-    finally:
-        engine.close()
 
 
 def _paired_delta(
