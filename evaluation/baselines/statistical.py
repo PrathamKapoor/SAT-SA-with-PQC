@@ -11,6 +11,7 @@ a number with nothing to compare it to. This module is deliberately
 free of any import from ``satsa.*`` — a baseline that could reach into
 SAT-SA's own code would not be an independent comparison.
 """
+
 from __future__ import annotations
 
 import random
@@ -54,7 +55,7 @@ def iqr_baseline(values: list, *, k: float = 1.5) -> list:
     sorted_v = sorted(values)
     mid = len(sorted_v) // 2
     lower_half = sorted_v[:mid]
-    upper_half = sorted_v[mid:] if len(sorted_v) % 2 == 0 else sorted_v[mid + 1:]
+    upper_half = sorted_v[mid:] if len(sorted_v) % 2 == 0 else sorted_v[mid + 1 :]
     q1 = statistics.median(lower_half)
     q3 = statistics.median(upper_half)
     iqr = q3 - q1
@@ -64,8 +65,9 @@ def iqr_baseline(values: list, *, k: float = 1.5) -> list:
     return [v < lo or v > hi for v in values]
 
 
-def fixed_threshold_baseline(values: list, *, threshold: float,
-                             below: bool = True) -> list:
+def fixed_threshold_baseline(
+    values: list, *, threshold: float, below: bool = True
+) -> list:
     """A single fixed operational constant with zero distributional
     awareness — the naive rule a domain expert might hand-write
     ("anything closed under 10 minutes looks suspicious")."""
@@ -87,8 +89,7 @@ def random_baseline(n: int, *, fraction: float, seed: int) -> list:
     return [i in idx for i in range(n)]
 
 
-def severity_only_baseline(severities: list, *,
-                           flag_severities=("critical",)) -> list:
+def severity_only_baseline(severities: list, *, flag_severities=("critical",)) -> list:
     """Flags purely by declared severity, ignoring any temporal or
     statistical signal — the simplest possible triage rule, and the
     natural baseline for comparing against SAT-SA's prioritization
@@ -111,7 +112,17 @@ def score(flags: list, labels: list) -> dict:
     tn = sum(1 for f, l in zip(flags, labels) if not f and not l)
     precision = tp / (tp + fp) if (tp + fp) else None
     recall = tp / (tp + fn) if (tp + fn) else None
-    f1 = (2 * precision * recall / (precision + recall)
-          if precision and recall else None)
-    return {"tp": tp, "fp": fp, "fn": fn, "tn": tn,
-            "precision": precision, "recall": recall, "f1": f1}
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if precision is not None and recall is not None and (precision + recall) > 0
+        else (0.0 if precision == 0.0 and recall == 0.0 else None)
+    )
+    return {
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
+        "tn": tn,
+        "precision": precision,
+        "recall": recall,
+        "f1": f1,
+    }
