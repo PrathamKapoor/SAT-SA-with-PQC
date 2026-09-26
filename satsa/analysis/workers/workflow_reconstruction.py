@@ -150,6 +150,7 @@ class WorkflowReconstructionWorker(AnalyticalWorker):
             if [s.id for s in by_declared_sequence] != [s.id for s in by_actual_time]:
                 cases_with_sequence_mismatch.append(case_id)
         if cases_with_sequence_mismatch:
+            case_refs = {c.id: c.source_record_ref for c in dataset.cases}
             findings.append(Finding(
                 observation_id="",
                 rule_or_category="workflow_reconstruction.sequence_chronology_mismatch",
@@ -167,7 +168,13 @@ class WorkflowReconstructionWorker(AnalyticalWorker):
                 effect=min(1.0, len(cases_with_sequence_mismatch) / max(1, len(dataset.cases))),
                 threshold=0.0,
                 confidence=ConfidenceVector(analytical_support=0.6, evidence_completeness=1.0),
-                evidence_refs=[],
+                # Cite the mismatched cases' source records: a 'signal'
+                # finding without evidence fails Finding.validate() and is
+                # withheld by the hosted worker.
+                evidence_refs=[
+                    case_refs[case_id] for case_id in cases_with_sequence_mismatch
+                    if case_refs.get(case_id)
+                ],
                 limitations=(
                     "Clock skew across analyst workstations, or a "
                     "case-management system that allows manual sequence "

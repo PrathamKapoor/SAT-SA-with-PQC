@@ -136,6 +136,20 @@ def test_sequence_chronology_mismatch_fires():
     assert f.scoped_subjects == ["C1"]
 
 
+def test_sequence_chronology_mismatch_cites_case_evidence_and_is_valid():
+    """A 'signal' finding must cite evidence; otherwise the hosted worker
+    withholds it as invalid and the signal never reaches a supervisor."""
+    c = _case(id="C1", source_record_ref="srcrec_case_c1")
+    s1 = _step(case_id="C1", performed_at=BASE + 5000, sequence=1)
+    s2 = _step(case_id="C1", performed_at=BASE + 1000, sequence=2)
+    batch = _eval(WorkflowReconstructionWorker(), _ds(cases=[c], steps=[s1, s2]))
+    f = next(f for f in batch.findings
+             if f.rule_or_category == "workflow_reconstruction.sequence_chronology_mismatch")
+    assert f.evidence_refs == ["srcrec_case_c1"]
+    f.observation_id = "obs-1"
+    assert f.validate() == []
+
+
 def test_sequence_matches_chronology_does_not_fire():
     c = _case(id="C1")
     s1 = _step(case_id="C1", performed_at=BASE + 1000, sequence=1)
