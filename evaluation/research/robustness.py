@@ -28,6 +28,7 @@ import copy
 import csv
 import io
 import json
+import logging
 import random
 import time
 from dataclasses import dataclass
@@ -58,6 +59,23 @@ _OUT_OF_PERIOD_SHIFT_SECONDS = 40 * 86400
 PERIOD_START = 1735689600.0
 PERIOD_END = 1738281600.0
 _RISK_IDENTIFIERS = {"entity_id", "run_id", "assessment_id"}
+
+
+class _WithheldFindingCounter(logging.Handler):
+    """Count findings the worker drops because ``Finding.validate()`` failed.
+
+    The worker only logs these; counting them keeps silently withheld
+    output visible in the experiment record without changing the product.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.WARNING)
+        self.by_worker: dict[str, int] = {}
+
+    def emit(self, record: logging.LogRecord) -> None:
+        if record.getMessage() == "invalid finding withheld":
+            worker = str(getattr(record, "worker", "unknown"))
+            self.by_worker[worker] = self.by_worker.get(worker, 0) + 1
 
 
 @dataclass(frozen=True)
@@ -813,10 +831,17 @@ def run_condition(scratch: Path, cse, condition: Condition) -> dict[str, Any]:
             audit=audit,
             trust_key_dir=str(root / "signing-keys"),
         )
+        withheld = _WithheldFindingCounter()
+        execution_log = logging.getLogger("qsmlops.satsa.analysis.execution")
+        execution_log.addHandler(withheld)
         started = perf_counter()
-        run_status = worker.run_once()
+        try:
+            run_status = worker.run_once()
+        finally:
+            execution_log.removeHandler(withheld)
         result["analysis_seconds"] = round(perf_counter() - started, 6)
         result["run_status"] = run_status
+        result["withheld_invalid_findings"] = dict(sorted(withheld.by_worker.items()))
         if run_status not in {"completed", "partial"}:
             result["status"] = "analysis_failed"
             result["failure_reason"] = f"worker returned {run_status!r}"
@@ -884,6 +909,7 @@ def _group_summary(rows: list[dict[str, Any]], key: str) -> dict[str, Any]:
                 "no_declared_expectation": 0,
                 "completed_analyses": 0,
                 "family_set_changed_vs_control": 0,
+                "withheld_invalid_findings": 0,
             },
         )
         entry["conditions"] += 1
@@ -899,6 +925,9 @@ def _group_summary(rows: list[dict[str, Any]], key: str) -> dict[str, Any]:
         delta = row.get("paired_delta_vs_control")
         entry["family_set_changed_vs_control"] += bool(
             delta and delta["family_set_changed"]
+        )
+        entry["withheld_invalid_findings"] += sum(
+            (row.get("withheld_invalid_findings") or {}).values()
         )
     return groups
 
