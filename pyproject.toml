@@ -33,6 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "httpx>=0.27", "setuptools>=68"]
+s3-test = ["boto3>=1.35,<2", "moto[server,s3]==5.2.3"]
 postgres = ["psycopg[binary,pool]>=3.2,<4"]
 s3 = ["boto3>=1.35,<2"]
 
@@ -40,12 +41,14 @@ s3 = ["boto3>=1.35,<2"]
 qsmlops = "qsmlops.cli:cli"
 sat-sa = "satsa.cli:main"
 sat-sa-worker = "satsa.analysis.execution:worker_main"
+sat-sa-api = "satsa.api.server:main"
+sat-sa-bootstrap-admin = "scripts.bootstrap_satsa_admin:main"
 
 [tool.setuptools.packages.find]
 # `satsa.ui.demo` resolves its committed input set from the installed
 # site-packages/docs/demo tree.  Discover `docs` as a namespace package so
 # the existing CLI demo remains usable from a wheel (not only from a clone).
-include = ["qsmlops*", "satsa*", "evaluation*", "public_benchmarks*", "docs*"]
+include = ["qsmlops*", "satsa*", "evaluation*", "public_benchmarks*", "docs*", "scripts*"]
 
 [tool.setuptools.package-data]
 # P28: public_benchmarks/workflow_augmentation/generator.py reads

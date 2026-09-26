@@ -1656,6 +1656,10 @@ class RetryableAnalysisError(RuntimeError):
 
 def worker_main() -> int:
     """CLI entry point for a separately deployed analysis worker."""
+    import signal
+    import threading
+    from pathlib import Path
+
     from qsmlops.core.settings import load_settings
     from qsmlops.database.engine import create_engine
     from qsmlops.database.migrations import MigrationRunner
@@ -1663,22 +1667,36 @@ def worker_main() -> int:
     from qsmlops.security.audit.service import AuditService
 
     settings = load_settings()
-    engine = create_engine(settings.database.url)
+    data_dir = Path(os.getenv("SATSA_DATA_DIR", ".satsa-api")).resolve()
+    database_url = os.getenv("SATSA_DATABASE_URL") or os.getenv("QSMLOPS_DB_URL")
+    if not database_url and os.getenv("SATSA_DB"):
+        database_url = f"sqlite:///{Path(os.environ['SATSA_DB']).resolve().as_posix()}"
+    database_url = database_url or settings.database.url
+    engine = create_engine(database_url)
     MigrationRunner(engine).migrate()
-    settings.ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    audit = AuditService(EvidenceLedger(settings.ledger_path), database=engine)
-    worker = AnalysisExecutionWorker(
-        engine, trust_key_dir=os.getenv("SATSA_TRUST_KEY_DIR") or None, audit=audit
+    ledger_path = Path(
+        os.getenv("SATSA_LEDGER_PATH", str(data_dir / "evidence-ledger.jsonl"))
     )
+    ledger_path.parent.mkdir(parents=True, exist_ok=True)
+    audit = AuditService(EvidenceLedger(ledger_path), database=engine)
+    worker = AnalysisExecutionWorker(
+        engine,
+        trust_key_dir=os.getenv("SATSA_TRUST_KEY_DIR", str(data_dir / "keys")),
+        audit=audit,
+    )
+    stopping = threading.Event()
+    signal.signal(signal.SIGTERM, lambda _signum, _frame: stopping.set())
+    signal.signal(signal.SIGINT, lambda _signum, _frame: stopping.set())
     try:
         idle = 0
-        while True:
+        while not stopping.is_set():
             outcome = worker.run_once()
             if outcome is None:
                 idle += 1
-                time.sleep(min(2.0, 0.1 * idle))
+                stopping.wait(min(2.0, 0.1 * idle))
             else:
                 idle = 0
+        return 0
     except KeyboardInterrupt:
         return 0
     finally:
