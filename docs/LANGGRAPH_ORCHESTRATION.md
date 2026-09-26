@@ -73,14 +73,16 @@ finding digest where applicable, a decision digest, and an audit event. The
 table is tenant-scoped and one terminal decision is allowed per run. Finding
 review history remains unchanged.
 
-TRUST-SAT finalization occurs only after a persisted human decision. For
-SQLite, the existing ML-DSA attestation runs after the final canonical run
-digest is written. PostgreSQL's existing TrustService remains SQLite-only;
-hosted graph runs receive no fake trust receipt. The current run receipt
-canonicalization does **not** cryptographically bind the new run-level review
-row; a future trust migration must explicitly bind decision and recommendation
-digests without changing existing receipt semantics silently. A shared durable
-audit ledger remains required across API and worker processes.
+Phase 5 extends `trust_boundary` to call the tenant-scoped `TrustService`
+finalizer before run completion. Both PostgreSQL and SQLite now receive a
+`supervisory_finalization` receipt binding the persisted decision, results and
+source relationships. The worker rechecks the same finalization when recovering
+an already-completed graph checkpoint (including old `ready` checkpoints).
+Existing run/finding receipt semantics remain unchanged. Supervised completion
+requires `SATSA_TRUST_KEY_DIR`; missing configuration fails explicitly rather
+than returning a fake receipt. See [TRUST_MODEL.md](TRUST_MODEL.md#supervisory-finalization-phase-5)
+for the exact proof, recovery protocol and limitations. API/worker instances
+must share the existing durable ledger and configured signing key directory.
 
 No cross-tenant peer population is introduced. Hosted peer workers still
 abstain until a governed organization-scoped aggregate exists. Live S3,

@@ -133,7 +133,9 @@ class AnalysisExecutionService:
         *,
         idempotency_key: str,
         graph_enabled: bool = False,
+        review_required: bool = False,
     ) -> dict:
+        review_required = review_required or graph_enabled
         self.tenant._require(ANALYSIS_RUN)
         self._validate_key(idempotency_key)
         version = self.db.query_one(
@@ -163,7 +165,10 @@ class AnalysisExecutionService:
                 )
                 if existing:
                     previous = self.get_run(existing["id"])
-                    if bool(previous["graph_enabled"]) != graph_enabled:
+                    if (
+                        bool(previous["graph_enabled"]) != graph_enabled
+                        or bool(previous["review_required"]) != review_required
+                    ):
                         raise DomainValidationError(
                             "idempotency key belongs to a different execution mode"
                         )
@@ -194,8 +199,8 @@ class AnalysisExecutionService:
                 )
                 self.db.execute(
                     "INSERT INTO satsa_run_context (run_id,organization_id,submission_id,"
-                    "submission_version_id,idempotency_key,requested_by_user_id,requested_at,correlation_id,graph_enabled)"
-                    " VALUES (?,?,?,?,?,?,?,?,?)",
+                    "submission_version_id,idempotency_key,requested_by_user_id,requested_at,correlation_id,graph_enabled,review_required)"
+                    " VALUES (?,?,?,?,?,?,?,?,?,?)",
                     (
                         run_id,
                         self.org,
@@ -206,6 +211,7 @@ class AnalysisExecutionService:
                         now,
                         correlation_id,
                         int(graph_enabled),
+                        int(review_required),
                     ),
                 )
                 for worker in _default_workers(DEFAULT_FAST_CLOSURE_POLICY):
@@ -245,7 +251,10 @@ class AnalysisExecutionService:
                 raise
             run_id = existing["run_id"]
         result = self.get_run(run_id)
-        if bool(result["graph_enabled"]) != graph_enabled:
+        if (
+            bool(result["graph_enabled"]) != graph_enabled
+            or bool(result["review_required"]) != review_required
+        ):
             raise DomainValidationError(
                 "idempotency key belongs to a different execution mode"
             )
@@ -254,7 +263,7 @@ class AnalysisExecutionService:
     def get_run(self, run_id: str) -> dict:
         self.tenant._require(FINDING_VIEW)
         row = self.db.query_one(
-            "SELECT r.*,c.submission_id,c.submission_version_id,c.graph_enabled,"
+            "SELECT r.*,c.submission_id,c.submission_version_id,c.graph_enabled,c.review_required,"
             "c.correlation_id AS execution_id"
             " FROM satsa_runs r JOIN satsa_run_context c ON c.run_id=r.id"
             " WHERE r.organization_id=? AND c.organization_id=? AND r.id=?",
@@ -350,6 +359,24 @@ class AnalysisExecutionService:
             (self.org, run_id),
         )
 
+    def get_trust_receipt(self, run_id: str) -> dict:
+        self.tenant._require(EVIDENCE_VIEW)
+        self.get_run(run_id)
+        from satsa.analysis.trust import TrustService
+
+        return TrustService(self.db, None, organization_id=self.org).get_final_receipt(
+            run_id
+        )
+
+    def verify_trust(self, run_id: str) -> tuple[bool, str]:
+        self.tenant._require(EVIDENCE_VIEW)
+        self.get_run(run_id)
+        from satsa.analysis.trust import TrustService
+
+        return TrustService(
+            self.db, None, organization_id=self.org
+        ).verify_finalization(run_id, self.audit)
+
     def get_graph_progress(self, run_id: str) -> dict:
         """Return small authorized checkpoint references, never raw graph state."""
         run = self.get_run(run_id)
@@ -394,8 +421,8 @@ class AnalysisExecutionService:
         if action not in {"confirm", "dismiss", "escalate"} or len(reason) > 4000:
             raise DomainValidationError("invalid supervisory action or reason")
         run = self.get_run(run_id)
-        if not run["graph_enabled"]:
-            raise DomainValidationError("run is not graph supervised")
+        if not (run["graph_enabled"] or run["review_required"]):
+            raise DomainValidationError("run is not supervised")
         existing = self.get_review_decision(run_id)
         if existing:
             if existing["action"] == action and existing["reason"] == reason:
@@ -463,6 +490,16 @@ class AnalysisExecutionService:
                     digest_document(document),
                     now,
                 ),
+            )
+            # Freeze the complete reviewed context atomically with the decision;
+            # finalization must not sign changed results after human review.
+            from satsa.analysis.canonical import supervisory_document
+
+            reviewed = supervisory_document(self.db, self.org, run_id)
+            reviewed.pop("review_context_digest")
+            self.db.execute(
+                "UPDATE satsa_run_review_decisions SET review_context_digest=? WHERE organization_id=? AND id=?",
+                (digest_document(reviewed), self.org, decision_id),
             )
             self.db.execute(
                 "UPDATE satsa_runs SET status='queued' WHERE organization_id=? AND id=?",
@@ -693,7 +730,7 @@ class ExecutionQueue:
         with self.db.transaction():
             self.db.execute(
                 "UPDATE satsa_execution_jobs SET heartbeat_at=?,lease_expires_at=?,updated_at=?"
-                " WHERE run_id=? AND status='running' AND lease_owner=? AND lease_generation=?"
+                " WHERE run_id=? AND status IN ('running','cancel_requested') AND lease_owner=? AND lease_generation=?"
                 " AND lease_expires_at>?",
                 (
                     now,
@@ -723,10 +760,35 @@ class ExecutionQueue:
             row = self._lease_row(lease, now)
             if row is None:
                 return False
+            if run_status in {"completed", "partial"}:
+                context = self.db.query_one(
+                    "SELECT graph_enabled,review_required FROM satsa_run_context WHERE organization_id=? AND run_id=?",
+                    (lease.organization_id, lease.run_id),
+                )
+                if context and (context["graph_enabled"] or context["review_required"]):
+                    finalized = self.db.query_one(
+                        "SELECT f.id FROM satsa_trust_finalizations f"
+                        " JOIN satsa_run_review_decisions d ON d.id=f.decision_id AND d.run_id=f.run_id"
+                        " AND d.organization_id=f.organization_id WHERE f.organization_id=? AND f.run_id=?"
+                        " AND f.state='verified' AND f.ledger_entry_hash IS NOT NULL",
+                        (lease.organization_id, lease.run_id),
+                    )
+                    if finalized is None:
+                        raise DomainValidationError(
+                            "supervised completion requires verified finalization"
+                        )
             run = self.db.query_one(
                 "SELECT status FROM satsa_runs WHERE organization_id=? AND id=?",
                 (lease.organization_id, lease.run_id),
             )
+            if (
+                run is not None
+                and run["status"] == "cancel_requested"
+                and run_status != "cancelled"
+            ):
+                # Cancellation after trust verification remains cancellation,
+                # not an analytical failure with a misleading failure audit.
+                raise CancelAtBoundary()
             if run is not None and run["status"] != run_status:
                 _transition(run["status"], run_status)
             self.db.execute(
@@ -911,6 +973,17 @@ class AnalysisExecutionWorker:
                     return "awaiting_review"
             else:
                 self._execute(lease, context)
+                if context["review_required"] and self._finish(lease) != "failed":
+                    self._persist_recommendations(lease)
+                    decision = self.db.query_one(
+                        "SELECT id FROM satsa_run_review_decisions WHERE organization_id=? AND run_id=?",
+                        (lease.organization_id, lease.run_id),
+                    )
+                    if decision is None:
+                        if not self.queue.pause_for_review(lease):
+                            raise LeaseLost("lease expired before review")
+                        self._audit_run_safely(lease, "analysis.awaiting_review")
+                        return "awaiting_review"
             current = self._job_state(lease.run_id)
             status = (
                 "cancelled"
@@ -945,6 +1018,8 @@ class AnalysisExecutionWorker:
                     self._audit_run_safely(lease, "analysis.failed")
                 return outcome
             else:
+                if context["graph_enabled"] or context["review_required"]:
+                    self._finalize_supervisory(lease)
                 if not self.queue.complete(lease, status):
                     raise LeaseLost("execution lease expired before finalization")
                 self._audit_run_safely(lease, f"analysis.{status}")
@@ -991,7 +1066,7 @@ class AnalysisExecutionWorker:
 
     def _resolve_context(self, lease: Lease) -> dict:
         row = self.db.query_one(
-            "SELECT r.*,c.submission_id,c.submission_version_id,c.graph_enabled,"
+            "SELECT r.*,c.submission_id,c.submission_version_id,c.graph_enabled,c.review_required,"
             "c.organization_id AS context_org"
             " FROM satsa_runs r JOIN satsa_run_context c ON c.run_id=r.id"
             " JOIN satsa_submissions s ON s.id=c.submission_id AND s.organization_id=c.organization_id"
@@ -1423,6 +1498,33 @@ class AnalysisExecutionWorker:
                 )
                 params = (self.org,) + tuple(params)
             return self.db.query_all(sql, params)
+
+    def _finalize_supervisory(self, lease: Lease) -> dict:
+        self._assert_lease(lease)
+        if self._cancel_requested(lease.run_id, lease.organization_id):
+            raise CancelAtBoundary()
+        if not self.trust_key_dir:
+            raise DomainValidationError(
+                "supervisory finalization requires SATSA_TRUST_KEY_DIR"
+            )
+        from pathlib import Path
+
+        from satsa.analysis.trust import TrustService
+
+        try:
+
+            def boundary(_stage):
+                self._assert_lease(lease)
+                if self._cancel_requested(lease.run_id, lease.organization_id):
+                    raise CancelAtBoundary()
+
+            return TrustService(
+                self.db, Path(self.trust_key_dir), organization_id=lease.organization_id
+            ).finalize(lease.run_id, self.audit, boundary=boundary)
+        except OSError as exc:
+            raise RetryableAnalysisError(
+                "trust storage temporarily unavailable"
+            ) from exc
 
     def _attest_if_configured(self, lease: Lease, jobs: list[Job]) -> None:
         # Existing TRUST-SAT persistence is explicitly offline-SQLite-only.

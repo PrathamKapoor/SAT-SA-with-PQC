@@ -71,3 +71,22 @@ Migration 13 adds the graph opt-in flag to `satsa_run_context`, tenant-owned
 checkpoint tables in PostgreSQL; SQLite offline mode stores checkpoints in
 `<database>.langgraph.sqlite`. See [LANGGRAPH_ORCHESTRATION.md](LANGGRAPH_ORCHESTRATION.md)
 for the queue, checkpoint, interrupt, review, and trust boundary.
+
+## Phase 5 decision-bound trust
+
+Migration 14 adds `review_required` to the existing run context and enables it
+for existing graph runs. It introduces `satsa_trust_finalizations` as execution
+metadata pointing to existing `satsa_trust_receipts`, not another receipt or
+ledger implementation. Composite foreign keys bind organization, run and the
+immutable decision. Unique `(run_id, decision_id, schema_version)` and a partial
+unique index on supervisory receipt subjects enforce finalization identity.
+Legacy receipt subjects and rows are unchanged; no old receipt is relabeled as
+proving a supervisory decision.
+
+States are `prepared → recorded → verified`. Canonical JSON/digest is frozen at
+prepare, signing occurs outside the DB transaction, and receipt insertion plus
+its finalization link commit together. The existing evidence ledger event and
+its DB hash link are recoverable across the file/DB boundary. Live verification
+reconstructs the decision, results and input relationships instead of relying
+on `state='verified'`. SQLite and PostgreSQL use the same protocol. See
+[TRUST_MODEL.md](TRUST_MODEL.md#supervisory-finalization-phase-5).

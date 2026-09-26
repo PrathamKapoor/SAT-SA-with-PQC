@@ -140,3 +140,16 @@ connections to the registry file).
 - Deployment gates require APPROVED state + an approving verification packet.
 - Separation of duties: the verifier cannot equal the signer.
 - Audit denial events (`DENIED`) are first-class records.
+
+## SAT-SA supervisory trust finalization
+
+The SAT-SA execution worker owns the queue lease and invokes the existing
+TrustService after authorized review (through LangGraph or supervised non-graph
+execution). Canonical reconstruction lives in `satsa/analysis/canonical.py`;
+receipt persistence remains `satsa_trust_receipts`, with migration-14 finalization
+metadata linking organization/run/decision and ledger commitment. SQLite and
+PostgreSQL share the same protocol. The existing EvidenceLedger and AuditService
+remain the append-only chain and audit infrastructure. No analytical worker,
+frontend or model lifecycle is replaced. See
+[TRUST_MODEL.md](TRUST_MODEL.md#supervisory-finalization-phase-5) for canonical
+binding, recovery, verification and residual limits.

@@ -129,9 +129,8 @@ class AnalysisGraphRuntime:
             raise PermissionDeniedError(
                 "supervisory decision missing at trust boundary"
             )
-        # SQLite attestation occurs after the Phase 3 run is finalized, using
-        # the final canonical run digest. Hosted attestation remains unavailable.
-        return {"current_stage": "finalization", "trust_finalization": "ready"}
+        self.worker._finalize_supervisory(self.lease)
+        return {"current_stage": "finalization", "trust_finalization": "verified"}
 
     def run(self) -> str:
         snapshot = self.graph.get_state(self.config)
@@ -162,6 +161,6 @@ class AnalysisGraphRuntime:
         result = self.graph.invoke(payload, self.config, version="v1")
         if "__interrupt__" in result:
             return "awaiting_review"
-        if result.get("trust_finalization") != "ready":
+        if result.get("trust_finalization") not in {"ready", "verified"}:
             raise RuntimeError("graph did not reach the finalization boundary")
         return "finished"

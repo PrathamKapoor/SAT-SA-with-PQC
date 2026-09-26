@@ -23,13 +23,15 @@ Workstream F1 — Packet Payload Persistence:
   material, HSM PINs, passphrases or credentials. Persistence rejects packets
   that contain sensitive field names (defense-in-depth).
 """
+
 from __future__ import annotations
 
 import json
+import os
 import threading
 import time
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 
 from qsmlops.artifacts.store import ArtifactStore
 from qsmlops.crypto.hashing import canonical_json, sha3_hex
@@ -138,7 +140,11 @@ class EvidenceLedger:
             )
             entry = {**body, "entry_hash": entry_hash}
             with self.path.open("a", encoding="utf-8") as fh:
-                fh.write(json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n")
+                fh.write(
+                    json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n"
+                )
+                fh.flush()
+                os.fsync(fh.fileno())
             return entry
 
     def append_packet(self, packet: VerificationPacket) -> dict:
@@ -162,7 +168,9 @@ class EvidenceLedger:
         pkt_dict = packet.to_dict()
         offending = _contains_sensitive(pkt_dict)
         if offending:
-            raise LedgerError(f"packet contains sensitive field {offending!r}; persistence rejected")
+            raise LedgerError(
+                f"packet contains sensitive field {offending!r}; persistence rejected"
+            )
 
         # 2. Immutability: packet_id is unique — any second append with same id is rejected
         #    (whether digest matches or not). This enforces that a packet, once committed,
@@ -185,7 +193,9 @@ class EvidenceLedger:
         except Exception as exc:
             raise LedgerError(f"packet store unavailable: {exc}") from exc
         if stored_digest != current_digest:
-            raise LedgerError(f"packet store digest mismatch: {stored_digest} != {current_digest}")
+            raise LedgerError(
+                f"packet store digest mismatch: {stored_digest} != {current_digest}"
+            )
 
         # 4. Ledger entry (re-entrant lock, but we already did immutability check; double-check inside append)
         return self.append(
@@ -211,6 +221,14 @@ class EvidenceLedger:
         entries = [json.loads(line) for line in raw]
         prev = GENESIS_PREV
         for i, e in enumerate(entries):
+            if not isinstance(e, dict) or not {
+                "prev_hash",
+                "seq",
+                "timestamp",
+                "record",
+                "entry_hash",
+            }.issubset(e):
+                return False, f"corrupted ledger entry {i} (missing chain fields)"
             if e["prev_hash"] != prev:
                 return False, f"chain break at entry {i}"
             body = {
@@ -239,7 +257,10 @@ class EvidenceLedger:
     def find_by_packet(self, packet_id: str) -> dict | None:
         for entry in self._entries():
             rec = entry.get("record", {})
-            if rec.get("type") == "verification_packet" and rec.get("packet_id") == packet_id:
+            if (
+                rec.get("type") == "verification_packet"
+                and rec.get("packet_id") == packet_id
+            ):
                 return entry
         return None
 
@@ -272,11 +293,15 @@ class EvidenceLedger:
     def get_packet_by_digest(self, digest: str) -> VerificationPacket | None:
         """Retrieve a persisted VerificationPacket by its canonical digest."""
         # Malformed digests (e.g. old test data "abc") must be treated as missing, not crash
-        if not isinstance(digest, str) or len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
+        if (
+            not isinstance(digest, str)
+            or len(digest) != 64
+            or any(c not in "0123456789abcdef" for c in digest)
+        ):
             return None
         try:
             data = self.packet_store.get_if_exists(digest)
-        except (ValueError, IOError):
+        except (OSError, ValueError):
             return None
         if data is None:
             return None
@@ -288,7 +313,7 @@ class EvidenceLedger:
                 # Tampered packet body → treat as missing (integrity failure)
                 return None
             return pkt
-        except Exception:
+        except (AttributeError, KeyError, TypeError, ValueError):
             return None
 
     def verify_packet(self, packet_id: str) -> tuple[bool, str]:
@@ -304,14 +329,17 @@ class EvidenceLedger:
             return False, "ledger entry has no digest"
         # Malformed digest → treat as missing, not crash (backward compat)
         if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
-            return False, f"packet body missing for digest {digest[:12]}... (malformed digest)"
+            return (
+                False,
+                f"packet body missing for digest {digest[:12]}... (malformed digest)",
+            )
         pkt = self.get_packet_by_digest(digest)
         if pkt is None:
             # Distinguish missing vs tampered: check raw file existence (not digest-validated)
             try:
                 packet_path = self.packet_store._path_for(digest)
                 exists = packet_path.exists()
-            except Exception:
+            except (OSError, TypeError, ValueError):
                 exists = False
             if not exists:
                 return False, f"packet body missing for digest {digest[:12]}..."

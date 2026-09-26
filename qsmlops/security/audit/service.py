@@ -63,6 +63,70 @@ class AuditService:
         except Exception as exc:  # noqa: BLE001 - ledger stays authoritative if mirror fails
             log.warning("audit mirror write failed: %s", exc)
 
+    def record_once(self, event: AuditEvent) -> str:
+        """Recover one deterministic event after an append/DB crash boundary.
+
+        Uses the same append lock as record(). All processes must share the
+        configured ledger. An existing event must match exactly; never rewrite
+        a ledger entry to accommodate a conflicting retry.
+        """
+        if self._database is None:
+            raise ValueError("idempotent audit requires a database")
+        database = self._database
+        if hasattr(database, "ensure_ready"):
+            database.ensure_ready()
+            database = database.engine
+        doc = event.to_dict()
+        doc["audit_type"] = AUDIT_ACTION_PREFIX
+        with database.transaction():
+            if database.dialect == "postgresql":
+                database.query_one("SELECT pg_advisory_xact_lock(703144062)")
+            ok, reason = self.verify()
+            if not ok:
+                raise ValueError(f"ledger integrity failure: {reason}")
+            matches = [
+                entry
+                for entry in self._ledger.iter_entries()
+                if entry.get("record", {}).get("event_id") == event.event_id
+            ]
+            if matches:
+                if len(matches) != 1 or matches[0]["record"] != doc:
+                    raise ValueError("conflicting idempotent ledger event")
+                entry = matches[0]
+            else:
+                entry = self._ledger.append(doc)
+            self._mirror(event, entry["entry_hash"])
+            return entry["entry_hash"]
+
+    def verify_event(self, event: AuditEvent, entry_hash: str) -> tuple[bool, str]:
+        """Verify one event against a consistent chain view under the append lock."""
+        if self._database is None:
+            raise ValueError("event verification requires a database")
+        database = self._database
+        if hasattr(database, "ensure_ready"):
+            database.ensure_ready()
+            database = database.engine
+        doc = event.to_dict()
+        doc["audit_type"] = AUDIT_ACTION_PREFIX
+        with database.transaction():
+            if database.dialect == "postgresql":
+                database.query_one("SELECT pg_advisory_xact_lock(703144062)")
+            ok, reason = self.verify()
+            if not ok:
+                return False, f"ledger integrity failure: {reason}"
+            matches = [
+                entry
+                for entry in self._ledger.iter_entries()
+                if entry.get("record", {}).get("event_id") == event.event_id
+            ]
+            if (
+                len(matches) != 1
+                or matches[0]["record"] != doc
+                or matches[0]["entry_hash"] != entry_hash
+            ):
+                return False, "final ledger binding mismatch"
+        return True, "ok"
+
     # -------------------- query path --------------------
     def query(
         self,

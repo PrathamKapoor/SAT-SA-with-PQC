@@ -110,3 +110,18 @@ attestation/verification flow when `trust_key_dir` is configured. PostgreSQL
 trust attestation is intentionally unavailable because the current
 `TrustService` is SQLite-only. No hosted run is marked verified. LangGraph is
 not part of Phase 3.
+
+## Phase 5 supervised non-graph execution
+
+`create_run(..., review_required=True)` enables the same human review and trust
+boundary without LangGraph. Default non-graph requests remain analysis-only for
+compatibility: their `completed` status and legacy receipts do not prove a
+supervisory outcome. Graph requests imply `review_required=True`.
+
+Supervised execution persists recommendations, pauses at `awaiting_review`,
+accepts only the existing authorized supervisor/admin `decide()` operation,
+and requeues the existing job. On resume it skips completed analytical stages,
+finalizes and verifies TRUST-SAT, then completes the queue item. Failed trust
+finalization cannot silently complete the run. Configure `SATSA_TRUST_KEY_DIR`
+on workers with a durable secret-backed directory. No frontend API or route
+shape is changed. See [TRUST_MODEL.md](TRUST_MODEL.md#supervisory-finalization-phase-5).
