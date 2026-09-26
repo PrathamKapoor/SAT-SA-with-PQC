@@ -137,6 +137,20 @@ Docker/Compose availability and target provider credentials vary by environment.
 Record local container and hosted deployment results separately. A successful
 build or unit suite alone is not deployment verification.
 
+### Verification record (Phase 9, 2026-09-27)
+
+Each layer is classified separately; nothing here is inferred from another.
+
+| Layer | Status | Evidence |
+| --- | --- | --- |
+| Container build | **Not verified locally** — Docker is not installed on the development machine (Windows or WSL). CI builds the image in the `docker-build-smoke` job and runs the topology in `saas-topology-smoke` when the branch is pushed. | `.github/workflows/ci.yml` |
+| Container startup / local production-like compose topology | **Blocked locally** (no Docker). CI path defined; not yet executed because nothing has been pushed. | `docker-compose.saas.yml`, CI job |
+| API + worker as separate processes over HTTP | **Verified** with `SATSA_ENVIRONMENT=development`, SQLite and local artifact storage: migration, key initialization, admin bootstrap, member invitation over HTTP, then the full smoke workflow passed (6 findings, receipt verified, 20 audit events). | local run via `scripts/deployment_smoke.py` |
+| PostgreSQL (live) | **Pending** — a PostgreSQL 18 server is available locally; live tests need `SATSA_TEST_POSTGRES_DSN` for a scratch database. | `tests/test_postgres_*.py` (skipped without DSN) |
+| S3-compatible storage (live) | **Not verified.** Only mocked/emulated S3 tests exist; SeaweedFS runs only inside the compose topology. | — |
+| HTTP smoke against the compose topology | **Not executed** locally (blocked by Docker); defined in CI. | — |
+| Hosted deployment | **Not verified** in Phase 9. The Render site hosts the separate web UI, not this API/worker topology. | — |
+
 ## Legacy offline deployment
 
 The following CLI/Jinja deployment is the offline-compatible single-machine

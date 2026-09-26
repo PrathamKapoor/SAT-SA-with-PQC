@@ -51,6 +51,34 @@ subject closure times of 30/400/750 seconds. Each cohort is isolated by
 explicit sector/environment labels in a temporary local database. It is not a
 production cross-tenant query.
 
+### Phase 9 experiments
+
+Each command writes one bundle `<out>\<experiment-id>\` with the same layout
+and refuses an existing ID. IDs below are the ones used for the recorded runs.
+
+```powershell
+python scripts/run_evidence_robustness_experiment.py --out C:\sat-sa-results --experiment-id EXP-R01b-evidence-robustness
+python scripts/run_orchestration_experiment.py overhead --out C:\sat-sa-results --experiment-id EXP-O01-orchestration-overhead --trials 30
+python scripts/run_orchestration_experiment.py recovery --out C:\sat-sa-results --experiment-id EXP-O02-orchestration-recovery --trials 3
+python scripts/run_trust_integrity_experiment.py --out C:\sat-sa-results --experiment-id EXP-T01-trust-mutation-matrix
+python scripts/run_peer_sensitivity_experiment.py --sweep --out C:\sat-sa-results --experiment-id EXP-P01-peer-sweep
+python scripts/run_ablation_experiment.py --out C:\sat-sa-results --experiment-id EXP-A01-component-ablation --seeds 5
+python scripts/run_prioritization_experiment.py --out C:\sat-sa-results --experiment-id EXP-PR01-prioritization-replicated --seeds 20
+```
+
+Approximate local durations: robustness ~5 min, orchestration overhead ~3
+min, recovery ~1 min, peer sweep ~2 min, ablation ~10 min, prioritization
+~15 min. Seeds: robustness omission seeds are `base_seed + replicate`
+(default 0); prioritization populations use `100 + replicate`; ablation
+populations `300 + replicate`; bootstrap intervals use seed 0 and 10,000
+resamples. Timing results will differ across machines; deterministic
+metrics (validation outcomes, families, rankings) should reproduce exactly
+for the same commit.
+
+`python scripts/export_paper_tables.py --bundles C:\sat-sa-results --out
+C:\sat-sa-results\tables` regenerates CSV, Markdown and LaTeX tables from
+completed bundles (it never edits a bundle).
+
 ## Manifest and hashes
 
 The manifest records experiment status, UTC creation time, controlled dataset
