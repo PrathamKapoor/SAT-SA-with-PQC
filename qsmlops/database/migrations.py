@@ -1028,6 +1028,17 @@ MIGRATIONS += (
 )
 
 
+MIGRATIONS += (
+    Migration(
+        version=16,
+        name="artifact_storage_lifecycle",
+        statements=(
+            "ALTER TABLE satsa_artifacts ADD COLUMN storage_status TEXT NOT NULL DEFAULT 'stored' CHECK(storage_status IN ('uploading','stored','failed'))",
+        ),
+    ),
+)
+
+
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
         self.engine = engine
@@ -1047,11 +1058,40 @@ class MigrationRunner:
         )
 
     def applied_versions(self) -> list[int]:
-        self._ensure_table()
+        if self.engine.dialect == "postgresql":
+            exists = self.engine.query_one(
+                "SELECT 1 AS present FROM information_schema.tables"
+                " WHERE table_schema=current_schema() AND table_name=?",
+                (MIGRATION_TABLE,),
+            )
+        else:
+            exists = self.engine.query_one(
+                "SELECT 1 AS present FROM sqlite_master WHERE type='table' AND name=?",
+                (MIGRATION_TABLE,),
+            )
+        if exists is None:
+            return []
         rows = self.engine.query_all(
             f"SELECT version FROM {MIGRATION_TABLE} ORDER BY version"
         )
         return [row["version"] for row in rows]
+
+    def status(self) -> dict:
+        """Return deterministic migration state without applying a migration."""
+        applied = self.applied_versions()
+        known = sorted(migration.version for migration in MIGRATIONS)
+        known_set = set(known)
+        applied_set = set(applied)
+        pending = [version for version in known if version not in applied_set]
+        unknown = [version for version in applied if version not in known_set]
+        return {
+            "current_version": max(applied, default=0),
+            "target_version": max(known, default=0),
+            "applied_versions": applied,
+            "pending_versions": pending,
+            "unknown_versions": unknown,
+            "is_current": not pending and not unknown,
+        }
 
     def migrate(self) -> list[str]:
         """Apply all pending migrations; returns names applied this call."""
@@ -1064,12 +1104,13 @@ class MigrationRunner:
         for migration in sorted(MIGRATIONS, key=lambda m: m.version):
             if migration.version in applied:
                 continue
-            for statement in migration.statements:
-                self.engine.execute(statement)
-            self.engine.execute(
-                f"INSERT INTO {MIGRATION_TABLE} (version, name, applied_at) VALUES (?,?,?)",
-                (migration.version, migration.name, time.time()),
-            )
+            with self.engine.transaction():
+                for statement in migration.statements:
+                    self.engine.execute(statement)
+                self.engine.execute(
+                    f"INSERT INTO {MIGRATION_TABLE} (version, name, applied_at) VALUES (?,?,?)",
+                    (migration.version, migration.name, time.time()),
+                )
             result.append(f"{migration.version:03d}_{migration.name}")
         return result
 

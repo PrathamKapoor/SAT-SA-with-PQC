@@ -1,5 +1,16 @@
 # Architecture: Quantum-Secure Agentic MLOps Pipeline Management System
 
+> **SAT-SA deployment correction (Phase 7):** this repository also contains a
+> separately composed supervisory product. Its current hosted topology is the
+> FastAPI application and independent PostgreSQL-backed analysis worker, using
+> PostgreSQL for tenant/application/queue/checkpoint state, private S3-compatible
+> storage for submitted file bytes, and the existing SAT-SA deterministic
+> analytics, LangGraph workflow, and TRUST-SAT finalization. It does not use an
+> LLM for core assessment. See [deployment.md](deployment.md) and
+> [API_CONTRACT.md](API_CONTRACT.md). The model lifecycle and broader QSMLOps
+> modules below remain reusable platform capabilities, not a claim that
+> SAT-SA has deployed a trained model or managed model-serving lifecycle.
+
 ## Scope
 
 This platform is an enterprise-grade intelligent MLOps operating system with

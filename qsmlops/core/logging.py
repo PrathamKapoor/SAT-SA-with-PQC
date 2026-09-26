@@ -4,6 +4,7 @@ Logs go to stderr (or a file) as JSON-per-line in production profiles and as
 concise human-readable lines in development. Log fields are stable so future
 telemetry/observability integration can index them without parsing prose.
 """
+
 from __future__ import annotations
 
 import json
@@ -12,7 +13,30 @@ import sys
 import time
 from typing import IO
 
-_RECORD_ATTRS = ("event", "service", "actor", "resource", "level_name", "code")
+_RECORD_ATTRS = (
+    "event",
+    "service",
+    "actor",
+    "resource",
+    "level_name",
+    "code",
+    "request_id",
+    "organization_id",
+    "user_id",
+    "run_id",
+    "execution_id",
+    "submission_id",
+    "stage",
+    "worker",
+    "worker_id",
+    "action",
+    "status",
+    "status_code",
+    "method",
+    "route",
+    "error_type",
+    "duration_ms",
+)
 
 
 class _JSONFormatter(logging.Formatter):
@@ -20,7 +44,7 @@ class _JSONFormatter(logging.Formatter):
         extra = {
             name: getattr(record, name)
             for name in _RECORD_ATTRS
-            if isinstance(getattr(record, name, None), str)
+            if isinstance(getattr(record, name, None), (str, int, float))
         }
         doc = {
             "timestamp": time.strftime(

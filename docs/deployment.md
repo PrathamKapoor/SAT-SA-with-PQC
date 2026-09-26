@@ -1,53 +1,147 @@
-# SAT-SA Deployment — reproducible offline path
+# SAT-SA Deployment and Operations
 
-## Phase 6 API/worker container topology
+## Phase 7 production deployment
 
-`docker-compose.saas.yml` adds a separately hosted API and worker, PostgreSQL,
-and shared persistent key/artifact/ledger volume. Both processes run the same
-migrations and use `SATSA_DATABASE_URL`, `SATSA_LEDGER_PATH`, and
-`SATSA_TRUST_KEY_DIR`; the worker handles TERM by finishing its current safe
-boundary, and expired leases recover work if the container is forcibly stopped.
-The API is bound to host loopback and should sit behind a TLS-terminating reverse
-proxy. The proxy must set a configured host and must be listed explicitly in
-`SATSA_TRUSTED_PROXIES` before forwarded headers are trusted. Secure cookies are
-on by default. For an isolated local HTTP setup only, set `SATSA_COOKIE_SECURE=false`.
+### Service topology
+
+The backend image is a non-root Python runtime with the PostgreSQL and S3
+extras installed. `docker-compose.saas.yml` runs PostgreSQL, a private
+S3-compatible SeaweedFS instance for local production-like testing, a one-shot
+migration step, a one-shot local signing-key initializer, FastAPI, and a
+separate queue worker. PostgreSQL, object data, and SAT-SA ledger/key data use
+independent persistent volumes. The S3 endpoint is not published to the host;
+the API is bound to loopback and should be placed behind a TLS reverse proxy.
+
+The bundled SeaweedFS service is a single-node local integration service, not
+a claim of highly available object storage. Hosted deployments must provide
+managed PostgreSQL, private durable S3-compatible object storage, a shared
+durable ledger/key arrangement meeting the TRUST-SAT constraints, and secret
+injection through the host platform. The application never returns credentials
+or object keys to callers, and application authorization remains the boundary
+for artifact access. Do not make the bucket public or grant anonymous listing.
+
+### Local production-like start
+
+Install Docker Engine with the Compose plugin, then:
 
 ```powershell
 Copy-Item .env.saas.example .env.saas
-# Replace the database placeholder with a fresh URL-safe 64-character secret.
+# Replace all placeholder passwords/keys with unique local test secrets.
 docker compose --env-file .env.saas -f docker-compose.saas.yml up --build -d
+docker compose --env-file .env.saas -f docker-compose.saas.yml ps
 ```
 
-First bootstrap is a deliberate operator command (run from a trusted machine
-with the same database and persistent audit ledger); its credential prints once:
+The `migrate` service runs `python -m satsa.api.migrate upgrade`; API and worker
+never apply schema changes at startup. To inspect or gate manually, set the
+same environment as the services and run `python -m satsa.api.migrate status`
+or `check`. For a hosted deployment, run `upgrade` as a serialized deployment
+job before rolling out API/worker images. A failed migration must stop rollout.
+The current migration system has no automatic schema downgrade; restore from a
+tested backup or apply a reviewed forward repair. Never run two independent
+migration jobs during a rollout (the PostgreSQL advisory lock serializes them,
+but deployment should still designate one owner).
 
-```powershell
-$env:SATSA_DATABASE_URL = "postgresql://satsa:<password>@localhost:5432/satsa"
-python scripts/bootstrap_satsa_admin.py --database-url $env:SATSA_DATABASE_URL `
-  --ledger .satsa-api/evidence-ledger.jsonl --name "Platform Administrator" `
-  --email admin@example.org --organization "Example CSE"
-```
+The Compose local stack deliberately uses `SATSA_ENVIRONMENT=development` so
+HTTP SeaweedFS and a local cookie mode are possible on loopback. Production
+must set `SATSA_ENVIRONMENT=production`, configure HTTPS S3, explicit trusted
+hosts and HTTPS origins, secure cookies, PostgreSQL, a pre-provisioned signing
+key and durable ledger, and `SATSA_AUTO_MIGRATE=false`. Production startup
+fails closed when any required configuration is missing or unsafe. Do not use
+the local Compose secrets or single-node object store in hosted environments.
 
-For a browser or frontend using a different origin, list only that exact HTTPS
-origin in `SATSA_ALLOWED_ORIGINS`. The API/worker must share one durable evidence
-ledger and software-key directory. The compose local artifact volume is a
-durable starting configuration; operators can set the documented S3-compatible
-storage variables and boto credential chain instead. Never use ephemeral
-container storage for hosted artifacts, keys, or the ledger. Set S3 encryption,
-retention, backup, and TLS at the object-storage service.
+Environment settings include:
 
-Liveness is `/health/live`; readiness checks the database migration version,
-trust-key configuration, and configured bucket reachability. Compose starts a
-PostgreSQL service and two SAT-SA processes; it is a deployable topology, not a
-claim that this repository has been deployed or production-validated. Configure
-backups, TLS proxy, secret distribution, monitoring, storage lifecycle, and
-PostgreSQL recovery policy for the target environment before hosted use.
+| Setting | Required | Meaning |
+|---|---|---|
+| `SATSA_ENVIRONMENT` | hosted | `production` enables fail-closed checks; development/test retain offline defaults |
+| `SATSA_DATABASE_URL` | hosted | PostgreSQL DSN; production does not fall back to SQLite |
+| `SATSA_DB_POOL_MIN_SIZE`, `SATSA_DB_POOL_MAX_SIZE` | optional | Bounded connection pool (defaults 1/5, max 50) |
+| `SATSA_DB_CONNECT_TIMEOUT_SECONDS`, `SATSA_DB_POOL_TIMEOUT_SECONDS`, `SATSA_DB_STATEMENT_TIMEOUT_MS` | optional | Database connection, pool wait, and query bounds |
+| `SATSA_STORAGE_BACKEND` | hosted | `s3` in production; `local` for offline SQLite workflows |
+| `SATSA_S3_ENDPOINT_URL`, `SATSA_S3_REGION`, `SATSA_S3_BUCKET` | hosted | S3-compatible endpoint, region, and private bucket |
+| `SATSA_S3_ACCESS_KEY`, `SATSA_S3_SECRET_KEY` | provider-specific | Both together, or omit for workload identity |
+| `SATSA_S3_USE_SSL`, `SATSA_S3_ADDRESSING_STYLE` | hosted | TLS must be enabled in production; style is `auto`, `path`, or `virtual` |
+| `SATSA_TRUST_KEY_DIR` | hosted | Mounted/provisioned TRUST-SAT ML-DSA key directory; no key is generated in production |
+| `SATSA_LEDGER_PATH` | hosted | Durable ledger path shared by API/worker instances; back it up consistently |
+| `SATSA_AUTO_MIGRATE` | hosted | Must be `false`; migrations run in the dedicated job |
+| `SATSA_ALLOWED_HOSTS`, `SATSA_ALLOWED_ORIGINS` | hosted | Exact hostnames and HTTPS browser origins; no wildcard |
+| `SATSA_COOKIE_SECURE`, `SATSA_COOKIE_SAMESITE`, `SATSA_SESSION_TTL_SECONDS` | hosted | Secure cookie/session behavior; `SameSite=None` requires Secure |
+| `SATSA_TRUST_PROXY_HEADERS`, `SATSA_TRUSTED_PROXIES` | proxy deployments | Forwarded headers are used only for explicitly trusted proxy IPs |
+| `SATSA_MAX_REQUEST_BYTES`, `SATSA_MUTATION_RATE_LIMIT`, `SATSA_READ_RATE_LIMIT` | optional | API request and per-user rate bounds |
+| `SATSA_LOG_LEVEL` | optional | Logging threshold; never include credentials or source data in log payloads |
 
-Phase 6 uses the backend API contract in [API_CONTRACT.md](API_CONTRACT.md).
-For actual routes and authentication see that contract rather than the legacy
-HTML deployment below.
+Do not put real secrets in `.env` files committed to source control. Use the
+managed platform's secret store or mounted secret files. The application does
+not implement KMS/HSM integration; the signing key must be protected and
+backed up by the operator. Loss of the private key prevents new signatures;
+old receipts remain verifiable from their public key where the record is intact.
 
-This page describes the existing SQLite offline deployment. The Phase 1 PostgreSQL tenant foundation is documented in [DATABASE.md](DATABASE.md); it is not a hosted application deployment yet.
+### Health, shutdown and recovery
+
+`GET /health/live` means the API process is alive and deliberately does not
+depend on PostgreSQL. `GET /health/ready` checks a database query, current
+migration version, configured trust key, and artifact-storage reachability. The
+worker has a container readiness command:
+`python -m satsa.api.healthcheck --role worker`; it checks the DB, schema,
+storage, and execution-queue table. These are readiness probes, not proof that a
+full analysis will complete. API and worker handle container shutdown; the
+worker stops claiming new work and finishes its current safe execution boundary.
+If force-killed, queue leases expire and another worker can recover the run.
+
+### Backup and restore contract
+
+PostgreSQL is authoritative for tenants, users/sessions, submissions,
+validation, canonical records, analysis runs/results, trust receipt rows, and
+audit mirrors. Back up with provider-managed point-in-time recovery or a
+scheduled encrypted `pg_dump` plus WAL retention. Test restore into an isolated
+instance, then run migration `check` before routing traffic.
+
+Object storage is authoritative for uploaded artifact bytes. Enable private
+bucket versioning/retention and provider durability controls where available;
+the application does not configure bucket replication, lifecycle policy, or
+encryption at rest. Restore PostgreSQL and the corresponding object-storage
+snapshot to a consistent point. If PostgreSQL is restored without objects,
+artifact reads and validation will fail digest/existence checks. If objects are
+restored without PostgreSQL metadata, they are orphaned and are not addressable
+through SAT-SA. Do not garbage collect them without a reviewed reconciliation
+process.
+
+The append-only TRUST-SAT ledger and ML-DSA signing key are separate durable
+state and must be backed up with PostgreSQL and artifacts. Restoring only the
+database can omit the authoritative ledger append for a mirrored audit/receipt;
+restoring only the ledger can leave its application references absent. A key
+restore mismatch does not invalidate old self-contained receipt signatures but
+may prevent finalization and verification of the expected run context. Restore
+the database, artifact snapshot, ledger, and public/private key material as a
+coordinated recovery set, then run trust verification and ledger-chain
+verification before reopening writes. These procedures are operational
+recommendations; automated cross-provider snapshots and disaster recovery are
+not implemented here.
+
+### Smoke testing and deployment claims
+
+`python scripts/deployment_smoke.py` is the deterministic HTTP workflow check.
+It requires analyst, supervisor, and auditor bearer credentials plus an
+organization ID; it creates a fresh entity/submission, uploads a real CSV,
+validates it, starts a graph run, waits for review, records a supervisor
+decision, then checks findings/results, receipt verification, and audit events.
+It checks live/readiness endpoints and confirms that the analyst cannot fetch
+the resulting run under a foreign organization context.
+It must be run against the API and a separately running worker. It creates
+persistent, audited test records and should be run against a staging/test
+organization, not a live supervisory assessment. The records are not deleted
+because decisions and trust history are intentionally durable. It is not run
+automatically at service startup.
+
+Docker/Compose availability and target provider credentials vary by environment.
+Record local container and hosted deployment results separately. A successful
+build or unit suite alone is not deployment verification.
+
+## Legacy offline deployment
+
+The following CLI/Jinja deployment is the offline-compatible single-machine
+path. The supported API/worker topology is documented above. These workflows
+continue to use SQLite and local files, and are not the hosted SaaS run mode.
 
 No cloud. No SaaS. No external AI. No remote fonts, CDN, or telemetry.
 Everything below runs on an air-gapped host.

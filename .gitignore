@@ -22,6 +22,7 @@ dist/
 .env
 .env.*
 !.env.example
+!.env.saas.example
 *.pem
 *.key
 credentials.json

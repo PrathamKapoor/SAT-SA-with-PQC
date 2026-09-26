@@ -1,4 +1,5 @@
 """Durable artifact storage contract shared by local and object backends."""
+
 from __future__ import annotations
 
 import io
@@ -47,12 +48,17 @@ def test_s3_adapter_uses_streamed_body_and_server_digest(tmp_path):
         def get_object(self, **kwargs):
             return {"Body": io.BytesIO(self.objects[kwargs["Key"]])}
 
+        def head_object(self, **kwargs):
+            body = self.objects[kwargs["Key"]]
+            return {"ContentLength": len(body), "Metadata": self.last_put["Metadata"]}
+
     client = Client()
     store = S3ArtifactStorage(bucket="test-bucket", prefix="sat-sa", client=client)
     source = tmp_path / "source"
     source.write_bytes(b"hello")
     digest = sha3_hex(b"hello")
     store.put_file(source, "org-a/version-a/alerts/data.csv", "text/csv", digest)
+    store.verify_object("org-a/version-a/alerts/data.csv", digest=digest, size=5)
     dest = tmp_path / "copy"
     store.copy_to("org-a/version-a/alerts/data.csv", dest)
     assert dest.read_bytes() == b"hello"

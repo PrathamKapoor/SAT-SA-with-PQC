@@ -25,25 +25,18 @@ COPY requirements.txt pyproject.toml ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN pip install --no-cache-dir -e .
+RUN pip install --no-cache-dir -e ".[postgres,s3]" \
+    && useradd --system --uid 10001 --create-home satsa \
+    && mkdir -p /data \
+    && chown -R satsa:satsa /app /data
 
-# Runtime data lives on a volume — the image itself carries no
-# database or key material.
-RUN mkdir -p /data/db /data/keys
 VOLUME ["/data"]
 
-ENV SATSA_DB=/data/db/satsa.db \
-    SATSA_TRUST_KEY_DIR=/data/keys \
-    PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+USER 10001:10001
 
 EXPOSE 8000
 
-# Fails closed if the install is broken, per `sat-sa doctor` (P24) —
-# not just "the process started."
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD sat-sa --db ${SATSA_DB} --trust-key-dir ${SATSA_TRUST_KEY_DIR} doctor || exit 1
-
-CMD ["python", "scripts/serve_ui.py", \
-     "--db", "/data/db/satsa.db", \
-     "--trust-key-dir", "/data/keys", \
-     "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "satsa.api.server"]

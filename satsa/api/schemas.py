@@ -141,6 +141,7 @@ class Artifact(Schema):
     size_bytes: int
     sha3_256_digest: str
     created_at: float
+    storage_status: Literal["uploading", "stored", "failed"] = "stored"
 
 
 class RunInput(Input):
