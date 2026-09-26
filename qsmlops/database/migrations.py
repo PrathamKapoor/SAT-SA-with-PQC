@@ -9,6 +9,7 @@ The production database requirements (encrypted at rest, quantum-safe
 transport, immutable audit) will be met by swapping the engine/dialect —
 migration versioning is dialect-neutral SQL applied through the engine.
 """
+
 from __future__ import annotations
 
 import time
@@ -968,12 +969,51 @@ MIGRATIONS = MIGRATIONS + (
 )
 
 
+MIGRATIONS = MIGRATIONS + (
+    Migration(
+        14,
+        "satsa_supervisory_finalization",
+        (
+            "ALTER TABLE satsa_run_context ADD COLUMN review_required INTEGER NOT NULL DEFAULT 0",
+            "UPDATE satsa_run_context SET review_required=1 WHERE graph_enabled=1",
+            "ALTER TABLE satsa_run_review_decisions ADD COLUMN review_context_digest TEXT",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_decision_owner ON satsa_run_review_decisions (id,organization_id,run_id)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_final_receipt ON satsa_trust_receipts (subject_type, subject_id) WHERE subject_type='supervisory_finalization'",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_trust_finalizations (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL,
+                run_id TEXT NOT NULL,
+                decision_id TEXT NOT NULL REFERENCES satsa_run_review_decisions(id),
+                schema_version INTEGER NOT NULL CHECK(schema_version=1),
+                state TEXT NOT NULL CHECK(state IN ('prepared','recorded','verified')),
+                canonical_json TEXT NOT NULL,
+                content_digest TEXT NOT NULL,
+                receipt_id INTEGER UNIQUE REFERENCES satsa_trust_receipts(id),
+                ledger_entry_hash TEXT,
+                created_at REAL NOT NULL,
+                verified_at REAL,
+                UNIQUE(run_id, decision_id, schema_version),
+                FOREIGN KEY(run_id, organization_id)
+                    REFERENCES satsa_run_context(run_id, organization_id),
+                FOREIGN KEY(decision_id, organization_id, run_id)
+                    REFERENCES satsa_run_review_decisions(id,organization_id,run_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_finalization_org ON satsa_trust_finalizations (organization_id,run_id)",
+        ),
+    ),
+)
+
+
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
         self.engine = engine
 
     def _ensure_table(self) -> None:
-        timestamp_type = "DOUBLE PRECISION" if self.engine.dialect == "postgresql" else "REAL"
+        timestamp_type = (
+            "DOUBLE PRECISION" if self.engine.dialect == "postgresql" else "REAL"
+        )
         self.engine.execute(
             f"""
             CREATE TABLE IF NOT EXISTS {MIGRATION_TABLE} (
