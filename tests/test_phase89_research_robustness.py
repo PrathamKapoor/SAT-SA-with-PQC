@@ -13,11 +13,23 @@ from evaluation.research.robustness import (
 from satsa.analysis.compval import SCENARIO_MAP
 
 _INVALID_BY_CONTRACT = {
-    "duplicate_exact",
-    "duplicate_conflicting",
+    "duplicate_exact:alerts",
+    "duplicate_conflicting:alerts",
+    "duplicate_exact:cases",
+    "duplicate_conflicting:cases",
+    "duplicate_exact:investigation_steps",
     "malformed_timestamp",
     "chronology_violation",
     "missing_required_column",
+    "conflict:case_status_vs_closure_time",
+}
+_FAMILIES = {
+    "control",
+    "missingness",
+    "duplication",
+    "malformation",
+    "staleness",
+    "conflict",
 }
 
 
@@ -51,8 +63,11 @@ def test_declared_conditions_are_seeded_and_do_not_mutate_the_fixture():
     assert names[0] == "control"
     assert "omit_records:0.25:seed7" in names
     assert "omit_records_cascade:0.25:seed8" in names
-    out_of_period = next(c for c, _, _ in first if c.name == "out_of_period")
-    assert out_of_period.expected_validation is None
+    stale = [c for c, _, _ in first if c.family == "staleness"]
+    assert len(stale) == 3
+    assert all(c.expected_validation is None for c in stale)
+    assert {c.family for c, _, _ in first} == _FAMILIES
+    assert all(c.expected_effect for c, _, _ in first)
 
 
 def test_control_runs_real_hosted_analysis_and_is_scored_against_catalog(mixed_result):
@@ -102,15 +117,41 @@ def test_omissions_are_compared_with_paired_control(mixed_result):
     assert cascade["validation_status"] == "valid"
 
 
-def test_out_of_period_is_observational_and_aggregates_are_consistent(mixed_result):
-    row = _conditions(mixed_result)["out_of_period"]
-    assert row["expected_validation"] is None
-    assert row["validation_matches_expected"] is None
+def test_valid_duplicates_and_conflicts_reach_analysis(mixed_result):
+    rows = _conditions(mixed_result)
+    for name in (
+        "duplicate_near:investigation_steps",
+        "duplicate_near:dispositions",
+        "conflict:contradictory_dispositions",
+        "conflict:closed_case_open_alert",
+        "conflict:escalation_without_investigation",
+    ):
+        row = rows[name]
+        assert row["expected_validation"] == "valid", name
+        assert row["status"] == "completed", name
+        assert row["paired_delta_vs_control"] is not None, name
+        metrics = row["catalog_family_metrics"]
+        assert metrics["labels_apply_to"] == "unperturbed fixture"
+
+
+def test_staleness_is_observational_and_aggregates_are_consistent(mixed_result):
+    rows = _conditions(mixed_result)
+    stale = [row for row in rows.values() if row["family"] == "staleness"]
+    assert len(stale) == 3
+    for row in stale:
+        assert row["expected_validation"] is None
+        assert row["validation_matches_expected"] is None
+        assert row["validation_status"] in {"valid", "invalid"}
 
     metrics = mixed_result["metrics"]
     conformance = metrics["validation_contract_conformance"]
-    rows = metrics["per_scenario"][0]["conditions"]
-    assert conformance["conditions_with_expectation"] == len(rows) - 1
+    rows = [
+        r
+        for r in metrics["per_scenario"][0]["conditions"]
+        if r["status"] != "not_applicable"
+    ]
+    assert conformance["conditions_with_expectation"] == len(rows) - len(stale)
+    assert set(conformance["by_family"]) == _FAMILIES
     assert conformance["matches"] == sum(
         bool(r["validation_matches_expected"]) for r in rows
     )
@@ -120,8 +161,10 @@ def test_out_of_period_is_observational_and_aggregates_are_consistent(mixed_resu
 
 
 def test_cli_writes_immutable_bundle(tmp_path):
-    path = Path(__file__).resolve().parents[1] / "scripts" / (
-        "run_evidence_robustness_experiment.py"
+    path = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / ("run_evidence_robustness_experiment.py")
     )
     spec = importlib.util.spec_from_file_location("robustness_cli", path)
     module = importlib.util.module_from_spec(spec)

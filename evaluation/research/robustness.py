@@ -1,20 +1,25 @@
 """Controlled imperfect-evidence experiment over the hosted SAT-SA path.
 
 Each catalog scenario fixture is submitted once unperturbed (the paired
-control) and once per declared perturbation: omitted categories, seeded
-record omission, exact and conflicting duplicates, malformed timestamps,
-chronology violations, a missing required column and an out-of-period
-record. Every condition runs in its own scratch SQLite tenant through the
-production ``SubmissionService`` validation and ``AnalysisExecutionWorker``
-so peer baselines and records never leak between conditions.
+control) and once per declared perturbation in five families:
+missingness (omitted categories, seeded record omission), duplication
+(exact, conflicting and near duplicates), malformation (bad timestamps,
+chronology violations, a missing required column), staleness (records
+shifted outside the assessment period) and conflict (individually valid
+but mutually contradictory records). Every condition runs in its own
+scratch SQLite tenant through the production ``SubmissionService``
+validation and ``AnalysisExecutionWorker`` so peer baselines and records
+never leak between conditions.
 
-The perturbation specification and the expected validation outcome are
-fixed before any submission runs. Expected outcomes come from the
-documented validator contract (hosted validation is all-or-nothing: any
-rejected row invalidates the version). ``out_of_period`` has no declared
-expectation because no assessment-period validation is implemented; its
-outcome is an observation. Perturbed analyses are compared with their
-paired control, never scored against labels written for unperturbed data.
+The perturbation specification, severity, expected validation outcome
+and expected effect are fixed before any submission runs. Expected
+outcomes come from the documented validator contract (hosted validation
+is all-or-nothing: any rejected row invalidates the version). Staleness
+conditions have no declared expectation because no assessment-period or
+recency validation is implemented; their outcome is an observation.
+Perturbed analyses are compared with their paired control. Catalog-label
+metrics on perturbed runs are reported as derived, informative values
+only, because those labels describe the unperturbed fixture.
 """
 
 from __future__ import annotations
@@ -49,6 +54,9 @@ _CSE_FIELD = {
     "assets": "assets",
 }
 _OUT_OF_PERIOD_SHIFT_SECONDS = 40 * 86400
+# Assessment period used for every fixture (satsa.analysis.synth constants).
+PERIOD_START = 1735689600.0
+PERIOD_END = 1738281600.0
 _RISK_IDENTIFIERS = {"entity_id", "run_id", "assessment_id"}
 
 
@@ -60,6 +68,9 @@ class Condition:
     kind: str
     expected_validation: str | None
     parameters: dict[str, Any]
+    family: str = "control"
+    severity: str = "none"
+    expected_effect: str = ""
 
 
 def _rows(cse, category: str) -> list[dict]:
@@ -100,7 +111,13 @@ def declared_conditions(
     out: list[tuple[Condition, Any, dict[str, Any]]] = []
     out.append(
         (
-            Condition("control", "control", "valid", {}),
+            Condition(
+                "control",
+                "control",
+                "valid",
+                {},
+                expected_effect="baseline for paired comparison",
+            ),
             copy.deepcopy(cse),
             {"description": "unperturbed catalog fixture"},
         )
@@ -119,6 +136,9 @@ def declared_conditions(
                     "omit_category",
                     "invalid" if any(dangling.values()) else "valid",
                     {"category": category},
+                    family="missingness",
+                    severity="whole category",
+                    expected_effect=_omission_effect(dangling),
                 ),
                 perturbed,
                 {
@@ -162,6 +182,9 @@ def declared_conditions(
                         "omit_records",
                         "invalid" if any(dangling.values()) else "valid",
                         {"rate": rate, "seed": seed},
+                        family="missingness",
+                        severity=f"{rate:.0%} of non-alert records",
+                        expected_effect=_omission_effect(dangling),
                     ),
                     perturbed,
                     {
@@ -191,6 +214,9 @@ def declared_conditions(
                         "omit_records_cascade",
                         "invalid" if any(dangling.values()) else "valid",
                         {"rate": rate, "seed": seed},
+                        family="missingness",
+                        severity=f"{rate:.0%} of non-alert records plus dependent steps",
+                        expected_effect=_omission_effect(dangling),
                     ),
                     cascaded,
                     {
@@ -202,53 +228,205 @@ def declared_conditions(
                 )
             )
 
+    out.extend(_single_record_conditions(cse))
+    return out
+
+
+def _omission_effect(dangling: dict[str, int]) -> str:
+    if any(dangling.values()):
+        return (
+            "dependent rows lose their required reference; the all-or-nothing "
+            "hosted validator rejects the version"
+        )
+    return "version remains valid; analytical output may change versus control"
+
+
+def _not_applicable(
+    name: str, family: str, reason: str
+) -> tuple[Condition, None, dict[str, Any]]:
+    return (
+        Condition(name, name.split(":")[0], None, {}, family=family),
+        None,
+        {"not_applicable": reason},
+    )
+
+
+def _single_record_conditions(cse) -> list[tuple[Condition, Any, dict[str, Any]]]:
+    """Duplication, malformation, staleness and conflict conditions.
+
+    Each alters (or adds) one record, one column or one case of an otherwise
+    unchanged fixture. Conditions whose prerequisite records are absent are
+    reported as not applicable rather than silently skipped.
+    """
+    out: list[tuple[Condition, Any, dict[str, Any]]] = []
     first = cse.alerts[0]
-    perturbed = copy.deepcopy(cse)
-    perturbed.alerts.append(dict(first))
-    out.append(
-        (
-            Condition("duplicate_exact", "duplicate_exact", "invalid", {}),
-            perturbed,
-            {"duplicated_alert": first["native_id"], "byte_identical": True},
-        )
-    )
 
-    perturbed = copy.deepcopy(cse)
-    conflicting = dict(first)
-    conflicting["severity"] = "low" if first["severity"] != "low" else "critical"
-    perturbed.alerts.append(conflicting)
-    out.append(
-        (
-            Condition("duplicate_conflicting", "duplicate_conflicting", "invalid", {}),
-            perturbed,
-            {
-                "duplicated_alert": first["native_id"],
-                "conflicting_field": "severity",
-                "values": [first["severity"], conflicting["severity"]],
-            },
-        )
-    )
+    def add(condition: Condition, mutate, truth: dict[str, Any]) -> None:
+        perturbed = copy.deepcopy(cse)
+        mutate(perturbed)
+        out.append((condition, perturbed, truth))
 
-    perturbed = copy.deepcopy(cse)
-    perturbed.alerts[0]["created_at"] = "not-a-time"
-    out.append(
-        (
-            Condition("malformed_timestamp", "malformed_timestamp", "invalid", {}),
-            perturbed,
-            {"alert": first["native_id"], "field": "created_at"},
-        )
+    # Duplication. Alerts, cases and assets carry native ids; steps,
+    # escalations and dispositions do not, so a non-identical repeat of
+    # those is structurally indistinguishable from a new record.
+    add(
+        Condition(
+            "duplicate_exact:alerts",
+            "duplicate_exact",
+            "invalid",
+            {"category": "alerts"},
+            family="duplication",
+            severity="one record",
+            expected_effect="byte-identical row rejected as duplicate record bytes",
+        ),
+        lambda c: c.alerts.append(dict(first)),
+        {"duplicated": first["native_id"], "byte_identical": True},
     )
-
-    perturbed = copy.deepcopy(cse)
-    perturbed.alerts[0]["closed_at"] = float(first["ack_at"]) - 10.0
-    out.append(
-        (
-            Condition("chronology_violation", "chronology_violation", "invalid", {}),
-            perturbed,
-            {"alert": first["native_id"], "violation": "closed_at < ack_at"},
-        )
+    other_severity = "low" if first["severity"] != "low" else "critical"
+    add(
+        Condition(
+            "duplicate_conflicting:alerts",
+            "duplicate_conflicting",
+            "invalid",
+            {"category": "alerts", "field": "severity"},
+            family="duplication",
+            severity="one record",
+            expected_effect="second row with the same native_id rejected",
+        ),
+        lambda c: c.alerts.append({**first, "severity": other_severity}),
+        {
+            "duplicated": first["native_id"],
+            "conflicting_field": "severity",
+            "values": [first["severity"], other_severity],
+        },
     )
+    if cse.cases:
+        case = cse.cases[0]
+        add(
+            Condition(
+                "duplicate_exact:cases",
+                "duplicate_exact",
+                "invalid",
+                {"category": "cases"},
+                family="duplication",
+                severity="one record",
+                expected_effect="byte-identical row rejected as duplicate record bytes",
+            ),
+            lambda c: c.cases.append(copy.deepcopy(case)),
+            {"duplicated": case["native_id"], "byte_identical": True},
+        )
+        add(
+            Condition(
+                "duplicate_conflicting:cases",
+                "duplicate_conflicting",
+                "invalid",
+                {"category": "cases", "field": "owner"},
+                family="duplication",
+                severity="one record",
+                expected_effect="second row with the same native_id rejected",
+            ),
+            lambda c: c.cases.append({**copy.deepcopy(case), "owner": "bob"}),
+            {"duplicated": case["native_id"], "conflicting_field": "owner"},
+        )
+    else:
+        out.append(_not_applicable("duplicate_exact:cases", "duplication", "no cases"))
+    if cse.steps:
+        step = cse.steps[0]
+        add(
+            Condition(
+                "duplicate_exact:investigation_steps",
+                "duplicate_exact",
+                "invalid",
+                {"category": "investigation_steps"},
+                family="duplication",
+                severity="one record",
+                expected_effect="byte-identical row rejected as duplicate record bytes",
+            ),
+            lambda c: c.steps.append(dict(step)),
+            {"duplicated_step_of_case": step["case_id"], "byte_identical": True},
+        )
+        add(
+            Condition(
+                "duplicate_near:investigation_steps",
+                "duplicate_near",
+                "valid",
+                {"category": "investigation_steps", "changed_field": "sequence"},
+                family="duplication",
+                severity="one record",
+                expected_effect=(
+                    "steps carry no native id, so a re-sequenced repeat is "
+                    "accepted; observe whether it inflates workflow evidence"
+                ),
+            ),
+            lambda c: c.steps.append({**step, "sequence": int(step["sequence"]) + 100}),
+            {"duplicated_step_of_case": step["case_id"], "sequence_offset": 100},
+        )
+    else:
+        out.append(
+            _not_applicable(
+                "duplicate_exact:investigation_steps", "duplication", "no steps"
+            )
+        )
+    if cse.dispositions:
+        disposition = cse.dispositions[0]
+        add(
+            Condition(
+                "duplicate_near:dispositions",
+                "duplicate_near",
+                "valid",
+                {"category": "dispositions", "changed_field": "occurred_at"},
+                family="duplication",
+                severity="one record",
+                expected_effect=(
+                    "dispositions carry no native id, so a repeat one second "
+                    "later is accepted; observe whether it inflates outcomes"
+                ),
+            ),
+            lambda c: c.dispositions.append(
+                {**disposition, "occurred_at": float(disposition["occurred_at"]) + 1}
+            ),
+            {"duplicated_disposition_of_alert": disposition["alert_id"]},
+        )
+    else:
+        out.append(
+            _not_applicable(
+                "duplicate_near:dispositions", "duplication", "no dispositions"
+            )
+        )
 
+    # Malformation.
+    def malformed_timestamp(c) -> None:
+        c.alerts[0]["created_at"] = "not-a-time"
+
+    def chronology_violation(c) -> None:
+        c.alerts[0]["closed_at"] = float(first["ack_at"]) - 10.0
+
+    add(
+        Condition(
+            "malformed_timestamp",
+            "malformed_timestamp",
+            "invalid",
+            {"category": "alerts", "field": "created_at"},
+            family="malformation",
+            severity="one record",
+            expected_effect="unparseable timestamp rejects the row and the version",
+        ),
+        malformed_timestamp,
+        {"alert": first["native_id"], "field": "created_at"},
+    )
+    add(
+        Condition(
+            "chronology_violation",
+            "chronology_violation",
+            "invalid",
+            {"category": "alerts"},
+            family="malformation",
+            severity="one record",
+            expected_effect="domain validation rejects closed_at before ack_at",
+        ),
+        chronology_violation,
+        {"alert": first["native_id"], "violation": "closed_at < ack_at"},
+    )
     out.append(
         (
             Condition(
@@ -256,26 +434,207 @@ def declared_conditions(
                 "missing_required_column",
                 "invalid",
                 {"category": "alerts", "column": "created_at"},
+                family="malformation",
+                severity="whole column",
+                expected_effect="schema check rejects the alerts artifact",
             ),
             copy.deepcopy(cse),
             {"category": "alerts", "dropped_column": "created_at"},
         )
     )
 
-    perturbed = copy.deepcopy(cse)
-    for field in ("created_at", "ack_at", "closed_at"):
-        perturbed.alerts[0][field] = float(first[field]) - _OUT_OF_PERIOD_SHIFT_SECONDS
-    out.append(
+    # Staleness. SAT-SA implements no assessment-period or recency
+    # validation, so these carry no declared expectation and record
+    # current behavior only.
+    created = float(first["created_at"])
+    for name, severity, shift in (
         (
-            Condition("out_of_period", "out_of_period", None, {}),
-            perturbed,
+            "stale:before_period_1d",
+            "moderate",
+            PERIOD_START - 86400.0 - created,
+        ),
+        ("stale:before_period_40d", "high", -float(_OUT_OF_PERIOD_SHIFT_SECONDS)),
+        ("stale:after_period_1d", "moderate", PERIOD_END + 86400.0 - created),
+    ):
+
+        def shifted(c, shift=shift) -> None:
+            for field in ("created_at", "ack_at", "closed_at"):
+                c.alerts[0][field] = float(first[field]) + shift
+
+        add(
+            Condition(
+                name,
+                "stale",
+                None,
+                {"shift_seconds": shift},
+                family="staleness",
+                severity=severity,
+                expected_effect=(
+                    "no declared expectation: no assessment-period or recency "
+                    "validation is implemented"
+                ),
+            ),
+            shifted,
+            {"alert": first["native_id"], "shift_seconds": shift},
+        )
+
+    # Conflicts between individually valid records.
+    if cse.dispositions:
+        disposition = cse.dispositions[0]
+        opposite = (
+            "false_positive"
+            if disposition.get("outcome") != "false_positive"
+            else "true_positive"
+        )
+        add(
+            Condition(
+                "conflict:contradictory_dispositions",
+                "conflict",
+                "valid",
+                {"conflict": "two dispositions with opposite outcomes"},
+                family="conflict",
+                severity="one record",
+                expected_effect=(
+                    "no cross-record consistency rule exists; observe analytical "
+                    "response"
+                ),
+            ),
+            lambda c: c.dispositions.append(
+                {
+                    **disposition,
+                    "outcome": opposite,
+                    "occurred_at": float(disposition["occurred_at"]) + 60,
+                }
+            ),
             {
-                "alert": first["native_id"],
-                "shift_seconds": -_OUT_OF_PERIOD_SHIFT_SECONDS,
-                "note": "observational: no assessment-period validation is implemented",
+                "alert": disposition["alert_id"],
+                "outcomes": [disposition.get("outcome"), opposite],
             },
         )
+    else:
+        out.append(
+            _not_applicable(
+                "conflict:contradictory_dispositions", "conflict", "no dispositions"
+            )
+        )
+
+    closed_case = next(
+        (row for row in cse.cases if row.get("status") == "closed"), None
     )
+    linked_alert = (
+        next(
+            (
+                row
+                for row in cse.alerts
+                if row.get("case_id") == closed_case["native_id"]
+            ),
+            None,
+        )
+        if closed_case is not None
+        else None
+    )
+    if closed_case is not None and linked_alert is not None:
+        alert_index = cse.alerts.index(linked_alert)
+
+        def reopen_alert(c, index=alert_index) -> None:
+            c.alerts[index]["closed_at"] = ""
+
+        add(
+            Condition(
+                "conflict:closed_case_open_alert",
+                "conflict",
+                "valid",
+                {"conflict": "case closed while a linked alert has no closure"},
+                family="conflict",
+                severity="one record",
+                expected_effect=(
+                    "no cross-record consistency rule exists; observe analytical "
+                    "response"
+                ),
+            ),
+            reopen_alert,
+            {"case": closed_case["native_id"], "alert": linked_alert["native_id"]},
+        )
+    else:
+        out.append(
+            _not_applicable(
+                "conflict:closed_case_open_alert",
+                "conflict",
+                "no closed case with a linked alert",
+            )
+        )
+
+    escalated = next(
+        (
+            row
+            for row in cse.escalations
+            if any(step["case_id"] == row.get("case_id") for step in cse.steps)
+        ),
+        None,
+    )
+    if escalated is not None:
+        target = escalated["case_id"]
+
+        def drop_case_steps(c, target=target) -> None:
+            c.steps = [row for row in c.steps if row["case_id"] != target]
+
+        add(
+            Condition(
+                "conflict:escalation_without_investigation",
+                "conflict",
+                "valid",
+                {"conflict": "escalated case has no investigation steps"},
+                family="conflict",
+                severity="one case",
+                expected_effect=(
+                    "record set stays referentially valid; observe whether "
+                    "execution-gap or negative-space workers respond"
+                ),
+            ),
+            drop_case_steps,
+            {
+                "case": target,
+                "removed_steps": sum(row["case_id"] == target for row in cse.steps),
+            },
+        )
+    else:
+        out.append(
+            _not_applicable(
+                "conflict:escalation_without_investigation",
+                "conflict",
+                "no escalated case with investigation steps",
+            )
+        )
+
+    if cse.cases:
+        case = cse.cases[0]
+        closure_time = float(case["opened_at"]) + 3600.0
+
+        def status_conflict(c, closure_time=closure_time) -> None:
+            c.cases[0]["status"] = "open"
+            c.cases[0]["closed_at"] = closure_time
+
+        add(
+            Condition(
+                "conflict:case_status_vs_closure_time",
+                "conflict",
+                "invalid",
+                {"conflict": "case status open while closed_at is set"},
+                family="conflict",
+                severity="one record",
+                expected_effect=(
+                    "Case domain validation rejects closed_at with a non-closed status"
+                ),
+            ),
+            status_conflict,
+            {"case": case["native_id"], "status": "open", "closed_at": closure_time},
+        )
+    else:
+        out.append(
+            _not_applicable(
+                "conflict:case_status_vs_closure_time", "conflict", "no cases"
+            )
+        )
     return out
 
 
@@ -512,6 +871,38 @@ def _describe(values: list[float]) -> dict[str, Any]:
     }
 
 
+def _group_summary(rows: list[dict[str, Any]], key: str) -> dict[str, Any]:
+    groups: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        entry = groups.setdefault(
+            row[key],
+            {
+                "conditions": 0,
+                "validation_status_counts": {},
+                "matches_expected": 0,
+                "mismatches_expected": 0,
+                "no_declared_expectation": 0,
+                "completed_analyses": 0,
+                "family_set_changed_vs_control": 0,
+            },
+        )
+        entry["conditions"] += 1
+        counts = entry["validation_status_counts"]
+        counts[row["validation_status"]] = counts.get(row["validation_status"], 0) + 1
+        if row["validation_matches_expected"] is None:
+            entry["no_declared_expectation"] += 1
+        elif row["validation_matches_expected"]:
+            entry["matches_expected"] += 1
+        else:
+            entry["mismatches_expected"] += 1
+        entry["completed_analyses"] += row.get("status") == "completed"
+        delta = row.get("paired_delta_vs_control")
+        entry["family_set_changed_vs_control"] += bool(
+            delta and delta["family_set_changed"]
+        )
+    return groups
+
+
 def _rate_summary(selected_rows: list[dict[str, Any]]) -> dict[str, Any]:
     deltas = [
         row["paired_delta_vs_control"]
@@ -569,8 +960,29 @@ def run_evidence_robustness_experiment(
         conditions = declared_conditions(
             cse, rates=tuple(rates), seeds=seeds, base_seed=base_seed
         )
+        case = labels.get(scenario)
         rows: list[dict[str, Any]] = []
         for index, (condition, fixture, truth) in enumerate(conditions):
+            declared = {
+                "condition": condition.name,
+                "kind": condition.kind,
+                "family": condition.family,
+                "severity": condition.severity,
+                "parameters": condition.parameters,
+                "perturbation_ground_truth": truth,
+                "expected_validation": condition.expected_validation,
+                "expected_effect": condition.expected_effect,
+            }
+            if fixture is None:
+                rows.append(
+                    {
+                        **declared,
+                        "status": "not_applicable",
+                        "validation_status": None,
+                        "validation_matches_expected": None,
+                    }
+                )
+                continue
             outcome = run_condition(
                 root / scenario / f"c{index:03d}", fixture, condition
             )
@@ -579,21 +991,20 @@ def run_evidence_robustness_experiment(
                 if condition.expected_validation is None
                 else outcome["validation_status"] == condition.expected_validation
             )
-            rows.append(
-                {
-                    "condition": condition.name,
-                    "kind": condition.kind,
-                    "parameters": condition.parameters,
-                    "perturbation_ground_truth": truth,
-                    "expected_validation": condition.expected_validation,
-                    "validation_matches_expected": matches,
-                    **outcome,
+            row = {**declared, "validation_matches_expected": matches, **outcome}
+            if case is not None and outcome.get("status") == "completed":
+                # Derived and informative only: catalog labels describe the
+                # unperturbed fixture and may not hold after perturbation.
+                row["catalog_family_metrics"] = {
+                    **scenario_family_metrics(
+                        list(case.expected_signals), outcome["emitted_families"]
+                    ),
+                    "labels_apply_to": "unperturbed fixture",
                 }
-            )
+            rows.append(row)
         control = rows[0]
         for row in rows[1:]:
             row["paired_delta_vs_control"] = _paired_delta(control, row)
-        case = labels.get(scenario)
         control_vs_catalog = (
             scenario_family_metrics(
                 list(case.expected_signals), control["emitted_families"]
@@ -615,29 +1026,9 @@ def run_evidence_robustness_experiment(
         )
 
     all_rows = [row for item in per_scenario for row in item["conditions"]]
-    by_kind: dict[str, dict[str, Any]] = {}
-    for row in all_rows:
-        entry = by_kind.setdefault(
-            row["kind"],
-            {
-                "conditions": 0,
-                "validation_status_counts": {},
-                "matches_expected": 0,
-                "mismatches_expected": 0,
-                "no_declared_expectation": 0,
-                "completed_analyses": 0,
-            },
-        )
-        entry["conditions"] += 1
-        counts = entry["validation_status_counts"]
-        counts[row["validation_status"]] = counts.get(row["validation_status"], 0) + 1
-        if row["validation_matches_expected"] is None:
-            entry["no_declared_expectation"] += 1
-        elif row["validation_matches_expected"]:
-            entry["matches_expected"] += 1
-        else:
-            entry["mismatches_expected"] += 1
-        entry["completed_analyses"] += row.get("status") == "completed"
+    executed_rows = [row for row in all_rows if row["status"] != "not_applicable"]
+    by_kind = _group_summary(executed_rows, "kind")
+    by_family = _group_summary(executed_rows, "family")
 
     by_rate: dict[str, dict[str, Any]] = {}
     for kind in ("omit_records", "omit_records_cascade"):
@@ -651,7 +1042,7 @@ def run_evidence_robustness_experiment(
             )
 
     conformance_rows = [
-        row for row in all_rows if row["validation_matches_expected"] is not None
+        row for row in executed_rows if row["validation_matches_expected"] is not None
     ]
     return {
         "status": "completed",
@@ -664,6 +1055,10 @@ def run_evidence_robustness_experiment(
                     row["validation_matches_expected"] for row in conformance_rows
                 ),
                 "by_kind": by_kind,
+                "by_family": by_family,
+                "not_applicable": sum(
+                    row["status"] == "not_applicable" for row in all_rows
+                ),
             },
             "record_omission_by_rate": by_rate,
             "per_scenario": per_scenario,
@@ -679,6 +1074,6 @@ def run_evidence_robustness_experiment(
             "Fixtures are authored single-entity catalog scenarios; perturbation effects are descriptive mechanism observations, not operational robustness estimates.",
             "Expected validation outcomes come from the documented all-or-nothing hosted validator contract, so conformance tests the implementation against its own specification, not against independent real-world data-quality labels.",
             "Seeded omission replicates vary which records are removed from a fixed fixture; they are not independent datasets and support no inferential statistics.",
-            "out_of_period has no declared expectation; its outcome records current behavior only.",
+            "Staleness conditions have no declared expectation; their outcomes record current behavior only.",
         ],
     }

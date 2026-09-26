@@ -73,18 +73,21 @@ def main(argv: list[str] | None = None) -> int:
         "omission_rates": args.rates,
         "seeds_per_rate": args.seeds,
         "base_seed": args.base_seed,
-        "conditions": [
-            "control",
-            "omit_category",
-            "omit_records",
-            "omit_records_cascade",
-            "duplicate_exact",
-            "duplicate_conflicting",
-            "malformed_timestamp",
-            "chronology_violation",
-            "missing_required_column",
-            "out_of_period",
-        ],
+        "condition_families": {
+            "missingness": ["omit_category", "omit_records", "omit_records_cascade"],
+            "duplication": [
+                "duplicate_exact",
+                "duplicate_conflicting",
+                "duplicate_near",
+            ],
+            "malformation": [
+                "malformed_timestamp",
+                "chronology_violation",
+                "missing_required_column",
+            ],
+            "staleness": ["stale"],
+            "conflict": ["conflict"],
+        },
         "protocol": (
             "declare perturbation and expected validation before execution; "
             "submit each condition in its own scratch tenant; compare analyses "
@@ -92,7 +95,9 @@ def main(argv: list[str] | None = None) -> int:
         ),
     }
     try:
-        with tempfile.TemporaryDirectory(prefix="satsa-robustness-research-") as scratch:
+        with tempfile.TemporaryDirectory(
+            prefix="satsa-robustness-research-"
+        ) as scratch:
             result = run_evidence_robustness_experiment(
                 Path(scratch),
                 scenarios=tuple(args.scenarios) if args.scenarios else None,
