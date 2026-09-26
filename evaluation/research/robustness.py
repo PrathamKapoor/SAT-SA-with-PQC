@@ -900,6 +900,7 @@ def run_evidence_robustness_experiment(
 ) -> dict[str, Any]:
     """Run every declared condition for each selected catalog scenario."""
     from evaluation.controlled_benchmark.runner import scenario_family_metrics
+    from evaluation.research.hosted import catalog_fixture
     from satsa.analysis.compval import SCENARIO_MAP
     from satsa.analysis.validate import synthetic_ground_truth
 
@@ -917,7 +918,7 @@ def run_evidence_robustness_experiment(
     per_scenario: list[dict[str, Any]] = []
     started = perf_counter()
     for scenario in selected:
-        cse, _ = SCENARIO_MAP[scenario]()
+        cse = catalog_fixture(scenario)
         conditions = declared_conditions(
             cse, rates=tuple(rates), seeds=seeds, base_seed=base_seed
         )

@@ -113,6 +113,17 @@ class HostedTenant:
         )
 
 
+def catalog_fixture(scenario: str) -> Any:
+    """Build one catalog scenario fixture (``SCENARIO_MAP`` is untyped)."""
+    from collections.abc import Callable
+    from typing import cast
+
+    from satsa.analysis.compval import SCENARIO_MAP
+
+    builder = cast(Callable[[], tuple[Any, Any]], SCENARIO_MAP[scenario])
+    return builder()[0]
+
+
 def cse_csv_files(cse) -> dict[str, bytes]:
     """Serialize a synthetic ``_CSE`` with the existing CSV writer.
 

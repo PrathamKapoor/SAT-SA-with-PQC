@@ -92,11 +92,9 @@ def _db_counter(engine) -> Iterator[dict[str, int]]:
 
 
 def _fixture_files(scenario: str) -> dict[str, bytes]:
-    from evaluation.research.hosted import cse_csv_files
-    from satsa.analysis.compval import SCENARIO_MAP
+    from evaluation.research.hosted import catalog_fixture, cse_csv_files
 
-    cse, _ = SCENARIO_MAP[scenario]()
-    return cse_csv_files(cse)
+    return cse_csv_files(catalog_fixture(scenario))
 
 
 def _outputs(service, run_id: str) -> dict[str, Any]:
