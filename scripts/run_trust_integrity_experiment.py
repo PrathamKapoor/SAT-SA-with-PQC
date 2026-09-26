@@ -48,7 +48,13 @@ def main() -> int:
             "canonical_payload",
             "receipt_signature",
             "ledger_chain",
+            "decision_reason",
+            "observation_scope",
+            "version_record_payload",
+            "artifact_digest",
+            "receipt_public_key",
         ],
+        "negative_controls": ["operational_queue_field_control"],
         "protocol": "verify valid control; mutate one scratch field at a time; restore and re-verify",
     }
     try:

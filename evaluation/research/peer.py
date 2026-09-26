@@ -53,6 +53,7 @@ def _run_case(
     baseline = compute_peer_baseline(service._db, subject.id, min_peers=3)
     return {
         "cohort_id": cohort_id,
+        "subject_entity_id": subject.id,
         "peer_count": baseline.peer_count,
         "subject_closure_seconds": subject_closure,
         "peer_closure_seconds": peer_closures,
@@ -173,3 +174,173 @@ def run_peer_sensitivity_experiment(scratch_dir: Path) -> dict[str, Any]:
         }
     finally:
         engine.close()
+
+
+SWEEP_EXPERIMENT = "peer-cohort-sweep-v1"
+SWEEP_COHORT_SIZES = (2, 3, 4, 5, 6, 8)
+SWEEP_SUBJECT_CLOSURES = (30, 150, 300, 450, 600, 900, 1500, 3000)
+# Peer closure times are evenly spaced around a 600 s centre; "tight" and
+# "wide" differ only in spread, so the MAD changes while the median holds.
+SWEEP_PEER_SPREADS = {"tight": (540, 660), "wide": (150, 1050)}
+
+
+def _evenly_spaced(low: int, high: int, count: int) -> list[int]:
+    if count == 1:
+        return [round((low + high) / 2)]
+    step = (high - low) / (count - 1)
+    return [round(low + step * index) for index in range(count)]
+
+
+def _sweep_cell(
+    root: Path, *, cohort_id: str, peers: list[int], subject: int
+) -> dict[str, Any]:
+    """One cohort in its own scratch database, so risk and priority rank
+    are computed over exactly this cohort."""
+    from qsmlops.database.engine import SQLiteDatabaseEngine
+    from qsmlops.database.migrations import MigrationRunner
+    from satsa.analysis.prioritize import prioritize_entities
+    from satsa.analysis.risk import compute_entity_risk
+    from satsa.service import SatsaService
+
+    cell_root = root / cohort_id
+    cell_root.mkdir(parents=True, exist_ok=True)
+    engine = SQLiteDatabaseEngine(cell_root / "peer-cell.sqlite3")
+    engine.connect()
+    try:
+        MigrationRunner(engine).migrate()
+        row = _run_case(
+            SatsaService(engine),
+            cell_root,
+            cohort_id=cohort_id,
+            peer_closures=peers,
+            subject_closure=subject,
+        )
+        subject_id = row["subject_entity_id"]
+        risk = compute_entity_risk(engine, subject_id)
+        ranking = prioritize_entities(engine)
+        rank = next(
+            (i for i, item in enumerate(ranking, 1) if item.entity_id == subject_id),
+            None,
+        )
+        tied_at_top = sum(
+            1 for item in ranking if item.priority_score == ranking[0].priority_score
+        )
+        row.update(
+            {
+                "peer_distribution": {
+                    "values_seconds": peers,
+                    "min": min(peers),
+                    "max": max(peers),
+                },
+                "deviation_mad_units": (
+                    row["findings"][0]["effect"] if row["findings"] else None
+                ),
+                "subject_risk_total_score": round(risk.total_score, 4),
+                "subject_risk_confidence_bucket": risk.confidence_bucket,
+                "subject_priority_rank": rank,
+                "cohort_entities_ranked": len(ranking),
+                "entities_tied_at_top_priority": tied_at_top,
+            }
+        )
+        return row
+    finally:
+        engine.close()
+
+
+def run_peer_sweep_experiment(
+    scratch_dir: Path,
+    *,
+    cohort_sizes: tuple[int, ...] = SWEEP_COHORT_SIZES,
+    subject_closures: tuple[int, ...] = SWEEP_SUBJECT_CLOSURES,
+    spreads: dict[str, tuple[int, int]] | None = None,
+) -> dict[str, Any]:
+    """Full factorial peer sweep: cohort size x peer spread x subject value.
+
+    Every cell holds unrelated conditions fixed (one critical alert per
+    entity, 10 s acknowledgement, same period) and runs in its own
+    scratch database with an explicit synthetic cohort label.
+    """
+    spreads = spreads or dict(SWEEP_PEER_SPREADS)
+    root = Path(scratch_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    started = time.perf_counter()
+    cells = []
+    for spread_name, (low, high) in spreads.items():
+        for size in cohort_sizes:
+            peers = _evenly_spaced(low, high, size)
+            for subject in subject_closures:
+                cell = _sweep_cell(
+                    root,
+                    cohort_id=f"{spread_name}-n{size}-s{subject}",
+                    peers=peers,
+                    subject=subject,
+                )
+                cell.update(
+                    {
+                        "spread": spread_name,
+                        "cohort_size": size,
+                        "subject_value": subject,
+                    }
+                )
+                cells.append(cell)
+    matrix = [
+        {
+            "spread": cell["spread"],
+            "cohort_size": cell["cohort_size"],
+            "subject_closure_seconds": cell["subject_value"],
+            "peer_count_used": cell["peer_count"],
+            "peer_median_seconds": cell["peer_median_seconds"],
+            "peer_mad_seconds": cell["peer_mad_seconds"],
+            "deviation_mad_units": cell["deviation_mad_units"],
+            "finding_emitted": cell["finding_emitted"],
+            "subject_risk_total_score": cell["subject_risk_total_score"],
+            "subject_priority_rank": cell["subject_priority_rank"],
+            "cohort_entities_ranked": cell["cohort_entities_ranked"],
+        }
+        for cell in cells
+    ]
+    emitted_by_size = {
+        f"{spread}:{size}": sum(
+            row["finding_emitted"]
+            for row in matrix
+            if row["spread"] == spread and row["cohort_size"] == size
+        )
+        for spread in spreads
+        for size in cohort_sizes
+    }
+    return {
+        "status": "completed",
+        "experiment": SWEEP_EXPERIMENT,
+        "data_origin": "synthetic",
+        "production_or_cross_tenant_data_used": False,
+        "metrics": {
+            "design": {
+                "cohort_sizes": list(cohort_sizes),
+                "subject_closure_seconds": list(subject_closures),
+                "peer_spreads": {k: list(v) for k, v in spreads.items()},
+                "peer_values": "evenly spaced between the spread bounds",
+                "measured_value": "worker compares creation-to-close time, i.e. the configured "
+                "closure value plus the 10 s acknowledgement",
+                "fixed": "one critical alert per entity, 10 s acknowledgement, "
+                "same assessment period, same sector/environment cohort label",
+                "cells": len(matrix),
+                "unit": "synthetic cohort (one subject plus its peers)",
+            },
+            "policy": {"minimum_peers": 3, "deviation_threshold_mad_units": 2.0},
+            "findings_emitted_per_spread_and_size": emitted_by_size,
+            "matrix": matrix,
+            "cells": cells,
+        },
+        "performance": {
+            "measurement_scope": "local synchronous legacy SQLite path",
+            "total_elapsed_seconds": round(time.perf_counter() - started, 6),
+        },
+        "limitations": [
+            (
+                "Deterministic engineered cohorts; each cell is a mechanism "
+                "observation, not a sample from a field distribution."
+            ),
+            "Only the critical-closure peer metric is exercised; other peer metrics are untouched.",
+            "Priority rank is computed within the cell's own cohort only.",
+        ],
+    }
