@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import os
 import socket
 import threading
@@ -20,6 +19,7 @@ from typing import Any
 from uuid import uuid4
 
 from qsmlops.core.errors import DuplicateEntryError, PermissionDeniedError
+from qsmlops.core.logging import configure_logging, get_logger
 from qsmlops.crypto.hashing import digest_document
 from qsmlops.security.permissions.model import (
     ANALYSIS_RUN,
@@ -46,7 +46,7 @@ from satsa.errors import DomainValidationError
 from satsa.store.dataset import CanonicalDataset
 from satsa.tenancy import TenantRepository, _id
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 RUN_TERMINAL = {"completed", "partial", "failed", "cancelled"}
 RUN_TRANSITIONS = {
@@ -1658,30 +1658,19 @@ def worker_main() -> int:
     """CLI entry point for a separately deployed analysis worker."""
     import signal
     import threading
-    from pathlib import Path
 
-    from qsmlops.core.settings import load_settings
-    from qsmlops.database.engine import create_engine
-    from qsmlops.database.migrations import MigrationRunner
-    from qsmlops.evidence.ledger import EvidenceLedger
-    from qsmlops.security.audit.service import AuditService
-
-    settings = load_settings()
-    data_dir = Path(os.getenv("SATSA_DATA_DIR", ".satsa-api")).resolve()
-    database_url = os.getenv("SATSA_DATABASE_URL") or os.getenv("QSMLOPS_DB_URL")
-    if not database_url and os.getenv("SATSA_DB"):
-        database_url = f"sqlite:///{Path(os.environ['SATSA_DB']).resolve().as_posix()}"
-    database_url = database_url or settings.database.url
-    engine = create_engine(database_url)
-    MigrationRunner(engine).migrate()
-    ledger_path = Path(
-        os.getenv("SATSA_LEDGER_PATH", str(data_dir / "evidence-ledger.jsonl"))
+    configure_logging(
+        os.getenv("SATSA_LOG_LEVEL", "INFO"),
+        json_format=os.getenv("SATSA_ENVIRONMENT", "development").lower()
+        == "production",
     )
-    ledger_path.parent.mkdir(parents=True, exist_ok=True)
-    audit = AuditService(EvidenceLedger(ledger_path), database=engine)
+
+    from satsa.api.runtime import build_runtime
+
+    engine, audit, _identity, storage, trust_key_dir = build_runtime()
     worker = AnalysisExecutionWorker(
         engine,
-        trust_key_dir=os.getenv("SATSA_TRUST_KEY_DIR", str(data_dir / "keys")),
+        trust_key_dir=str(trust_key_dir),
         audit=audit,
     )
     stopping = threading.Event()
@@ -1700,4 +1689,5 @@ def worker_main() -> int:
     except KeyboardInterrupt:
         return 0
     finally:
+        storage.close()
         engine.close()

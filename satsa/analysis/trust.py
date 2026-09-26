@@ -156,6 +156,13 @@ class TrustService:
     def public_key(self) -> bytes:
         return self._keypair.public_key
 
+    def validate_signing_key(self) -> None:
+        """Fail closed when provisioned signing material is malformed or mismatched."""
+        message = b"satsa-trust-key-self-test-v1"
+        signature = self._provider.sign(self._keypair.secret_key, message)
+        if not self._provider.verify(self._keypair.public_key, message, signature):
+            raise ValueError("configured TRUST-SAT signing key pair is invalid")
+
     # ------------------------------------------------------------------
     # signing
     # ------------------------------------------------------------------

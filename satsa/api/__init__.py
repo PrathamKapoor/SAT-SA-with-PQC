@@ -1,7 +1,6 @@
 """Dedicated tenant-aware SaaS API. Legacy demo routes are not mounted."""
 
 import json
-import logging
 import re
 import time
 from typing import Annotated
@@ -15,6 +14,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from qsmlops.core.errors import NotFoundError, QSMLOPSError
+from qsmlops.core.logging import get_logger
 from satsa.analysis.execution import AnalysisExecutionService
 from satsa.errors import DomainValidationError
 from satsa.submissions.service import SubmissionService
@@ -35,7 +35,7 @@ from .security import (
 )
 from .settings import ApiSettings
 
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 User = Annotated[Caller, Depends(caller)]
 Tenant = Annotated[TenantRepository, Depends(tenant)]
 Limit = Annotated[int, Query(ge=1, le=200)]
@@ -188,15 +188,19 @@ def create_app(
             )
             scope.setdefault("state", {})["request_id"] = request_id
             request = Request(scope)
+            started_at = time.monotonic()
             peer = scope.get("client")
-            try:
-                app.state.limiter.check(
-                    f"ip:{peer[0] if peer else 'unknown'}", settings.read_limit
-                )
-            except ApiError as exc:
-                return await error(request, exc.status, exc.code, exc.message)(
-                    scope, receive, send
-                )
+            # Health probes must reach their own checks when database-backed
+            # rate limiting is unavailable; readiness handles DB failure safely.
+            if scope.get("path") not in {"/health/live", "/health/ready"}:
+                try:
+                    app.state.limiter.check(
+                        f"ip:{peer[0] if peer else 'unknown'}", settings.read_limit
+                    )
+                except ApiError as exc:
+                    return await error(request, exc.status, exc.code, exc.message)(
+                        scope, receive, send
+                    )
             try:
                 declared = int(headers.get(b"content-length", b"0"))
             except ValueError:
@@ -221,6 +225,25 @@ def create_app(
 
             async def secured_send(message):
                 if message["type"] == "http.response.start":
+                    route = scope.get("route")
+                    actor = getattr(request.state, "caller", None)
+                    log.info(
+                        "api.response",
+                        extra={
+                            "event": "api.response",
+                            "request_id": request_id,
+                            "organization_id": getattr(
+                                request.state, "organization_id", ""
+                            ),
+                            "user_id": getattr(actor, "user_id", ""),
+                            "method": scope.get("method", ""),
+                            "route": getattr(route, "path", ""),
+                            "status_code": message.get("status", 0),
+                            "duration_ms": round(
+                                (time.monotonic() - started_at) * 1000, 2
+                            ),
+                        },
+                    )
                     message["headers"] = [
                         (k, v)
                         for k, v in message.get("headers", [])
@@ -293,8 +316,8 @@ def create_app(
     def ready():
         try:
             from qsmlops.database.migrations import MIGRATIONS
-            from satsa.submissions.storage import S3ArtifactStorage
 
+            engine.query_one("SELECT 1 AS ready")
             row = engine.query_one(
                 "SELECT MAX(version) AS version FROM schema_migrations"
             )
@@ -302,8 +325,7 @@ def create_app(
                 raise RuntimeError("migrations pending")
             if trust_key_dir is None:
                 raise RuntimeError("trust not configured")
-            if isinstance(storage, S3ArtifactStorage):
-                storage.client.head_bucket(Bucket=storage.bucket)
+            storage.check_ready()
         except Exception as exc:
             raise ApiError(
                 503, "NOT_READY", "Critical dependencies are not ready"
@@ -345,7 +367,7 @@ def create_app(
             max_age=settings.session_ttl,
             httponly=True,
             secure=settings.secure_cookies,
-            samesite="lax",
+            samesite=settings.cookie_samesite,
             path="/api/v1",
         )
         audit_action(request, user, "session.login", f"user:{user.user_id}")
@@ -392,7 +414,7 @@ def create_app(
             path="/api/v1",
             secure=settings.secure_cookies,
             httponly=True,
-            samesite="lax",
+            samesite=settings.cookie_samesite,
         )
         return response
 

@@ -369,6 +369,26 @@ def test_limits_security_headers_and_login_origin(api):
     )
 
 
+def test_liveness_does_not_depend_on_database(api, monkeypatch):
+    def unavailable(*_args, **_kwargs):
+        raise RuntimeError("database unavailable")
+
+    monkeypatch.setattr(api["client"].app.state.limiter, "check", unavailable)
+    assert api["client"].get("/health/live").status_code == 200
+    assert api["client"].get("/health/ready").status_code == 200
+
+
+def test_readiness_requires_database_migration_and_storage(api, monkeypatch):
+    def unavailable():
+        raise OSError("storage unavailable")
+
+    monkeypatch.setattr(api["client"].app.state.storage, "check_ready", unavailable)
+    response = api["client"].get("/health/ready")
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "NOT_READY"
+    assert "storage unavailable" not in response.text
+
+
 def test_upload_retry_and_invalid_file(api):
     c = api["client"]
     _, _, _, version, artifact = dataset(api)

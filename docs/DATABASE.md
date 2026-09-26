@@ -101,3 +101,51 @@ row-locked initialization guard; the provisioning command refuses to create a
 second first administrator. API product reads use tenant-bound repositories
 and explicit response schemas. The frontend does not receive arbitrary database
 rows or storage keys.
+
+## Phase 7 production runtime
+
+Migration 16 adds `satsa_artifacts.storage_status` (`uploading`, `stored`,
+`failed`) with existing rows marked `stored`. The submission service records
+upload intent in PostgreSQL before calling external object storage, verifies
+the S3 object metadata/size after PUT, and only exposes stored artifacts to the
+completion/validation path. A same-key/same-content retry can recover an
+`uploading` or `failed` artifact because its generated object key is
+content-addressed; conflicting content remains rejected. A process crash after
+object write but before updating metadata leaves a retryable intent. There is
+not yet a general orphan-object garbage collector; do not delete unreferenced
+objects automatically.
+
+`python -m satsa.api.migrate status|check|upgrade` is the deployment migration
+interface. The production API and worker do not migrate at startup: they
+validate that the schema is current and fail closed otherwise. `status` reports
+applied/pending/unknown versions; `check` returns nonzero for a stale schema;
+`upgrade` applies ordered migrations using the PostgreSQL migration lock.
+SQLite migrations also apply each migration transactionally. There is no
+automatic downgrade path. Version 16's storage status is deliberately
+additive, so existing artifact records remain readable after the migration.
+
+The production API/worker share `RuntimeSettings` and the bounded PostgreSQL
+pool (`SATSA_DB_POOL_*`, connect/pool timeout and statement timeout settings).
+Production requires an explicit PostgreSQL DSN and cannot select SQLite by
+fallback. SQLite plus local object files remains the supported offline mode.
+Production uses PostgreSQL plus S3-compatible object storage. Large file bytes
+remain outside PostgreSQL; the database stores tenant ownership, content
+digest, size, content type, key, and lifecycle state.
+
+The S3-compatible runtime settings are `SATSA_S3_ENDPOINT_URL`,
+`SATSA_S3_REGION`, `SATSA_S3_BUCKET`, `SATSA_S3_ACCESS_KEY`,
+`SATSA_S3_SECRET_KEY`, `SATSA_S3_USE_SSL`, and
+`SATSA_S3_ADDRESSING_STYLE`. Key/secret must be configured as a pair or omitted
+to use the provider's workload identity. TLS is mandatory in production. The
+adapter uses conditional object creation, stores the server-computed SHA3-256
+as object metadata, and checks `HEAD` metadata/length after upload. Bucket
+privacy, encryption, replication, and retention policy are provider/operator
+controls and must be independently configured.
+
+Phase 7's production Compose stack is documented in [deployment.md](deployment.md).
+It is production-like locally, not itself high availability. PostgreSQL remains
+authoritative for metadata and results; object storage holds uploaded bytes;
+the append-only trust/audit ledger and ML-DSA signing key are separate durable
+inputs to TRUST-SAT verification. Database, artifacts, ledger, and key backups
+must be coordinated. See [SECURITY.md](SECURITY.md) for the limits of this
+recovery set and trust proof.

@@ -6,21 +6,20 @@ import time
 from pathlib import Path
 
 import pytest
+from test_postgres_engine import postgres_dsn  # noqa: F401
+from test_tenant_schema import engine  # noqa: F401
 
 from qsmlops.core.errors import PermissionDeniedError
 from qsmlops.crypto.hashing import sha3_hex
 from qsmlops.evidence.ledger import EvidenceLedger
 from qsmlops.security.audit.service import AuditService
-from satsa.tenancy import TenantAdministration
 from satsa.errors import DomainValidationError
-from test_tenant_schema import engine
-from test_postgres_engine import postgres_dsn
-
+from satsa.tenancy import TenantAdministration
 
 ALERTS = b"native_id,created_at,severity\nA1,1735689700,critical\n"
 
 
-def test_phase2_schema_preserves_versioned_snapshots(engine):
+def test_phase2_schema_preserves_versioned_snapshots(engine):  # noqa: F811
     assert engine.query_one("SELECT COUNT(*) AS n FROM satsa_validation_reports") == {"n": 0}
     assert engine.query_one("SELECT COUNT(*) AS n FROM satsa_version_records") == {"n": 0}
     assert engine.query_one(
@@ -29,7 +28,7 @@ def test_phase2_schema_preserves_versioned_snapshots(engine):
 
 
 @pytest.fixture
-def submission_scope(engine, tmp_path):
+def submission_scope(engine, tmp_path):  # noqa: F811
     from satsa.submissions import LocalArtifactStorage, SubmissionService
 
     admin = TenantAdministration(engine)
@@ -50,7 +49,7 @@ def submission_scope(engine, tmp_path):
 
 
 def test_valid_upload_normalizes_and_persists_report(submission_scope):
-    service, storage, audit, org, user, assessment = submission_scope
+    service, _, audit, _, _, assessment = submission_scope
     submission = service.create_submission(assessment, idempotency_key="assessment-1")
     assert service.create_submission(assessment, idempotency_key="assessment-1") == submission
     version = service.create_version(submission, idempotency_key="version-1")
@@ -88,6 +87,7 @@ def test_valid_upload_normalizes_and_persists_report(submission_scope):
     assert {"submission.created", "submission.version_created", "submission.artifact_uploaded",
             "submission.upload_completed", "submission.validation_started",
             "submission.validation_completed", "submission.accepted"} <= actions
+    assert sum(event.action == "submission.artifact_uploaded" for event in audit.query()) == 1
 
 
 def test_streamed_reader_does_not_read_whole_file(tmp_path, monkeypatch):
@@ -153,6 +153,45 @@ def test_upload_retry_cannot_change_bytes(submission_scope):
     with pytest.raises(DomainValidationError, match="idempotency"):
         service.upload(version, category="alerts", stream=io.BytesIO(ALERTS + b"\n"),
                        filename="alerts.csv", content_type="text/csv", idempotency_key="u")
+
+
+def test_failed_object_write_is_persisted_and_same_request_recovers(submission_scope):
+    service, storage, _, _, _, assessment = submission_scope
+    submission = service.create_submission(assessment, idempotency_key="s")
+    version = service.create_version(submission, idempotency_key="v")
+
+    class FailOnce:
+        def __init__(self):
+            self.failed = False
+
+        def put_file(self, *args):
+            if not self.failed:
+                self.failed = True
+                raise OSError("temporary object store failure")
+            storage.put_file(*args)
+
+        def copy_to(self, *args):
+            return storage.copy_to(*args)
+
+        def check_ready(self):
+            return storage.check_ready()
+
+        def close(self):
+            return storage.close()
+
+    service.storage = FailOnce()
+    with pytest.raises(OSError, match="temporary object store"):
+        service.upload(version, category="alerts", stream=io.BytesIO(ALERTS),
+                       filename="alerts.csv", content_type="text/csv", idempotency_key="u")
+    row = service.db.query_one(
+        "SELECT storage_status FROM satsa_artifacts WHERE organization_id=?",
+        (service.org,),
+    )
+    assert row == {"storage_status": "failed"}
+    retried = service.upload(version, category="alerts", stream=io.BytesIO(ALERTS),
+                             filename="alerts.csv", content_type="text/csv", idempotency_key="u")
+    assert retried["storage_status"] == "stored"
+    service.complete_uploads(version)
 
 
 def test_upload_reads_in_bounded_chunks(submission_scope):

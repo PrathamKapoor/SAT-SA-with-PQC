@@ -3,12 +3,16 @@ from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import tempfile
 import time
 from pathlib import Path
 
-from qsmlops.core.errors import DuplicateEntryError, IntegrityError, PermissionDeniedError
+from qsmlops.core.errors import (
+    DuplicateEntryError,
+    IntegrityError,
+    PermissionDeniedError,
+)
+from qsmlops.core.logging import get_logger
 from qsmlops.crypto.hashing import digest_document
 from qsmlops.security.audit.events import AuditEvent
 from qsmlops.security.permissions.model import ANALYSIS_RUN, EVIDENCE_VIEW, FINDING_VIEW
@@ -30,7 +34,7 @@ ALLOWED_TYPES = {
 }
 MAX_ARTIFACT_BYTES = 16 * 1024 * 1024
 VALIDATOR_VERSION = "satsa-submission-validation/1"
-log = logging.getLogger(__name__)
+log = get_logger(__name__)
 
 
 class SubmissionService:
@@ -55,6 +59,29 @@ class SubmissionService:
         self.audit.record(AuditEvent.create(
             actor=actor["identity_id"], action=action, resource=resource,
             metadata={"organization_id": self.org, **metadata},
+        ))
+
+    def _audit_artifact_uploaded(self, artifact: dict) -> None:
+        actor = self.db.query_one(
+            "SELECT identity_id FROM satsa_users WHERE id=?",
+            (artifact["uploaded_by_user_id"],),
+        )
+        event_id = hashlib.sha3_256(
+            f"{self.org}:submission.artifact_uploaded:{artifact['id']}".encode()
+        ).hexdigest()[:32]
+        self.audit.record_once(AuditEvent(
+            event_id=event_id,
+            timestamp=artifact["created_at"],
+            actor=actor["identity_id"],
+            action="submission.artifact_uploaded",
+            resource=f"artifact:{artifact['id']}",
+            result="SUCCESS",
+            metadata={
+                "organization_id": self.org,
+                "version_id": artifact["submission_version_id"],
+                "category": artifact["category"],
+                "size_bytes": artifact["size_bytes"],
+            },
         ))
 
     @staticmethod
@@ -169,7 +196,9 @@ class SubmissionService:
                         raise DomainValidationError("upload stream must contain bytes")
                     size += len(chunk)
                     if size > self.max_artifact_bytes:
-                        raise DomainValidationError("upload exceeds artifact size limit")
+                        raise DomainValidationError(
+                            "upload exceeds artifact size limit"
+                        )
                     digest.update(chunk)
                     destination.write(chunk)
             if size == 0:
@@ -189,15 +218,28 @@ class SubmissionService:
                 (self.org, version_id, idempotency_key),
             )
             if existing:
-                if (existing["sha3_256_digest"] != artifact_digest
-                        or existing["category"] != category
-                        or existing["original_filename"] != filename
-                        or existing["content_type"] != content_type):
-                    raise DomainValidationError("idempotency key reused for different artifact")
-                return existing
+                if (
+                    existing["sha3_256_digest"] != artifact_digest
+                    or existing["category"] != category
+                    or existing["original_filename"] != filename
+                    or existing["content_type"] != content_type
+                ):
+                    raise DomainValidationError(
+                        "idempotency key reused for different artifact"
+                    )
+                if existing.get("storage_status", "stored") == "stored":
+                    self._audit_artifact_uploaded(existing)
+                    return existing
+                artifact_id = existing["id"]
+                storage_key = existing["storage_key"]
+            else:
+                artifact_id = None
+                storage_key = None
             if version["status"] not in {"created", "uploading"}:
-                raise DomainValidationError("version is immutable after upload completion")
-            if self.db.query_one(
+                raise DomainValidationError(
+                    "version is immutable after upload completion"
+                )
+            if existing is None and self.db.query_one(
                 "SELECT id FROM satsa_artifacts WHERE organization_id=?"
                 " AND submission_version_id=? AND category=?",
                 (self.org, version_id, category),
@@ -206,56 +248,104 @@ class SubmissionService:
             # Keep local paths below Windows MAX_PATH even under deep test/user roots.
             # Ownership is stored and checked in SQL; this is only an opaque blob key.
             scope_key = hashlib.sha3_256(
-                f"{self.org}\0{version_id}".encode("utf-8")
+                f"{self.org}\0{version_id}".encode()
             ).hexdigest()[:32]
-            storage_key = f"{scope_key}/{category}/{artifact_digest}{suffix}"
-            self.storage.put_file(source, storage_key, content_type, artifact_digest)
-            artifact_id = _id("artifact")
-            try:
-                with self.db.transaction():
-                    # The update locks the version row on PostgreSQL. A concurrent
-                    # completion cannot interleave between status check and insert.
-                    self.db.execute(
-                        "UPDATE satsa_submission_versions SET status='uploading'"
-                        " WHERE organization_id=? AND id=? AND status IN ('created','uploading')",
-                        (self.org, version_id),
+            if not storage_key:
+                storage_key = f"{scope_key}/{category}/{artifact_digest}{suffix}"
+                artifact_id = _id("artifact")
+                try:
+                    with self.db.transaction():
+                        # Persist intent before external storage. Retries can resume
+                        # an interrupted write without changing artifact identity.
+                        self.db.execute(
+                            "UPDATE satsa_submission_versions SET status='uploading'"
+                            " WHERE organization_id=? AND id=? AND status IN ('created','uploading')",
+                            (self.org, version_id),
+                        )
+                        current = self.db.query_one(
+                            "SELECT status FROM satsa_submission_versions"
+                            " WHERE organization_id=? AND id=?",
+                            (self.org, version_id),
+                        )
+                        if current is None or current["status"] != "uploading":
+                            raise DomainValidationError(
+                                "version is immutable after upload completion"
+                            )
+                        self.db.execute(
+                            "INSERT INTO satsa_artifacts"
+                            " (id, organization_id, submission_version_id, storage_key, content_type,"
+                            " size_bytes, sha3_256_digest, created_at, category, original_filename,"
+                            " upload_idempotency_key, format, uploaded_by_user_id, storage_status)"
+                            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,'uploading')",
+                            (
+                                artifact_id,
+                                self.org,
+                                version_id,
+                                storage_key,
+                                content_type,
+                                size,
+                                artifact_digest,
+                                time.time(),
+                                category,
+                                filename,
+                                idempotency_key,
+                                suffix[1:],
+                                self.user,
+                            ),
+                        )
+                except DuplicateEntryError:
+                    existing = self.db.query_one(
+                        "SELECT * FROM satsa_artifacts WHERE organization_id=?"
+                        " AND submission_version_id=? AND upload_idempotency_key=?",
+                        (self.org, version_id, idempotency_key),
                     )
-                    current = self.db.query_one(
-                        "SELECT status FROM satsa_submission_versions"
-                        " WHERE organization_id=? AND id=?", (self.org, version_id),
-                    )
-                    if current is None or current["status"] != "uploading":
-                        raise DomainValidationError("version is immutable after upload completion")
-                    self.db.execute(
-                        "INSERT INTO satsa_artifacts"
-                        " (id, organization_id, submission_version_id, storage_key, content_type,"
-                        " size_bytes, sha3_256_digest, created_at, category, original_filename,"
-                        " upload_idempotency_key, format, uploaded_by_user_id)"
-                        " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                        (artifact_id, self.org, version_id, storage_key, content_type, size,
-                         artifact_digest, time.time(), category, filename, idempotency_key,
-                         suffix[1:], self.user),
-                    )
-            except DuplicateEntryError:
-                existing = self.db.query_one(
-                    "SELECT * FROM satsa_artifacts WHERE organization_id=?"
-                    " AND submission_version_id=? AND upload_idempotency_key=?",
-                    (self.org, version_id, idempotency_key),
-                )
-                if (existing and existing["sha3_256_digest"] == artifact_digest
+                    if (
+                        existing
+                        and existing["sha3_256_digest"] == artifact_digest
                         and existing["category"] == category
                         and existing["original_filename"] == filename
-                        and existing["content_type"] == content_type):
-                    return existing
-                raise DomainValidationError("artifact category or idempotency key already used")
-            self._audit("submission.artifact_uploaded", f"artifact:{artifact_id}",
-                        version_id=version_id, category=category, size_bytes=size)
-            return self.tenant.get_artifact(artifact_id)
+                        and existing["content_type"] == content_type
+                    ):
+                        if existing.get("storage_status", "stored") == "stored":
+                            return existing
+                        artifact_id, storage_key = (
+                            existing["id"],
+                            existing["storage_key"],
+                        )
+                    else:
+                        raise DomainValidationError(
+                            "artifact category or idempotency key already used"
+                        )
+            try:
+                self.storage.put_file(
+                    source, storage_key, content_type, artifact_digest
+                )
+                completed = self.db.query_one(
+                    "UPDATE satsa_artifacts SET storage_status='stored'"
+                    " WHERE organization_id=? AND id=? AND storage_status IN ('uploading','failed')"
+                    " RETURNING id",
+                    (self.org, artifact_id),
+                )
+            except Exception:
+                self.db.execute(
+                    "UPDATE satsa_artifacts SET storage_status='failed'"
+                    " WHERE organization_id=? AND id=? AND storage_status='uploading'",
+                    (self.org, artifact_id),
+                )
+                raise
+            artifact = self.tenant.get_artifact(artifact_id)
+            if artifact is None:
+                raise RuntimeError("stored artifact metadata disappeared")
+            if completed or existing is not None:
+                self._audit_artifact_uploaded(artifact)
+            return artifact
 
     def read_artifact(self, artifact_id: str) -> bytes:
         artifact = self.tenant.get_artifact(artifact_id)
         if artifact is None:
             raise PermissionDeniedError("artifact does not belong to organization")
+        if artifact.get("storage_status", "stored") != "stored":
+            raise DomainValidationError("artifact storage is not complete")
         if artifact["size_bytes"] > self.max_artifact_bytes:
             raise DomainValidationError("artifact too large for byte retrieval")
         with tempfile.TemporaryDirectory(prefix="satsa-read-") as temporary:
@@ -271,7 +361,10 @@ class SubmissionService:
             return
         if version["status"] != "uploading":
             raise DomainValidationError("version has no open uploads")
-        if "alerts" not in {r["category"] for r in self._artifacts(version_id)}:
+        artifacts = self._artifacts(version_id)
+        if any(a.get("storage_status", "stored") != "stored" for a in artifacts):
+            raise DomainValidationError("all artifacts must be stored before completion")
+        if "alerts" not in {r["category"] for r in artifacts}:
             raise DomainValidationError("alerts artifact is required")
         self.db.execute("UPDATE satsa_submission_versions SET status='uploaded'"
                         " WHERE organization_id=? AND id=? AND status='uploading'",
@@ -297,6 +390,8 @@ class SubmissionService:
                         (self.org, version_id))
         self._audit("submission.validation_started", f"version:{version_id}")
         artifacts = self._artifacts(version_id)
+        if any(a.get("storage_status", "stored") != "stored" for a in artifacts):
+            raise DomainValidationError("all artifacts must be stored before completion")
         parsed, errors, failures, results = {}, [], [], {}
         with tempfile.TemporaryDirectory(prefix="satsa-validate-") as temporary:
             for artifact in artifacts:
@@ -408,7 +503,9 @@ class SubmissionService:
         return report
 
     def _normalize(self, parsed: dict, entity_id: str, assessment_id: str) -> dict:
-        maps = {category: {} for category in ("alerts", "cases", "assets")}
+        maps: dict[str, dict[str, str]] = {
+            category: {} for category in ("alerts", "cases", "assets")
+        }
         specs = {"alerts": ALERT_FIELDS, "cases": CASE_FIELDS, "assets": ASSET_FIELDS}
         prefixes = {"alerts": "alert", "cases": "case", "assets": "asset"}
         for category, spec in specs.items():

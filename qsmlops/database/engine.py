@@ -164,12 +164,12 @@ class SQLiteDatabaseEngine(DatabaseEngine):
                 self._in_transaction = False
 
 
-def create_engine(url: str) -> DatabaseEngine:
+def create_engine(url: str, **options) -> DatabaseEngine:
     dialect, path = parse_database_url(url)
     if dialect == "sqlite":
         return SQLiteDatabaseEngine(path)
     if dialect == "postgresql":
         from qsmlops.database.postgres import PostgresDatabaseEngine
 
-        return PostgresDatabaseEngine(str(path))
+        return PostgresDatabaseEngine(str(path), **options)
     raise StorageError(f"no engine implementation for dialect {dialect!r}")

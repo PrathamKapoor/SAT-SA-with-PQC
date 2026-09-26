@@ -123,6 +123,27 @@ and encryption policies are configured by the operator. `Idempotency-Key`
 upload requests are multipart and streamed to bounded temporary storage; the
 client digest is never authoritative.
 
+Artifact responses include `storage_status` (`uploading`, `stored`, `failed`);
+only `stored` artifacts are readable or eligible for validation. Repeating an
+interrupted upload with the same key and same content retries the object write;
+changed content conflicts.
+
+Deployment environment variables use the `SATSA_S3_*` namespace:
+`SATSA_S3_ENDPOINT_URL`, `SATSA_S3_REGION`, `SATSA_S3_BUCKET`,
+`SATSA_S3_ACCESS_KEY`, `SATSA_S3_SECRET_KEY`, `SATSA_S3_USE_SSL`, and
+`SATSA_S3_ADDRESSING_STYLE`. Credentials may be omitted when the provider's
+workload identity supplies them. Production requires PostgreSQL, S3 storage,
+TLS, a pre-provisioned signing key, explicit durable ledger path, secure cookies,
+explicit hosts, and `SATSA_AUTO_MIGRATE=false`.
+
+Migrations are run by the deployment step with
+`python -m satsa.api.migrate upgrade`; inspect with `status` or gate startup with
+`check`. API and worker startup reject an out-of-date schema and never migrate
+automatically in production. `/health/live` is process-only and does not query
+the database. `/health/ready` checks database connectivity, schema version,
+trust configuration, and artifact-storage connectivity. The separate worker
+container check uses `python -m satsa.api.healthcheck --role worker`.
+
 ## Contract difference from the frontend proposal
 
 The existing frontend proposal is retained as a proposal and currently expects

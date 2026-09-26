@@ -1,4 +1,5 @@
 """Pooled PostgreSQL implementation of the existing statement-level engine."""
+
 from __future__ import annotations
 
 import threading
@@ -44,8 +45,10 @@ def _bind_qmarks(statement: str) -> str:
                 continue
             elif char == "$":
                 end = statement.find("$", i + 1)
-                if end != -1 and all(c.isalnum() or c == "_" for c in statement[i + 1:end]):
-                    dollar_tag = statement[i:end + 1]
+                if end != -1 and all(
+                    c.isalnum() or c == "_" for c in statement[i + 1 : end]
+                ):
+                    dollar_tag = statement[i : end + 1]
                     state = "dollar"
                     output.append(dollar_tag)
                     i = end + 1
@@ -86,11 +89,32 @@ def _bind_qmarks(statement: str) -> str:
 class PostgresDatabaseEngine(DatabaseEngine):
     """Connection pool with one thread-local connection per transaction."""
 
-    def __init__(self, dsn: str, *, min_size: int = 1, max_size: int = 5) -> None:
+    def __init__(
+        self,
+        dsn: str,
+        *,
+        min_size: int = 1,
+        max_size: int = 5,
+        connect_timeout: int = 5,
+        pool_timeout: int = 5,
+        statement_timeout_ms: int = 60_000,
+    ) -> None:
+        if min_size < 0 or max_size < 1 or min_size > max_size:
+            raise ValueError("invalid PostgreSQL connection pool bounds")
+        if connect_timeout < 1 or pool_timeout < 1 or statement_timeout_ms < 1:
+            raise ValueError("PostgreSQL timeouts must be positive")
         self.dsn = dsn
         self._pool = ConnectionPool(
-            conninfo=dsn, min_size=min_size, max_size=max_size,
-            kwargs={"row_factory": rows.dict_row}, open=False,
+            conninfo=dsn,
+            min_size=min_size,
+            max_size=max_size,
+            timeout=pool_timeout,
+            kwargs={
+                "row_factory": rows.dict_row,
+                "connect_timeout": connect_timeout,
+                "options": f"-c statement_timeout={statement_timeout_ms}",
+            },
+            open=False,
         )
         self._local = threading.local()
         self._lock = threading.Lock()

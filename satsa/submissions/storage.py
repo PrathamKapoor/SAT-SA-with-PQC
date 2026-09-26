@@ -1,4 +1,5 @@
 """Immutable file-backed and S3-compatible artifact storage adapters."""
+
 from __future__ import annotations
 
 import hashlib
@@ -8,15 +9,15 @@ import tempfile
 from pathlib import Path
 from typing import Protocol
 
-
 CHUNK_BYTES = 64 * 1024
 _COMPONENT = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
 def validate_key(key: str) -> str:
     parts = key.split("/")
-    if not key or any(part in {"", ".", ".."} or not _COMPONENT.fullmatch(part)
-                      for part in parts):
+    if not key or any(
+        part in {"", ".", ".."} or not _COMPONENT.fullmatch(part) for part in parts
+    ):
         raise ValueError("invalid artifact storage key")
     return key
 
@@ -30,8 +31,12 @@ def file_sha3_256(path: Path) -> str:
 
 
 class ArtifactStorage(Protocol):
-    def put_file(self, source: Path, key: str, content_type: str, digest: str) -> None: ...
+    def put_file(
+        self, source: Path, key: str, content_type: str, digest: str
+    ) -> None: ...
     def copy_to(self, key: str, destination: Path) -> None: ...
+    def check_ready(self) -> None: ...
+    def close(self) -> None: ...
 
 
 class LocalArtifactStorage:
@@ -68,9 +73,19 @@ class LocalArtifactStorage:
                 os.link(temp_name, destination)
             except FileExistsError:
                 if file_sha3_256(destination) != digest:
-                    raise FileExistsError("artifact key already contains different bytes")
+                    raise FileExistsError(
+                        "artifact key already contains different bytes"
+                    )
         finally:
             Path(temp_name).unlink(missing_ok=True)
+
+    def check_ready(self) -> None:
+        self.root.mkdir(parents=True, exist_ok=True)
+        if not self.root.is_dir():
+            raise OSError("artifact storage is unavailable")
+
+    def close(self) -> None:
+        return None
 
     def copy_to(self, key: str, destination: Path) -> None:
         source = self._path(key)
@@ -116,19 +131,50 @@ class S3ArtifactStorage:
         try:
             with Path(source).open("rb") as body:
                 self.client.put_object(
-                    Bucket=self.bucket, Key=object_key, Body=body,
+                    Bucket=self.bucket,
+                    Key=object_key,
+                    Body=body,
                     ContentLength=Path(source).stat().st_size,
-                    ContentType=content_type, Metadata={"sha3-256": digest},
+                    ContentType=content_type,
+                    Metadata={"sha3-256": digest},
                     IfNoneMatch="*",
                 )
         except Exception as exc:
             response = getattr(exc, "response", {})
             code = str(response.get("Error", {}).get("Code", ""))
-            if code not in {"PreconditionFailed", "ConditionalRequestConflict", "412", "409"}:
+            if code not in {
+                "PreconditionFailed",
+                "ConditionalRequestConflict",
+                "412",
+                "409",
+            }:
                 raise
             existing = self.client.head_object(Bucket=self.bucket, Key=object_key)
             if existing.get("Metadata", {}).get("sha3-256") != digest:
-                raise FileExistsError("artifact key already contains different bytes") from exc
+                raise FileExistsError(
+                    "artifact key already contains different bytes"
+                ) from exc
+        self.verify_object(key, digest=digest, size=Path(source).stat().st_size)
+
+    def verify_object(
+        self, key: str, *, digest: str | None = None, size: int | None = None
+    ) -> None:
+        result = self.client.head_object(Bucket=self.bucket, Key=self._key(key))
+        if digest is not None and result.get("Metadata", {}).get("sha3-256") != digest:
+            raise ValueError("stored artifact digest metadata mismatch")
+        if size is not None and result.get("ContentLength") != size:
+            raise ValueError("stored artifact size mismatch")
+
+    def check_ready(self) -> None:
+        self.client.head_bucket(Bucket=self.bucket)
+
+    def delete(self, key: str) -> None:
+        self.client.delete_object(Bucket=self.bucket, Key=self._key(key))
+
+    def close(self) -> None:
+        close = getattr(self.client, "close", None)
+        if close is not None:
+            close()
 
     def copy_to(self, key: str, destination: Path) -> None:
         response = self.client.get_object(Bucket=self.bucket, Key=self._key(key))
