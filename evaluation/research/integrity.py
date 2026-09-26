@@ -194,7 +194,13 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
         mutations: list[dict[str, Any]] = []
 
         def mutate_sql(
-            name: str, select: str, update: str, parameter: tuple[Any, ...]
+            name: str,
+            select: str,
+            update: str,
+            parameter: tuple[Any, ...],
+            *,
+            target: str = "",
+            expected: str = "tampered",
         ) -> None:
             row = engine.query_one(select, (run["run_id"],))
             if row is None:
@@ -205,23 +211,31 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
             verified, reason = trust.verify_finalization(run["run_id"], audit)
             elapsed_ms = (perf_counter() - started) * 1000
             engine.execute(update, (original, run["run_id"]))
+            outcome = "tampered" if not verified else "verified"
             mutations.append(
                 {
                     "mutation": name,
+                    "target_object": target,
+                    "expected_verification_outcome": expected,
                     "detected": not verified,
-                    "verification_outcome": "tampered" if not verified else "verified",
+                    "verification_outcome": outcome,
+                    "matches_expected": outcome == expected,
                     "failure_category": reason if not verified else None,
                     "verification_ms": round(elapsed_ms, 4),
                 }
             )
-            if verified:
-                raise RuntimeError(f"TRUST-SAT did not detect {name} mutation")
+            restored, restored_reason = trust.verify_finalization(run["run_id"], audit)
+            if not restored:
+                raise RuntimeError(
+                    f"restoring {name} did not restore verification: {restored_reason}"
+                )
 
         mutate_sql(
             "decision",
             "SELECT action AS value FROM satsa_run_review_decisions WHERE run_id=?",
             "UPDATE satsa_run_review_decisions SET action=? WHERE run_id=?",
             ("dismiss",),
+            target="satsa_run_review_decisions.action",
         )
         mutate_sql(
             "finding",
@@ -230,12 +244,14 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
             "UPDATE satsa_findings SET rationale=? WHERE id=(SELECT f.id FROM satsa_findings f"
             " JOIN satsa_observations o ON o.id=f.observation_id WHERE o.run_id=? ORDER BY f.id LIMIT 1)",
             ("controlled mutation",),
+            target="satsa_findings.rationale",
         )
         mutate_sql(
             "risk",
             "SELECT profile_json AS value FROM satsa_run_risk WHERE run_id=?",
             "UPDATE satsa_run_risk SET profile_json=? WHERE run_id=?",
             ("{}",),
+            target="satsa_run_risk.profile_json",
         )
         mutate_sql(
             "recommendation",
@@ -244,6 +260,7 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
             "UPDATE satsa_run_recommendations SET recommendation_json=? WHERE id=(SELECT id"
             " FROM satsa_run_recommendations WHERE run_id=? ORDER BY id LIMIT 1)",
             ("{}",),
+            target="satsa_run_recommendations.recommendation_json",
         )
         mutate_sql(
             "source_provenance",
@@ -254,6 +271,7 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
             " WHERE version_id=(SELECT submission_version_id FROM satsa_run_context"
             " WHERE run_id=?) ORDER BY id LIMIT 1)",
             ("controlled-mutation",),
+            target="satsa_source_records.locator",
         )
         mutate_sql(
             "canonical_payload",
@@ -261,6 +279,7 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
             " WHERE run_id=?",
             "UPDATE satsa_trust_finalizations SET canonical_json=? WHERE run_id=?",
             ("{}",),
+            target="satsa_trust_finalizations.canonical_json",
         )
         mutate_sql(
             "receipt_signature",
@@ -271,6 +290,7 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
             "'supervisory_finalization' AND subject_id=(SELECT id FROM"
             " satsa_trust_finalizations WHERE run_id=?)",
             (b"controlled-mutation",),
+            target="satsa_trust_receipts.signature",
         )
 
         ledger_path = audit._ledger.path
@@ -289,6 +309,9 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
         mutations.append(
             {
                 "mutation": "ledger_chain",
+                "target_object": "audit ledger JSONL (last entry prev_hash)",
+                "expected_verification_outcome": "tampered",
+                "matches_expected": not ledger_verified,
                 "detected": not ledger_verified,
                 "verification_outcome": "tampered"
                 if not ledger_verified
@@ -297,8 +320,72 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
                 "verification_ms": round(ledger_ms, 4),
             }
         )
-        if ledger_verified:
-            raise RuntimeError("TRUST-SAT did not detect ledger mutation")
+
+        # Additional canonical-state classes, plus one operational field the
+        # design deliberately leaves unsigned (a negative control).
+        mutate_sql(
+            "decision_reason",
+            "SELECT reason AS value FROM satsa_run_review_decisions WHERE run_id=?",
+            "UPDATE satsa_run_review_decisions SET reason=? WHERE run_id=?",
+            ("controlled mutation",),
+            target="satsa_run_review_decisions.reason",
+        )
+        mutate_sql(
+            "observation_scope",
+            "SELECT scope_json AS value FROM satsa_observations WHERE run_id=?"
+            " ORDER BY id LIMIT 1",
+            "UPDATE satsa_observations SET scope_json=? WHERE id=(SELECT id FROM"
+            " satsa_observations WHERE run_id=? ORDER BY id LIMIT 1)",
+            ('{"mutated":true}',),
+            target="satsa_observations.scope_json",
+        )
+        version_scope = (
+            " WHERE version_id=(SELECT submission_version_id FROM satsa_run_context"
+            " WHERE run_id=?)"
+        )
+        mutate_sql(
+            "version_record_payload",
+            "SELECT payload_json AS value FROM satsa_version_records"
+            + version_scope
+            + " ORDER BY record_id LIMIT 1",
+            "UPDATE satsa_version_records SET payload_json=? WHERE record_id=(SELECT"
+            " record_id FROM satsa_version_records"
+            + version_scope
+            + " ORDER BY record_id LIMIT 1)",
+            ('{"mutated":true}',),
+            target="satsa_version_records.payload_json",
+        )
+        mutate_sql(
+            "artifact_digest",
+            "SELECT sha3_256_digest AS value FROM satsa_artifacts WHERE"
+            " submission_version_id=(SELECT submission_version_id FROM"
+            " satsa_run_context WHERE run_id=?) ORDER BY id LIMIT 1",
+            "UPDATE satsa_artifacts SET sha3_256_digest=? WHERE id=(SELECT id FROM"
+            " satsa_artifacts WHERE submission_version_id=(SELECT"
+            " submission_version_id FROM satsa_run_context WHERE run_id=?)"
+            " ORDER BY id LIMIT 1)",
+            ("0" * 64,),
+            target="satsa_artifacts.sha3_256_digest",
+        )
+        mutate_sql(
+            "receipt_public_key",
+            "SELECT public_key AS value FROM satsa_trust_receipts"
+            " WHERE subject_type='supervisory_finalization' AND subject_id=(SELECT id"
+            " FROM satsa_trust_finalizations WHERE run_id=?)",
+            "UPDATE satsa_trust_receipts SET public_key=? WHERE subject_type="
+            "'supervisory_finalization' AND subject_id=(SELECT id FROM"
+            " satsa_trust_finalizations WHERE run_id=?)",
+            (b"controlled-mutation-key",),
+            target="satsa_trust_receipts.public_key",
+        )
+        mutate_sql(
+            "operational_queue_field_control",
+            "SELECT lease_owner AS value FROM satsa_execution_jobs WHERE run_id=?",
+            "UPDATE satsa_execution_jobs SET lease_owner=? WHERE run_id=?",
+            ("controlled-mutation-owner",),
+            target="satsa_execution_jobs.lease_owner (unsigned by design)",
+            expected="verified",
+        )
 
         final_ok, final_reason = trust.verify_finalization(run["run_id"], audit)
         if not final_ok:
@@ -309,6 +396,28 @@ def run_trust_integrity_experiment(scratch_dir: Path) -> dict[str, Any]:
             "data_origin": "synthetic",
             "valid_control": {"verified": valid, "reason": valid_reason},
             "mutations": mutations,
+            "mutation_summary": {
+                "tested": len(mutations),
+                "expected_tampered": sum(
+                    m["expected_verification_outcome"] == "tampered" for m in mutations
+                ),
+                "detected_of_expected_tampered": sum(
+                    m["detected"]
+                    for m in mutations
+                    if m["expected_verification_outcome"] == "tampered"
+                ),
+                "negative_controls_verified": sum(
+                    not m["detected"]
+                    for m in mutations
+                    if m["expected_verification_outcome"] == "verified"
+                ),
+                "all_match_expected": all(m["matches_expected"] for m in mutations),
+                "wording": (
+                    "'detected all tested mutations' holds only when "
+                    "detected_of_expected_tampered equals expected_tampered; this "
+                    "is not a general tamper-detection rate"
+                ),
+            },
             "traceability": traceability,
             "workflow": {
                 "organization_id": organization_id,
