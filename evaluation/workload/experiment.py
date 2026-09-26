@@ -21,29 +21,37 @@ score. Everything here is explicitly synthetic; call it "simulated
 workload reduction," never "analyst time saved" — no real examiner
 has ever used this experiment's output.
 """
+
 from __future__ import annotations
 
 import random
+import statistics
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-
 
 # A genuinely bad operational profile: alerts closed fast without
 # real investigation, missing investigations outright, poor
 # remediation follow-through, weak escalation discipline.
-PATHOLOGICAL_CONFIG = dict(
-    fast_closure_rate=0.6, missing_investigation_rate=0.4,
-    no_remediation_rate=0.4, escalation_rate=0.2, disposition_rate=0.5,
-)
+PATHOLOGICAL_CONFIG = {
+    "fast_closure_rate": 0.6,
+    "missing_investigation_rate": 0.4,
+    "no_remediation_rate": 0.4,
+    "escalation_rate": 0.2,
+    "disposition_rate": 0.5,
+}
 # A genuinely clean operational profile — the same deterministic
 # "healthy" configuration validated in P19's negative-control test
 # (tests/test_phase64_satsa_fresh_database_e2e.py): every critical/
 # high alert escalated, every alert dispositioned, no fast closure,
 # no missing investigation, no remediation gaps.
-CLEAN_CONFIG = dict(
-    fast_closure_rate=0.0, missing_investigation_rate=0.0,
-    no_remediation_rate=0.0, escalation_rate=1.0, disposition_rate=1.0,
-)
+CLEAN_CONFIG = {
+    "fast_closure_rate": 0.0,
+    "missing_investigation_rate": 0.0,
+    "no_remediation_rate": 0.0,
+    "escalation_rate": 1.0,
+    "disposition_rate": 1.0,
+}
 
 
 @dataclass
@@ -55,16 +63,24 @@ class WorkloadPopulation:
     seed: int
 
 
-def build_population(engine, *, n_entities: int, n_pathological: int,
-                     seed: int, trust_key_dir: Path,
-                     period_start: float = 1735689600.0,
-                     period_end: float = 1738281600.0) -> WorkloadPopulation:
+def build_population(
+    engine,
+    *,
+    n_entities: int,
+    n_pathological: int,
+    seed: int,
+    trust_key_dir: Path,
+    period_start: float = 1735689600.0,
+    period_end: float = 1738281600.0,
+) -> WorkloadPopulation:
     """Generate ``n_entities`` synthetic CSEs (``n_pathological`` of
     them configured pathological, the rest clean), ingest and analyze
     every one into ``engine``. Which entities are pathological is
     decided by a seeded shuffle *before* any generation happens, and
     is never touched again after label assignment — SAT-SA never
     sees this list."""
+    if n_entities < 1 or n_pathological < 0:
+        raise ValueError("n_entities must be positive and n_pathological non-negative")
     if n_pathological > n_entities:
         raise ValueError("n_pathological cannot exceed n_entities")
     from satsa.analysis.synth import GenConfig, generate
@@ -80,9 +96,20 @@ def build_population(engine, *, n_entities: int, n_pathological: int,
     pathological_ids: set[str] = set()
     for i in range(n_entities):
         is_pathological = i in pathological_indices
-        overrides = dict(PATHOLOGICAL_CONFIG if is_pathological else CLEAN_CONFIG)
-        cfg = GenConfig(seed=seed * 1000 + i, num_cse=1,
-                        num_alerts=25, num_cases=6, **overrides)
+        profile: dict[str, float] = dict(
+            PATHOLOGICAL_CONFIG if is_pathological else CLEAN_CONFIG
+        )
+        cfg = GenConfig(
+            seed=seed * 1000 + i,
+            num_cse=1,
+            num_alerts=25,
+            num_cases=6,
+            escalation_rate=profile["escalation_rate"],
+            disposition_rate=profile["disposition_rate"],
+            fast_closure_rate=profile["fast_closure_rate"],
+            missing_investigation_rate=profile["missing_investigation_rate"],
+            no_remediation_rate=profile["no_remediation_rate"],
+        )
         outroot = Path(trust_key_dir).parent / f"workload-gen-{seed}-{i}"
         paths = generate(cfg, outroot)
         entity = svc.register_entity(f"CSE-WL-{seed}-{i:03d}", sector="defence")
@@ -94,8 +121,12 @@ def build_population(engine, *, n_entities: int, n_pathological: int,
             pathological_ids.add(entity.id)
 
     return WorkloadPopulation(
-        entity_ids=entity_ids, pathological_entity_ids=pathological_ids,
-        n_entities=n_entities, n_pathological=n_pathological, seed=seed)
+        entity_ids=entity_ids,
+        pathological_entity_ids=pathological_ids,
+        n_entities=n_entities,
+        n_pathological=n_pathological,
+        seed=seed,
+    )
 
 
 @dataclass
@@ -103,14 +134,19 @@ class WorkloadResult:
     """Every field here describes a *simulated* measurement against
     synthetically-labeled data — not a claim about real analyst
     behavior or real time savings."""
+
     n_entities: int
     n_pathological: int
     k_percentages: list[int]
     satsa_recall_at_k: dict = field(default_factory=dict)
     random_recall_at_k_mean: dict = field(default_factory=dict)
+    random_recall_at_k_trials: dict = field(default_factory=dict)
+    random_recall_at_k_distribution: dict = field(default_factory=dict)
     lift_over_random: dict = field(default_factory=dict)
     satsa_review_volume_to_find_all: int = 0
     random_review_volume_to_find_all_mean: float = 0.0
+    random_review_volume_to_find_all_trials: list[int] = field(default_factory=list)
+    random_review_volume_distribution: dict = field(default_factory=dict)
     n_random_trials: int = 0
     label: str = "simulated_workload_reduction"
 
@@ -122,10 +158,13 @@ class WorkloadResult:
             "k_percentages": self.k_percentages,
             "satsa_recall_at_k": self.satsa_recall_at_k,
             "random_recall_at_k_mean": self.random_recall_at_k_mean,
+            "random_recall_at_k_trials": self.random_recall_at_k_trials,
+            "random_recall_at_k_distribution": self.random_recall_at_k_distribution,
             "lift_over_random": self.lift_over_random,
             "satsa_review_volume_to_find_all": self.satsa_review_volume_to_find_all,
-            "random_review_volume_to_find_all_mean":
-                self.random_review_volume_to_find_all_mean,
+            "random_review_volume_to_find_all_mean": self.random_review_volume_to_find_all_mean,
+            "random_review_volume_to_find_all_trials": self.random_review_volume_to_find_all_trials,
+            "random_review_volume_distribution": self.random_review_volume_distribution,
             "n_random_trials": self.n_random_trials,
         }
 
@@ -150,18 +189,36 @@ def _review_volume_to_find_all(ordered_ids: list[str], pathological: set[str]) -
     return last_pos
 
 
+def _percentile(sorted_values: Sequence[float | int], fraction: float) -> float:
+    position = (len(sorted_values) - 1) * fraction
+    lower = int(position)
+    upper = min(lower + 1, len(sorted_values) - 1)
+    weight = position - lower
+    return sorted_values[lower] * (1 - weight) + sorted_values[upper] * weight
+
+
 def run_workload_experiment(
-    engine, population: WorkloadPopulation, *,
+    engine,
+    population: WorkloadPopulation,
+    *,
     k_percentages: tuple[int, ...] = (10, 20, 50),
-    n_random_trials: int = 200, rng_seed: int = 12345,
+    n_random_trials: int = 200,
+    rng_seed: int = 12345,
 ) -> WorkloadResult:
     """Compare SAT-SA's actual, already-computed entity prioritization
     against a *measured* (not assumed) random-order baseline, over
     ``n_random_trials`` independent shuffles of the same population."""
     from satsa.analysis.prioritize import prioritize_entities
 
+    if n_random_trials < 1:
+        raise ValueError("n_random_trials must be positive")
+    if not k_percentages or any(not 1 <= k <= 100 for k in k_percentages):
+        raise ValueError("k_percentages must contain values from 1 through 100")
+
     ranked = prioritize_entities(engine)
-    ranked_ids = [p.entity_id for p in ranked if p.entity_id in set(population.entity_ids)]
+    ranked_ids = [
+        p.entity_id for p in ranked if p.entity_id in set(population.entity_ids)
+    ]
     # Every population entity must appear in the ranking — if not,
     # prioritize_entities() silently dropped one, which is itself a
     # real defect this experiment would need to surface, not hide.
@@ -169,12 +226,16 @@ def run_workload_experiment(
     if missing:
         raise AssertionError(
             f"{len(missing)} population entities never appeared in "
-            f"prioritize_entities() output: {sorted(missing)[:5]}")
+            f"prioritize_entities() output: {sorted(missing)[:5]}"
+        )
 
     n = population.n_entities
     result = WorkloadResult(
-        n_entities=n, n_pathological=population.n_pathological,
-        k_percentages=list(k_percentages), n_random_trials=n_random_trials)
+        n_entities=n,
+        n_pathological=population.n_pathological,
+        k_percentages=list(k_percentages),
+        n_random_trials=n_random_trials,
+    )
 
     rng = random.Random(rng_seed)
     random_trials: dict[int, list[float]] = {k: [] for k in k_percentages}
@@ -185,9 +246,11 @@ def run_workload_experiment(
         for k in k_percentages:
             top_n = max(1, round(n * k / 100))
             random_trials[k].append(
-                _recall_at_k(shuffled, population.pathological_entity_ids, top_n))
+                _recall_at_k(shuffled, population.pathological_entity_ids, top_n)
+            )
         random_volumes.append(
-            _review_volume_to_find_all(shuffled, population.pathological_entity_ids))
+            _review_volume_to_find_all(shuffled, population.pathological_entity_ids)
+        )
 
     for k in k_percentages:
         top_n = max(1, round(n * k / 100))
@@ -195,13 +258,43 @@ def run_workload_experiment(
         random_r = sum(random_trials[k]) / len(random_trials[k])
         result.satsa_recall_at_k[k] = round(satsa_r, 4)
         result.random_recall_at_k_mean[k] = round(random_r, 4)
+        ordered = sorted(random_trials[k])
+
+        result.random_recall_at_k_trials[k] = [
+            round(value, 6) for value in random_trials[k]
+        ]
+        result.random_recall_at_k_distribution[k] = {
+            "n": len(ordered),
+            "mean": round(statistics.fmean(ordered), 6),
+            "minimum": round(ordered[0], 6),
+            "p25": round(_percentile(ordered, 0.25), 6),
+            "median": round(statistics.median(ordered), 6),
+            "p75": round(_percentile(ordered, 0.75), 6),
+            "maximum": round(ordered[-1], 6),
+            "interpretation": "empirical randomization distribution; not a confidence interval",
+        }
         result.lift_over_random[k] = (
-            round(satsa_r / random_r, 3) if random_r > 0 else
-            (float("inf") if satsa_r > 0 else 1.0))
+            round(satsa_r / random_r, 3) if random_r > 0 else None
+        )
 
     result.satsa_review_volume_to_find_all = _review_volume_to_find_all(
-        ranked_ids, population.pathological_entity_ids)
+        ranked_ids, population.pathological_entity_ids
+    )
     result.random_review_volume_to_find_all_mean = round(
-        sum(random_volumes) / len(random_volumes), 2)
+        sum(random_volumes) / len(random_volumes), 2
+    )
+    sorted_volumes = sorted(random_volumes)
+
+    result.random_review_volume_to_find_all_trials = list(random_volumes)
+    result.random_review_volume_distribution = {
+        "n": len(sorted_volumes),
+        "mean": round(statistics.fmean(sorted_volumes), 6),
+        "minimum": sorted_volumes[0],
+        "p25": round(_percentile(sorted_volumes, 0.25), 6),
+        "median": round(statistics.median(sorted_volumes), 6),
+        "p75": round(_percentile(sorted_volumes, 0.75), 6),
+        "maximum": sorted_volumes[-1],
+        "interpretation": "empirical randomization distribution; not a confidence interval",
+    }
 
     return result

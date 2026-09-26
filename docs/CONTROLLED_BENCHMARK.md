@@ -18,8 +18,12 @@ Every scenario is a deterministic hand-built single-entity fixture
 (`satsa/analysis/compval.py::SCENARIO_MAP`) or a seeded synthetic
 generator population (`evaluation/workload/experiment.py`). Nothing in
 this benchmark processes real CIC-IDS2017, Splunk BOTS, CSE, SOC, or
-NCIIPC data. Every result file records this statement and the
-benchmark version, code version, seeds, and per-input SHA-256 digests.
+NCIIPC data. A Phase 8 immutable bundle records the benchmark version,
+code revision/dirty state, configuration and scenario-manifest digests,
+seed, relevant package versions, and hashes of bundle files. Raw
+per-scenario output includes hashes of generated CSV inputs. The legacy
+JSON file is a convenience export; cite the immutable bundle manifest
+and contents.
 
 ## Scenario and ground-truth design
 
@@ -84,18 +88,27 @@ top-level sections and are never mixed.
 ## Reproducible command
 
 ```bash
-python scripts/run_controlled_benchmark.py --out <output-dir> [--seed 42]
+python scripts/run_controlled_benchmark.py --out <output-dir> [--seed 42] [--experiment-id <unique-id>]
 ```
 
-Writes `controlled-benchmark-results.json` (benchmark version, code
-version, seeds, timestamps, per-scenario labels/emissions, metrics,
-limitations) to the explicitly chosen output directory. Results are
-never written into tracked source directories by default. Determinism
-is enforced by fixed seeds and verified by
+Writes the legacy `controlled-benchmark-results.json` and a write-once
+bundle under `<output-dir>/experiments/<experiment-id>/` with raw results,
+metrics JSON/CSV, summary Markdown, configuration, and `manifest.json`.
+Results are never written into tracked source directories by default. The
+bundle writer refuses overwrite. `--random-trials` controls the number of
+random-order samples, and the recorded sample distribution is descriptive,
+not a confidence interval. Runtime measurements are kept outside
+deterministic domain metrics and scoped to local synchronous SQLite
+execution, not the hosted multi-service topology. Determinism is enforced
+by fixed seeds and verified by
 `tests/test_phase88_controlled_benchmark.py::test_runner_is_deterministic_for_fixed_seed`
 (two full runs must produce identical `metrics`).
 
 ## Allowed conclusions
+
+The following is a historical measured report from the prior P33 controlled
+run, retained for provenance. It is not the Phase 8 pilot result; cite the
+immutable Phase 8 bundle for any new run and its recorded seed/configuration.
 
 - On the controlled synthetic corpus (versioned v1.0.0, declared
   seeds), the real SAT-SA pipeline detected 5/5 declared signal

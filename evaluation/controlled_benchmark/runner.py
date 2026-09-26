@@ -23,6 +23,7 @@ comparison. Results are returned as a dict; a JSON file is written
 only when the caller passes an explicit ``output_dir`` (never into
 tracked source directories by default).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -31,7 +32,9 @@ import platform
 import sys
 import tempfile
 import time
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any, cast
 
 from evaluation.controlled_benchmark.manifest import (
     BENCHMARK_NAME,
@@ -41,10 +44,10 @@ from evaluation.controlled_benchmark.manifest import (
     validate_manifest,
 )
 
-
 # ---------------------------------------------------------------------------
 # Metrics (pure functions over DECLARED labels + emitted outputs)
 # ---------------------------------------------------------------------------
+
 
 def _prf(tp: int, fp: int, fn: int) -> dict:
     precision = tp / (tp + fp) if (tp + fp) else None
@@ -54,7 +57,9 @@ def _prf(tp: int, fp: int, fn: int) -> dict:
     else:
         f1 = 2 * precision * recall / (precision + recall)
     return {
-        "tp": tp, "fp": fp, "fn": fn,
+        "tp": tp,
+        "fp": fp,
+        "fn": fn,
         "precision": round(precision, 4) if precision is not None else None,
         "recall": round(recall, 4) if recall is not None else None,
         "f1": round(f1, 4) if f1 is not None else None,
@@ -90,6 +95,7 @@ def corpus_micro_metrics(per_scenario: list[dict]) -> dict:
 # Scenario corpus execution through the REAL pipeline
 # ---------------------------------------------------------------------------
 
+
 def _hash_submission_dir(d: Path) -> dict:
     """sha256 per input CSV — the input-artifact hashes the manifest
     promises ('where applicable'). Deterministic content digests."""
@@ -119,7 +125,9 @@ def _emitted_families_and_action(service, run_id: str) -> tuple[list[str], str]:
     rows = service._db.query_all(
         "SELECT f.rule_or_category, f.confidence_json FROM satsa_findings f"
         " JOIN satsa_observations o ON o.id = f.observation_id"
-        " WHERE o.run_id = ? AND f.state = 'signal'", (run_id,))
+        " WHERE o.run_id = ? AND f.state = 'signal'",
+        (run_id,),
+    )
     families = sorted({r.get("rule_or_category", "") for r in rows})
     if not families:
         return [], "SATSA_SURFACE"
@@ -136,11 +144,13 @@ def _emitted_families_and_action(service, run_id: str) -> tuple[list[str], str]:
             best_conf = score
             best_family = family
     rec_action = _SATSA_RECOMMENDATION_TO_DECISION.get(
-        recommend({
-            "rule_or_category": best_family,
-            "id": "cbench",
-            "evidence_refs": [],
-        }).action,
+        recommend(
+            {
+                "rule_or_category": best_family,
+                "id": "cbench",
+                "evidence_refs": [],
+            }
+        ).action,
         "SATSA_SURFACE",
     )
     return families, rec_action
@@ -160,17 +170,20 @@ def _run_scenarios(engine, *, trust_key_dir) -> tuple[list[dict], list[dict]]:
 
     for case in synthetic_ground_truth():
         if case.case_id not in SCENARIO_MAP:
-            not_executed.append({
-                "case_id": case.case_id,
-                "scenario": case.scenario,
-                "reason": NOT_EXECUTABLE_REASON.get(
-                    case.case_id,
-                    "No deterministic single-entity fixture exists; the "
-                    "runner refuses to fabricate one."),
-            })
+            not_executed.append(
+                {
+                    "case_id": case.case_id,
+                    "scenario": case.scenario,
+                    "reason": NOT_EXECUTABLE_REASON.get(
+                        case.case_id,
+                        "No deterministic single-entity fixture exists; the "
+                        "runner refuses to fabricate one.",
+                    ),
+                }
+            )
             continue
 
-        builder = SCENARIO_MAP[case.case_id]
+        builder = cast(Callable[[], tuple[Any, Any]], SCENARIO_MAP[case.case_id])
         cse, _omitted = builder()
         run = ingest = entity = assessment = None
         input_hashes: dict = {}
@@ -179,56 +192,73 @@ def _run_scenarios(engine, *, trust_key_dir) -> tuple[list[dict], list[dict]]:
             _write_cse(cse, d)
             input_hashes = _hash_submission_dir(d)
             entity = service.register_entity(
-                f"CBENCH-{case.case_id}", sector="defence",
-                environment_class="on-prem")
+                f"CBENCH-{case.case_id}", sector="defence", environment_class="on-prem"
+            )
             assessment = service.open_assessment(
-                entity.id, 1735689600.0, 1735689600.0 + 86400 * 31)
+                entity.id, 1735689600.0, 1735689600.0 + 86400 * 31
+            )
+            ingestion_started = time.perf_counter()
             ingest = service.submit(assessment.id, d)
+            ingestion_seconds = time.perf_counter() - ingestion_started
             if ingest.status != "accepted":
-                not_executed.append({
-                    "case_id": case.case_id,
-                    "scenario": case.scenario,
-                    "reason": f"Ingestion failed: status={ingest.status}",
-                })
+                not_executed.append(
+                    {
+                        "case_id": case.case_id,
+                        "scenario": case.scenario,
+                        "reason": f"Ingestion failed: status={ingest.status}",
+                    }
+                )
                 continue
+            analysis_started = time.perf_counter()
             run = service.run_analysis(
-                entity.id, assessment.id, trust_key_dir=trust_key_dir)
+                entity.id, assessment.id, trust_key_dir=trust_key_dir
+            )
+            analysis_seconds = time.perf_counter() - analysis_started
             if run.status not in ("completed", "partial"):
-                not_executed.append({
-                    "case_id": case.case_id,
-                    "scenario": case.scenario,
-                    "reason": f"Analysis run failed: {run.status}",
-                })
+                not_executed.append(
+                    {
+                        "case_id": case.case_id,
+                        "scenario": case.scenario,
+                        "reason": f"Analysis run failed: {run.status}",
+                    }
+                )
                 continue
             emitted_families, emitted_action = _emitted_families_and_action(
-                service, run.run_id)
+                service, run.run_id
+            )
 
-        executed.append({
-            "case_id": case.case_id,
-            "scenario": case.scenario,
-            "run_id": run.run_id,
-            "entity_id": entity.id,
-            "assessment_id": assessment.id,
-            "input_artifact_sha256": input_hashes,
-            "declared_labels": {
-                "expected_signals": sorted(case.expected_signals),
-                "expected_action": case.expected_action,
-                "source": "satsa.analysis.validate.synthetic_ground_truth",
-            },
-            "metrics": scenario_family_metrics(
-                case.expected_signals, emitted_families),
-            "action": {
-                "expected": case.expected_action,
-                "emitted": emitted_action,
-                "ok": emitted_action == case.expected_action,
-            },
-        })
+        executed.append(
+            {
+                "case_id": case.case_id,
+                "scenario": case.scenario,
+                "run_id": run.run_id,
+                "entity_id": entity.id,
+                "assessment_id": assessment.id,
+                "input_artifact_sha256": input_hashes,
+                "ingestion_seconds": ingestion_seconds,
+                "analysis_seconds": analysis_seconds,
+                "declared_labels": {
+                    "expected_signals": sorted(case.expected_signals),
+                    "expected_action": case.expected_action,
+                    "source": "satsa.analysis.validate.synthetic_ground_truth",
+                },
+                "metrics": scenario_family_metrics(
+                    case.expected_signals, emitted_families
+                ),
+                "action": {
+                    "expected": case.expected_action,
+                    "emitted": emitted_action,
+                    "ok": emitted_action == case.expected_action,
+                },
+            }
+        )
     return executed, not_executed
 
 
 # ---------------------------------------------------------------------------
 # Closure-time baseline comparison (labels stated by construction)
 # ---------------------------------------------------------------------------
+
 
 def _closure_baseline_section(*, seed: int = 42) -> dict:
     """Deterministic closure-time corpus: fast closures are positive by
@@ -247,31 +277,53 @@ def _closure_baseline_section(*, seed: int = 42) -> dict:
     # Deliberate construction: 9 normal-paced critical closures
     # (700-950s, above the documented 600s critical fast-closure SLA)
     # and 3 deliberately fast closures (40-90s). Labels precede any run.
-    close_times = [700, 800, 900, 750, 850, 950, 720, 780, 880,
-                   40, 60, 90]
+    close_times = [700, 800, 900, 750, 850, 950, 720, 780, 880, 40, 60, 90]
     labels = [False] * 9 + [True] * 3
     severities = ["critical"] * len(close_times)
 
     alerts = []
     for i, (ct, sev) in enumerate(zip(close_times, severities)):
-        alerts.append(Alert(
-            entity_id="cbench-e", assessment_id="cbench-a",
-            native_id=f"CB-ALERT-{i:03d}",
-            created_at=base, mapped_severity=sev,
-            acknowledged_at=base + 10, closed_at=base + 10 + ct,
-            source_record_ref=f"cbench-sr-{i}"))
+        alerts.append(
+            Alert(
+                entity_id="cbench-e",
+                assessment_id="cbench-a",
+                native_id=f"CB-ALERT-{i:03d}",
+                created_at=base,
+                mapped_severity=sev,
+                acknowledged_at=base + 10,
+                closed_at=base + 10 + ct,
+                source_record_ref=f"cbench-sr-{i}",
+            )
+        )
     dataset = CanonicalDataset(
-        entity_id="cbench-e", assessment_id="cbench-a",
-        snapshot_digest="cbench-d", alerts=alerts, cases=[], steps=[],
-        escalations=[], dispositions=[], assets=[],
+        entity_id="cbench-e",
+        assessment_id="cbench-a",
+        snapshot_digest="cbench-d",
+        alerts=alerts,
+        cases=[],
+        steps=[],
+        escalations=[],
+        dispositions=[],
+        assets=[],
         submitted_categories=frozenset(
-            ("alerts", "cases", "investigation_steps", "escalations",
-             "dispositions", "assets")))
+            (
+                "alerts",
+                "cases",
+                "investigation_steps",
+                "escalations",
+                "dispositions",
+                "assets",
+            )
+        ),
+    )
     worker = FastClosureWorker()
     batch = worker.evaluate(
-        SnapshotRef("cbench-d", "cbench-e", "cbench-a"), dataset, [], None,
-        RunContext(run_id="cbench-r", entity_id="cbench-e",
-                   assessment_id="cbench-a"))
+        SnapshotRef("cbench-d", "cbench-e", "cbench-a"),
+        dataset,
+        [],
+        None,
+        RunContext(run_id="cbench-r", entity_id="cbench-e", assessment_id="cbench-a"),
+    )
     flagged = {aid for f in batch.findings for aid in f.scoped_subjects}
     # scoped_subjects carry the Alert domain id (a per-construction
     # random id, exactly as tests/test_phase77 does) — native_id would
@@ -279,10 +331,11 @@ def _closure_baseline_section(*, seed: int = 42) -> dict:
     satsa_flags = [a.id in flagged for a in dataset.alerts]
 
     comparison = compare_closure_time_detectors(
-        close_times, labels, satsa_flags=satsa_flags, seed=seed)
+        close_times, labels, satsa_flags=satsa_flags, seed=seed
+    )
     return {
         "label_origin": "construction — fast closures were built fast, "
-                        "normal closures slow, before any detector ran",
+        "normal closures slow, before any detector ran",
         "n_records": len(close_times),
         "n_positive_labels": sum(labels),
         "comparison": comparison,
@@ -293,10 +346,16 @@ def _closure_baseline_section(*, seed: int = 42) -> dict:
 # Full benchmark
 # ---------------------------------------------------------------------------
 
-def run_benchmark(*, trust_key_dir=None, workload_seed: int = 42,
-                  n_population: int = 10, n_pathological: int = 4,
-                  n_random_trials: int = 200,
-                  include_ablation: bool = True) -> dict:
+
+def run_benchmark(
+    *,
+    trust_key_dir=None,
+    workload_seed: int = 42,
+    n_population: int = 10,
+    n_pathological: int = 4,
+    n_random_trials: int = 200,
+    include_ablation: bool = True,
+) -> dict:
     """Execute the controlled benchmark end to end.
 
     All heavy state (scratch DB, generated submissions, workload
@@ -315,6 +374,7 @@ def run_benchmark(*, trust_key_dir=None, workload_seed: int = 42,
     validate_manifest(manifest)
 
     started = time.time()
+    benchmark_timer = time.perf_counter()
     own_temp = None
     engine = None
     if trust_key_dir is None:
@@ -333,7 +393,8 @@ def run_benchmark(*, trust_key_dir=None, workload_seed: int = 42,
         MigrationRunner(engine).migrate()
 
         scenario_executed, scenario_not_executed = _run_scenarios(
-            engine, trust_key_dir=trust_key_dir)
+            engine, trust_key_dir=trust_key_dir
+        )
 
         per_scenario = [
             {
@@ -342,12 +403,16 @@ def run_benchmark(*, trust_key_dir=None, workload_seed: int = 42,
                 "metrics": s["metrics"],
                 "action": s["action"],
                 "declared_labels": s["declared_labels"],
+                "input_artifact_sha256": s["input_artifact_sha256"],
             }
             for s in scenario_executed
         ]
         action_total = len(per_scenario)
         action_ok = sum(1 for s in per_scenario if s["action"]["ok"])
 
+        baseline_timer = time.perf_counter()
+        closure_baselines = _closure_baseline_section()
+        closure_baseline_seconds = time.perf_counter() - baseline_timer
         metrics = {
             "scenario_corpus": {
                 "coverage": {
@@ -361,39 +426,52 @@ def run_benchmark(*, trust_key_dir=None, workload_seed: int = 42,
                     "ok": action_ok,
                     "total": action_total,
                     "rate": round(action_ok / action_total, 4)
-                    if action_total else None,
+                    if action_total
+                    else None,
                 },
                 "per_scenario": per_scenario,
             },
-            "closure_time_baselines": _closure_baseline_section(),
+            "closure_time_baselines": closure_baselines,
         }
 
         # Prioritization — the existing workload experiment (labels from
         # generator configuration, never from detector output).
+        workload_started = time.perf_counter()
         population = build_population(
-            engine, n_entities=n_population,
-            n_pathological=n_pathological, seed=workload_seed,
-            trust_key_dir=trust_key_dir)
+            engine,
+            n_entities=n_population,
+            n_pathological=n_pathological,
+            seed=workload_seed,
+            trust_key_dir=trust_key_dir,
+        )
         workload = run_workload_experiment(
-            engine, population, n_random_trials=n_random_trials,
-            rng_seed=workload_seed + 1)
+            engine,
+            population,
+            n_random_trials=n_random_trials,
+            rng_seed=workload_seed + 1,
+        )
         metrics["prioritization"] = workload.to_dict()
+        workload_seconds = time.perf_counter() - workload_started
 
         # Ablation — existing runner over the 'mixed' scenario scope
         # (the scope expected to emit multiple families, so ablation has
         # something real to remove).
+        ablation_started = time.perf_counter()
         if include_ablation:
-            mixed = next((s for s in scenario_executed
-                          if s["case_id"] == "mixed"), None)
+            mixed = next(
+                (s for s in scenario_executed if s["case_id"] == "mixed"), None
+            )
             if mixed is None:
                 metrics["ablation"] = {
                     "status": "not_applicable",
                     "reason": "the 'mixed' scenario scope did not execute, "
-                              "so no ablation scope exists",
+                    "so no ablation scope exists",
                 }
             else:
                 metrics["ablation"] = run_ablation_study(
-                    engine, mixed["entity_id"], mixed["assessment_id"])
+                    engine, mixed["entity_id"], mixed["assessment_id"]
+                )
+        ablation_seconds = time.perf_counter() - ablation_started
 
         finished = time.time()
         return {
@@ -407,16 +485,39 @@ def run_benchmark(*, trust_key_dir=None, workload_seed: int = 42,
             },
             "started_at": started,
             "finished_at": finished,
+            "performance": {
+                "measurement_scope": (
+                    "local synchronous benchmark with isolated SQLite; "
+                    "not production API/worker/S3 topology"
+                ),
+                "total_elapsed_seconds": round(
+                    time.perf_counter() - benchmark_timer, 6
+                ),
+                "scenario_timings": [
+                    {
+                        "case_id": row["case_id"],
+                        "ingestion_seconds": round(row["ingestion_seconds"], 6),
+                        "analysis_seconds": round(row["analysis_seconds"], 6),
+                    }
+                    for row in scenario_executed
+                ],
+                "closure_baseline_seconds": round(closure_baseline_seconds, 6),
+                "synthetic_population_and_prioritization_seconds": round(
+                    workload_seconds, 6
+                ),
+                "ablation_seconds": round(ablation_seconds, 6),
+            },
             "metrics": metrics,
             "provenance_note": manifest["provenance"]["statement"],
             "limitations": list(manifest["limitations"]),
         }
     finally:
         import shutil
+
         if engine is not None:
             try:
                 engine.close()
-            except Exception:
+            except Exception:  # noqa: BLE001,S110 - cleanup must not mask run failures
                 pass
         if own_temp:
             shutil.rmtree(own_temp, ignore_errors=True)
@@ -428,6 +529,5 @@ def write_results(results: dict, output_dir: Path) -> Path:
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     out = output_dir / "controlled-benchmark-results.json"
-    out.write_text(
-        json.dumps(results, indent=2, default=str), encoding="utf-8")
+    out.write_text(json.dumps(results, indent=2, default=str), encoding="utf-8")
     return out
