@@ -1,5 +1,40 @@
 # SAT-SA Deployment and Operations
 
+## Hosting status and provider-neutral contract
+
+| Item | Status |
+|---|---|
+| Hosting provider | None configured. The earlier Render Blueprint (`render.yaml`, which built the separate `feat/sat-sa-site` branch) and its start script were removed. |
+| Deployment configuration | Provider-neutral: `Dockerfile`, `web/Dockerfile`, `docker-compose.saas.yml`, migrations, health checks. |
+| Local execution | Supported (native processes; Compose where Docker is available). |
+| Hosted deployment | Not currently configured; nothing in this repository is claimed to be deployed. |
+
+A replacement host must provide the following. Nothing here names or assumes a
+provider.
+
+| Requirement | Contract |
+|---|---|
+| Frontend runtime | Node.js 24 serving the standalone Next.js build from `web/Dockerfile` (`node server.js`, listens on `PORT`, default 3000, `HOSTNAME=0.0.0.0`). Server-side settings: `SATSA_DATA_SOURCE=api`, `SATSA_API_BASE_URL` (backend base URL), `SATSA_AUTH_ADAPTER` (defaults to `backend` in production builds). |
+| API runtime | Root `Dockerfile` image, default command `python -m satsa.api.server` (port 8000). Behind a TLS-terminating proxy. |
+| Worker runtime | Same image, command `sat-sa-worker`; long-running, no inbound port; at least one instance. |
+| Migration job | Same image, `python -m satsa.api.migrate upgrade`, run once per rollout before API/worker start; a failure stops the rollout. |
+| PostgreSQL | Managed or self-run PostgreSQL reachable by API, worker and migration job (`SATSA_DATABASE_URL`); point-in-time recovery or scheduled backups. |
+| Object storage | Private S3-compatible bucket (`SATSA_STORAGE_BACKEND=s3`, `SATSA_S3_*`); never public. |
+| Persistent storage | A durable volume shared by API and worker for the TRUST-SAT ledger (`SATSA_LEDGER_PATH`) and signing-key directory (`SATSA_TRUST_KEY_DIR`); backed up with the database and bucket as one recovery set. Container filesystems must not hold this state. |
+| Environment variables | As in the table under "Local production-like start" below; `SATSA_ENVIRONMENT=production` makes startup fail closed on missing or unsafe settings. |
+| Health checks | API: `GET /health/live` (liveness), `GET /health/ready` (readiness). Worker: `python -m satsa.api.healthcheck --role worker`. |
+| HTTPS | TLS at the edge for frontend and API; `SATSA_ALLOWED_HOSTS` and HTTPS `SATSA_ALLOWED_ORIGINS` set to the real hostnames; secure cookies. |
+| Secrets | Injected through the host's secret store or mounted files, never committed: database credentials, S3 keys (or workload identity), signing key material. |
+
+After the provider is chosen, verify with `scripts/deployment_smoke.py` against
+the hosted API and worker, and record the result separately from local results.
+
+**Image note.** The root `Dockerfile` builds the Python backend image. Its
+header comment still describes the earlier single-process CLI/Jinja container,
+but its default command is the FastAPI API server, and `docker-compose.saas.yml`
+reuses the same image for the worker, migration and key-initialization steps.
+The Next.js frontend is built separately from `web/Dockerfile`.
+
 ## Phase 7 production deployment
 
 ### Service topology

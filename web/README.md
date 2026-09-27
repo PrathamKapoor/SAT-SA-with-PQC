@@ -3,9 +3,9 @@
 The SAT-SA product interface: a public site and the secure supervisory
 application. Next.js 16, React 19, Tailwind CSS 4, Lucide icons.
 
-- **Live:** https://sat-sa-with-pqc-81gi.onrender.com/ (Render builds the
-  `feat/sat-sa-site` branch, see `../render.yaml`; this folder is the current
-  UI and will replace that branch once hosting is pointed here)
+- **Hosting:** no hosting provider is currently configured. The production
+  image is `web/Dockerfile` (standalone Next.js server on `PORT`, default
+  3000); see `../docs/deployment.md` for the provider-neutral hosting contract.
 - **Backend contract:** [`docs/API_CONTRACT.md`](docs/API_CONTRACT.md)
 
 ## Surfaces
@@ -37,7 +37,7 @@ remains the only place a permission is enforced.
 | Value | Used when | Behaviour |
 |---|---|---|
 | `development` | default under `npm run dev` | Sign-in lists five development identities (`dev-admin`, `dev-supervisor`, `dev-analyst`, `dev-auditor`, `dev-viewer`). One click enters the application. The session is a browser-session cookie; the top bar shows "Development session" and an exit action. |
-| `backend` | default for every production build (`next build`, Docker, Render) | Sign-in takes a credential issued by the SAT-SA backend (`POST /api/v1/session`). |
+| `backend` | default for every production build (`next build`, Docker) | Sign-in takes a credential issued by the SAT-SA backend (`POST /api/v1/session`). |
 
 Development identities exist only in this frontend. They carry no credential,
 are validated against a fixed list on every request, and are never sent to a

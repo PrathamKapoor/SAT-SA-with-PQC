@@ -269,12 +269,17 @@ This repository contains two UIs. Both live on `main`:
 | Stack | Next.js 16 / React 19 / Tailwind 4 | FastAPI + Jinja2 + vanilla JS |
 | Data | Typed data layer: a development fixture generated from a real backend run, or the backend API (`web/docs/API_CONTRACT.md`) | Live SQLite database: real ingest, findings, verification, reviews |
 | Run | `cd web && npm ci && npm run dev` | `python scripts/serve_ui.py` |
-| Hosted | https://sat-sa-with-pqc-81gi.onrender.com/ | Local / air-gapped only |
+| Hosted | No hosting provider configured (see below) | Local / air-gapped only |
 
-`web/` holds the current, redesigned UI. Render (`render.yaml`) still
-deploys the older UI from the `feat/sat-sa-site` branch, so the live site
-shows that version until hosting is pointed at `web/`. See
-[`web/README.md`](web/README.md).
+`web/` holds the current, redesigned UI. See [`web/README.md`](web/README.md).
+
+**Hosting.** The repository contains provider-neutral deployment
+infrastructure (backend image, Compose topology with PostgreSQL and
+S3-compatible storage, separate API and worker, migrations, health checks,
+and a web image). No hosting provider is currently configured in `main`, and
+no hosted deployment is claimed. The earlier Render configuration has been
+removed. See [`docs/deployment.md`](docs/deployment.md#hosting-status-and-provider-neutral-contract)
+for the hosting contract.
 
 The backend UI is FastAPI + Jinja2 + vanilla JS, all local: Overview (command center) ·
 Entities · Entity detail · Findings · Finding detail (WHAT/WHY/EVIDENCE/
@@ -337,8 +342,9 @@ docs/                  # phase docs, roadmap status, deployment, demo runbook,
 demo.py                # SAT-SA end-to-end demonstration
 .github/workflows/     # CI (dependency install, full suite, offline/trust/
                        # auth suites, CLI smoke, demo — see Limitations)
-Dockerfile             # single-process backend container (see Limitations)
-render.yaml            # Render deployment (builds the feat/sat-sa-site branch)
+Dockerfile             # backend image (API server by default; also runs the
+                       # worker and migration commands in docker-compose.saas.yml)
+docker-compose.saas.yml # provider-neutral API/worker/PostgreSQL/S3 topology
 ```
 
 `qsmlops/` provides reusable infrastructure (crypto, evidence, logging,
