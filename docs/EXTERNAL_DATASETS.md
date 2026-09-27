@@ -75,5 +75,5 @@ detectors, whatever its size or popularity. This analysis was done on
 | Category | Evidence available |
 | --- | --- |
 | Controlled synthetic | mechanism, robustness, integrity, orchestration, peer sensitivity, prioritization (EXP-R01b, O01, O02, T01, P01, A01, PR01) |
-| External dataset | partial: UCI-498 real IT incident workflow (EXP-X02) |
+| External dataset | UCI-498 real IT incident workflow (EXP-X02b, EXP-X03): independent feasibility validation; negative independent evidence under domain mismatch; not external-effectiveness validation — see [EXTERNAL_FAILURE_ANALYSIS.md](EXTERNAL_FAILURE_ANALYSIS.md) |
 | Real SOC operational data | **not evaluated** |
