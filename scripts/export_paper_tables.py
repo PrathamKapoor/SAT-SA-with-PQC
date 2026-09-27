@@ -1,4 +1,4 @@
-"""Regenerate paper tables (CSV, Markdown, LaTeX) from experiment bundles."""
+"""Regenerate paper tables (CSV, Markdown, LaTeX) and figure data from bundles."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
+from evaluation.research.figures import export_figures
 from evaluation.research.tables import export_tables
 
 
@@ -31,7 +32,14 @@ def main(argv: list[str] | None = None) -> int:
     expected = None
     if args.freeze:
         record = json.loads((args.freeze / "freeze.json").read_text(encoding="utf-8"))
-        expected = {b["bundle"]: b["manifest_sha256"] for b in record["bundles"]}
+        # Only canonical bundles feed paper tables and figures; superseded and
+        # historical bundles stay in the freeze for verification only.
+        expected = {
+            b["bundle"]: b["manifest_sha256"]
+            for b in record["bundles"]
+            if b["role"] == "canonical"
+        }
+        args.only = sorted(expected)
         args.bundles = args.freeze / "bundles"
     if args.bundles is None:
         parser.error("give --freeze or --bundles")
@@ -42,12 +50,16 @@ def main(argv: list[str] | None = None) -> int:
         and (not args.only or path.name in args.only)
     ]
     record = export_tables(bundles, args.out, expected_manifests=expected)
+    figures = export_figures(bundles, args.out / "figures", expected_manifests=expected)
     print(
         json.dumps(
             {
                 "sources": [s["bundle"] for s in record["sources"]],
                 "skipped": record["skipped"],
                 "tables": len(record["tables"]),
+                "figures": [
+                    f["figure_id"] for f in figures["figures"] if "data_file" in f
+                ],
             },
             indent=2,
         )

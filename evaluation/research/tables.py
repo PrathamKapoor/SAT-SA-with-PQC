@@ -214,7 +214,76 @@ def _prioritization(results: dict[str, Any]) -> dict[str, list[Row]]:
     return {"prioritization": rows, "prioritization_comparisons": comparisons}
 
 
+def _controlled(results: dict[str, Any]) -> dict[str, list[Row]]:
+    metrics = results["metrics"]
+    closure = metrics["closure_time_baselines"]
+    baselines = [
+        {
+            "detector": name,
+            "n_records": closure["n_records"],
+            **{k: v[k] for k in ("tp", "fp", "fn", "tn", "precision", "recall", "f1")},
+        }
+        for name, v in sorted(closure["comparison"].items())
+    ]
+    scenarios = [
+        {
+            "scenario": s["case_id"],
+            "expected": s["metrics"]["expected_families"],
+            "emitted": s["metrics"]["emitted_families"],
+            "tp": s["metrics"]["tp"],
+            "fp": s["metrics"]["fp"],
+            "fn": s["metrics"]["fn"],
+            "action_ok": s["action"]["ok"],
+        }
+        for s in metrics["scenario_corpus"]["per_scenario"]
+    ]
+    return {"baseline_closure_time": baselines, "controlled_scenarios": scenarios}
+
+
+def _external(results: dict[str, Any]) -> dict[str, list[Row]]:
+    metrics = results["metrics"]
+    association = [
+        {
+            "score": name,
+            "spearman_rho": v["spearman_rho"],
+            "ci_lower": (v["bootstrap_interval"] or {}).get("lower"),
+            "ci_upper": (v["bootstrap_interval"] or {}).get("upper"),
+            "n_groups": metrics["design"]["entities"],
+        }
+        for name, v in metrics["association_with_sla_miss_rate"].items()
+    ]
+    ranking = [
+        {
+            "method": method,
+            **{
+                f"{metric}@{k}%": v[str(k)][metric]
+                for k in (10, 20, 30)
+                for metric in ("precision", "recall", "ndcg")
+            },
+            "review_volume_to_find_all": v.get("review_volume_to_find_all"),
+        }
+        for method, v in metrics["ranking_vs_sla_miss_quartile"].items()
+    ]
+    families = [
+        {
+            "family": family,
+            "groups_emitting": count,
+            "of_groups": metrics["design"]["entities"],
+        }
+        for family, count in metrics["detector_behaviour"][
+            "entities_emitting_family"
+        ].items()
+    ]
+    return {
+        "external_association": association,
+        "external_ranking": ranking,
+        "external_detector_saturation": families,
+    }
+
+
 BUILDERS: dict[str, Callable[[dict[str, Any]], dict[str, list[Row]]]] = {
+    "satsa-controlled-supervisory-benchmark": _controlled,
+    "satsa-external-itsm-v1": _external,
     "satsa-evidence-perturbation-v1": _robustness,
     "trust-sat-controlled-mutation-v1": _integrity,
     "satsa-orchestration-overhead-v1": _overhead,
@@ -303,7 +372,8 @@ def export_tables(
         except (BundleIntegrityError, FileNotFoundError, KeyError) as exc:
             record["skipped"].append({"bundle": bundle.name, "reason": str(exc)})
             continue
-        builder = BUILDERS.get(results.get("experiment", ""))
+        experiment = results.get("experiment") or results.get("benchmark_name", "")
+        builder = BUILDERS.get(experiment)
         if builder is None:
             record["skipped"].append(
                 {"bundle": bundle.name, "reason": "no table builder for experiment"}
@@ -312,7 +382,7 @@ def export_tables(
         record["sources"].append(
             {
                 "bundle": bundle.name,
-                "experiment": results["experiment"],
+                "experiment": experiment,
                 "commit": manifest["code"]["commit"],
                 "source_tree_dirty": manifest["code"]["source_tree_dirty"],
                 "results_sha256": manifest["artifacts_sha256"]["raw/results.json"],
