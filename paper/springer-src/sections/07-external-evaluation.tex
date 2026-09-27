@@ -21,7 +21,9 @@ of \V{X02b-analysis-median}\,s per group.
 rate: Spearman $\rho=\V{X02b-rho-risk}$, 95\% bootstrap \V{X02b-rho-risk-lo} to
 \V{X02b-rho-risk-hi} (Table~\ref{tab:external}, Fig.~\ref{fig:external}). Slowest median
 resolution reached $\rho=\V{X02b-rho-slowest}$ (\V{X02b-rho-slowest-lo} to
-\V{X02b-rho-slowest-hi}), as expected for a timeliness outcome; reassignment rate
+\V{X02b-rho-slowest-hi}), a strong positive association with the SLA-miss rate,
+which is expected because slow resolution and missed resolution deadlines measure
+closely related aspects of timeliness; reassignment rate
 reached \V{X02b-rho-reassign}. Among the \V{X02b-relevant} groups in the top SLA-miss
 quartile, SAT-SA's precision@10\% was \V{X02b-p10-satsa} (random \V{X02b-p10-random},
 slowest resolution \V{X02b-p10-slowest}), and it needed to review \V{X02b-volume-satsa}
@@ -39,7 +41,8 @@ prevalence (right) against the SLA-miss rate; one point per assignment group
 \end{figure}
 
 \paragraph{Failure analysis.} A diagnostic analysis (X03) on the same data changed no
-detector, threshold or weight. It attributes the result to four causes.
+detector, threshold or weight. It identifies four contributing explanations; the
+data are observational and the analysis is diagnostic, not causal.
 \emph{(i) Construct mismatch (primary).} On a service desk, fast resolution is the
 goal: the prevalence of fast closures was \emph{negatively} associated with SLA misses
 ($\rho=\V{X03-rho-fast}$, \V{X03-rho-fast-lo} to \V{X03-rho-fast-hi}). SAT-SA treats
@@ -66,7 +69,7 @@ ticket, and reassigned incidents missed more often (\V{X03-reassigned-miss} vers
 
 \paragraph{Decision.} No risk-model change was made. Changing detectors or weights to
 raise the correlation with SLA misses would optimize SAT-SA toward a timeliness
-construct it does not claim to measure, using the evaluation data for tuning. We
+construct it is not designed to measure, using the evaluation data for tuning. We
 therefore read X02b and X03 as \emph{feasibility and construct-validity evidence}, not
 as external validation of effectiveness: on data whose outcome measures a different
 construct and that lacks investigation, escalation and coverage semantics, SAT-SA's

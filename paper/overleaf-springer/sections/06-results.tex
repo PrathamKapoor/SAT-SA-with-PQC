@@ -35,13 +35,11 @@ in 12 populations and more in 6.
 
 These results must be read against how the data were made. The populations come from
 SAT-SA's own generator, whose pathological profile deliberately injects the behaviours
-that SAT-SA's detector families target, so the construction favours SAT-SA. Because
-the generated populations inject behaviours targeted by SAT-SA's detector families,
-PR01 is a controlled sensitivity and ranking-mechanism evaluation rather than an
-unbiased benchmark of general supervisory effectiveness. It shows that the ranking
-responds as designed under these generated conditions; it does not establish ranking
-superiority in general or effectiveness in real SOCs. Even under this favourable
-construction, a single closure-speed rule captures most of the separation.
+that SAT-SA's detector families target. Because the generated populations inject
+behaviours targeted by SAT-SA's detector families, PR01 is a controlled sensitivity
+and ranking-mechanism evaluation rather than an unbiased benchmark of general
+supervisory effectiveness: it characterizes how the ranking responds under these
+generated conditions. Even under this favourable construction, a single closure-speed rule captures most of the separation.
 
 \input{tables/tab-prio}
 
@@ -69,15 +67,12 @@ workers add ranking noise to the measured metric.
 We read this nuanced result narrowly. The full worker set spans a broader analytical
 signal space than the generated populations exercise, and the ranking objective is
 specific to the generator's pathological profile. The ablation therefore shows that
-some workers can reduce this particular metric; it does not show that those workers
-are unnecessary, that they would be harmful in real SOC environments, or that all
-16 workers are necessary. Worker utility is task- and
-population-dependent, which is one more reason why external and human evaluation are
-needed.
+some workers can reduce this particular metric on these populations; worker utility
+is task- and population-dependent (Section~\ref{sec:threats}).
 
 \input{tables/tab-ablation}
 
-\subsection{Imperfect evidence (RQ4)}
+\subsection{Imperfect evidence (RQ3)}
 Each perturbed condition declared its family, affected records and expected validation
 outcome before it ran, on a fresh tenant database. Validation matched the declared
 contract in 245 of 245 conditions with an expectation
@@ -106,7 +101,7 @@ findings more often as the rate grows.}
 \label{fig:robust}
 \end{figure}
 
-\subsection{Peer-cohort sensitivity (RQ6)}
+\subsection{Peer-cohort sensitivity (RQ4)}
 Over 96 engineered cells (Fig.~\ref{fig:peer}), cohorts of two peers never
 produced a finding, as Eq.~\eqref{eq:peer} requires three. With a tight cohort spread,
 7 of eight subject values were flagged from three peers upward---every
@@ -124,7 +119,7 @@ emitted a finding (P01, 96 cells).}
 \label{fig:peer}
 \end{figure}
 
-\subsection{Orchestration cost and recovery (RQ7)}
+\subsection{Orchestration cost and recovery (RQ5)}
 On one machine with SQLite, 30 paired trials per mode gave median processing
 times, excluding the human decision, of 1.276\,s (direct),
 1.433\,s (LangGraph) and 0.976\,s (unreviewed benchmark
@@ -146,7 +141,7 @@ not exercised.
 
 \input{tables/tab-orch}
 
-\subsection{Integrity of the decided record (RQ5)}
+\subsection{Integrity of the decided record (RQ6)}
 On one finalized controlled workflow, each of 14 mutations was applied,
 verified, restored and re-verified (Table~\ref{tab:trust}). Verification detected
 13 of 13 mutations of signed state---decision action and
@@ -154,7 +149,7 @@ reason, finding, risk, recommendation, observation scope, source provenance,
 submission record payload, artifact digest, canonical payload, receipt signature,
 receipt public key and ledger chain---while the negative control (1
 mutation of an unsigned operational queue field) still verified, as designed. These
-are detections of the tested mutation classes on one workflow, not a detection rate,
-and detection is not prevention (Section~\ref{sec:system}).
+results cover the tested mutation classes on one workflow; verification detects
+alteration after the fact rather than preventing it (Section~\ref{sec:system}).
 
 \input{tables/tab-trust}

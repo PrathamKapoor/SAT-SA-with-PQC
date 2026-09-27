@@ -3,13 +3,14 @@
 
 \paragraph{Research questions.} RQ1: does SAT-SA emit the finding families declared
 for controlled scenarios? RQ2: how does it compare with simple baselines, and what
-does each worker contribute? RQ4: how does it behave on imperfect evidence? RQ5: does
-verification detect alteration of the finalized record? RQ6: how sensitive is the peer
-rule to cohort size and dispersion? RQ7: what do durable orchestration and review
-cost, and do interrupted runs recover? EXT: does the pipeline run on independent real
-data, and is its risk associated with an outcome available there? RQ3, the utility of
-SAT-SA to supervisors, requires a human study that was not run. Table~\ref{tab:design}
-maps every question to its experiment.
+does each worker contribute? RQ3: how does it behave on imperfect evidence? RQ4: how
+sensitive is the peer rule to cohort size and dispersion? RQ5: what do durable
+orchestration and review cost, and do interrupted runs recover? RQ6: does
+verification detect alteration of the finalized record? EXT: does the pipeline run
+on independent real data, and is its risk associated with an outcome available
+there? Utility to supervisors was outside the evaluated scope because no
+human-subject study was conducted. Table~\ref{tab:design} maps every question to
+its experiment.
 
 \input{tables/tab-design}
 
@@ -31,8 +32,9 @@ has triage-graded SOC incidents but no acknowledgement, closure, investigation-s
 escalation records~\cite{freitas2024guide}, and CIC-IDS2017 contains network flows,
 not workflow records~\cite{sharafaldin2018cicids}.
 
-\paragraph{Baselines.} Baselines are deliberately simple, because a supervisory tool
-must beat transparent rules to justify its complexity. For closure-time detection:
+\paragraph{Baselines.} Baselines are deliberately simple because they provide
+transparent reference points for assessing whether the additional analytical
+machinery yields measurable benefit. For closure-time detection:
 fixed threshold, MAD rule, z-score and interquartile-range (IQR) rules, and seeded
 random. For prioritization: random order, critical-and-high alert volume, and a
 closure-speed heuristic that ranks entities by \emph{fastest median closure time}.
@@ -53,7 +55,7 @@ higher, equal or lower. No $p$-values are computed and no significance is claime
 intervals are descriptive and uncorrected. Table~\ref{tab:design} distinguishes
 repeated trials from independent units.
 
-\paragraph{Evidence discipline.} Every experiment writes a write-once bundle
+\paragraph{Evidence discipline.} Each experiment produces an experiment bundle
 (manifest with code commit and a dirty-tree flag, configuration, raw results,
 processed metrics) with SHA-256 hashes. The canonical bundles are frozen and
 hash-verified; superseded bundles (for example X02, replaced by X02b after a

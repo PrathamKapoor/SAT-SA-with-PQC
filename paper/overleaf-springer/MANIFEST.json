@@ -2,15 +2,15 @@
   "schema": "satsa-overleaf-manifest/1",
   "zip": {
     "path": "paper/overleaf-springer.zip",
-    "sha256": "84814e4bfc56b06a37fe9f6fb0405f49bd35297b2c8ba560b617e43d9a045442",
-    "size": 237910,
-    "files": 56
+    "sha256": "6f63a0d08677968415377c2234cd108c49d2f8f068904bb31d29630295b25f33",
+    "size": 311704,
+    "files": 63
   },
   "files": [
     {
       "file": "CLAIM_TRACE.csv",
-      "sha256": "5e19bd082ccf5dd668f47f034e9847bd8e130c05a0f2deb91986328264fb2df7",
-      "size": 60362,
+      "sha256": "3f74ff65e6e5ea03c380a456a16dd1d1b9381f07c33f14e18db604520fe3c866",
+      "size": 60152,
       "purpose": "provenance / build metadata (not in ZIP)",
       "in_zip": false
     },
@@ -58,8 +58,8 @@
     },
     {
       "file": "main.pdf",
-      "sha256": "4b3faa40b9c8aa68c14171f19c312e592a6042132367379560dff01c0c03680f",
-      "size": 398122,
+      "sha256": "2cf6093e724169a6466f097e340dd0e07f534275a72f538a711d86b60eab697c",
+      "size": 398560,
       "purpose": "compiled PDF (not in ZIP)",
       "in_zip": false
     },
@@ -93,15 +93,15 @@
     },
     {
       "file": "sections/00-abstract.tex",
-      "sha256": "9e9ad7fd44eb78c8a902fdba4c3ca3f9529830056e51ba1a3f0642b395532e21",
-      "size": 1859,
+      "sha256": "662ef4170c167bb15a0da06714850cc8123c4d5c2f4db1b6ab0d86353cbdbf92",
+      "size": 1912,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/01-introduction.tex",
-      "sha256": "00a81d27bcf0a890027d4f11aee9b72cdafb0e114320fda003247310711a3c48",
-      "size": 4155,
+      "sha256": "6a7ab37d4e1bb692858dd9bfa23763d02d6962a8a24a9cdd3fe82ff9a8a49f7b",
+      "size": 4176,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -121,43 +121,43 @@
     },
     {
       "file": "sections/04-system.tex",
-      "sha256": "db4ee3599b4eaed2dbbd8d2a6d0d82ae937b109639ef13bb4669bf650efb9186",
-      "size": 5647,
+      "sha256": "9683002570e2d58df2c3c61129790ece91576612db39b84ce3cc253f59453692",
+      "size": 5958,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/05-experimental-methodology.tex",
-      "sha256": "a9ccebfdd4f116017ccdcdab208502977de642b3da98ff0c979ac461a4baab32",
-      "size": 4178,
+      "sha256": "a435e6ae01fc9a54397abdf114539128c4e7a7ead81a386ae7e54838796bb924",
+      "size": 4249,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/06-results.tex",
-      "sha256": "2f2d6da4bb1a67dd4a98986f58c2e7fc0a399c438d8e37d09191080a2a898271",
-      "size": 8473,
+      "sha256": "2a8a7048301717dce01cc717af546a06b3164a8c5b0703afd9b26ab5f9f39498",
+      "size": 8197,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/07-external-evaluation.tex",
-      "sha256": "a0efffa51b5205347992348248c8d3e54bfcaaf7d3a65b6aefb845db74f6f9d3",
-      "size": 4288,
+      "sha256": "72bdccedfbe602eb488b85d0f6d7c9ae80c0c9974740fc58eb215d35bb5d096d",
+      "size": 4502,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/08-discussion.tex",
-      "sha256": "aeb5ad98d404b5f407d2830382f94d90580f0c2f82ebed6fdfc083d753f7222d",
-      "size": 3200,
+      "sha256": "64936e889f5d010f4d323ee1e615b73c69284080672e4c013c412e41f65045e5",
+      "size": 3178,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/09-threats.tex",
-      "sha256": "4d855341b094ee5ddb8ba4ea99a8bcbb1982f955033dc4befe387e3bb6e3b64b",
-      "size": 2685,
+      "sha256": "0a2dec4136c1b5553ba0c75e37d9330e9a78209c8b1e252fee3fe1ce76c091b9",
+      "size": 2742,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -170,8 +170,8 @@
     },
     {
       "file": "sections/11-conclusion.tex",
-      "sha256": "2dc246c808848ad88d9c066d0584d1a2fb142b929f1b1ca14cea5f18a6105c82",
-      "size": 1527,
+      "sha256": "c1362fbfa633dca4f1f1aabcfe8661e091fb42bc2602beb11b72275afd4fe57d",
+      "size": 1507,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -246,6 +246,34 @@
       "in_zip": true
     },
     {
+      "file": "supplementary/literature-matrix.csv",
+      "sha256": "3a17cef7ef37403bbafeab80748aa2116dcd3385d61d8fb0bff8a23e5ce63460",
+      "size": 29777,
+      "purpose": "supplementary material",
+      "in_zip": true
+    },
+    {
+      "file": "supplementary/literature-review/abstract-stage-decisions.json",
+      "sha256": "0fe507835c60b44430938d2c3e6bb12279ea92c98fa75e0826f5caf84a326b94",
+      "size": 34674,
+      "purpose": "supplementary material",
+      "in_zip": true
+    },
+    {
+      "file": "supplementary/literature-review/additional-sources.csv",
+      "sha256": "406757d2dd8bea4d24fcede10cf6417bf75d9317a397d5841331a40a54bf8b60",
+      "size": 9301,
+      "purpose": "supplementary material",
+      "in_zip": true
+    },
+    {
+      "file": "supplementary/literature-review/excluded.csv",
+      "sha256": "2b5b5bcaa0bf5446ff99e735506b06c1a0026bacb51e8b21668b13b130eca406",
+      "size": 224857,
+      "purpose": "supplementary material",
+      "in_zip": true
+    },
+    {
       "file": "supplementary/literature-review/extraction.csv",
       "sha256": "666db9af7cf401899f5847a3218bfd9b9107711d90e29cc041e3ab14faec6f7b",
       "size": 8281,
@@ -268,8 +296,22 @@
     },
     {
       "file": "supplementary/literature-review/protocol.md",
-      "sha256": "02fdb493e0c63fbe53b2d5a92502f95317dbd908cd2e3c2854291aa5493076a7",
-      "size": 8750,
+      "sha256": "d5ff8b7a5d7558f0feff3f7140779eca93358d01dff640ba1af1cb787141fbfa",
+      "size": 8852,
+      "purpose": "supplementary material",
+      "in_zip": true
+    },
+    {
+      "file": "supplementary/literature-review/run_searches.py",
+      "sha256": "16db5c2f7d7ccd5029f37005088df379cedb55c18304e1a45e81570be4b110f6",
+      "size": 12978,
+      "purpose": "supplementary material",
+      "in_zip": true
+    },
+    {
+      "file": "supplementary/literature-review/screen.py",
+      "sha256": "77e74657fdea5fcfdd38e697bca10aa4d9b9623b960230e85b0d4dbf9bbdf6a9",
+      "size": 6554,
       "purpose": "supplementary material",
       "in_zip": true
     },
@@ -305,6 +347,13 @@
       "file": "supplementary/literature-review/update-2026-09-27/records.csv",
       "sha256": "db85c677f753670db5338f2ceea3707930632d74a7937c3d3fe464cd491e7380",
       "size": 102761,
+      "purpose": "supplementary material",
+      "in_zip": true
+    },
+    {
+      "file": "supplementary/literature-review/update-2026-09-27/run_update.py",
+      "sha256": "17d7e5e323cee7cb88d73697ee696713d76df30e79f9891165fb2aaa28e84e9e",
+      "size": 5397,
       "purpose": "supplementary material",
       "in_zip": true
     },
@@ -366,7 +415,7 @@
     },
     {
       "file": "tables/tab-design.tex",
-      "sha256": "a79ebf95f183ab8b078cae47ee2ddd25a260faa301b4c486b553f093228fd70d",
+      "sha256": "fe5b5e3572827cd3f6c6613e33073485e87f43cd0e9012055e5599e1a1c358b6",
       "size": 1394,
       "purpose": "manuscript table",
       "in_zip": true

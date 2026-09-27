@@ -1,9 +1,9 @@
 {
   "paper_version": "springer-proceedings-draft-1",
-  "source_commit": "4d886456022335610e5ea1aa1c0074188ec98c61",
+  "source_commit": "2c20063cdf160aa28a40db955d68a5fa0d900f49",
   "evidence_freeze": "satsa-evidence-freeze-v2",
   "freeze_json_sha256": "2ac93ef3f2967f908c35b05c1fed97dc60282aa503d1a97594275deae3a1ff0a",
-  "generation_date": "2026-09-27T20:03:09.939494+00:00",
+  "generation_date": "2026-09-27T20:13:52.143557+00:00",
   "template_source": "Springer LaTeX2e Proceedings Template (official ZIP, link.springer.com/series/558)",
   "template_version": "llncs.cls v2.25 (2026-09-03); splncs04.bst",
   "literature_search_date": "2026-09-27 (structured search) + 2026-09-27 (update search)",
