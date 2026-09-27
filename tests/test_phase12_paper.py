@@ -135,6 +135,54 @@ def test_values_tex_uses_math_minus() -> None:
     assert "\\@namedef{pv@A}{\\ensuremath{-}0.11}" in tex
 
 
+def test_sih_safe_numbers_trace_to_paper_data(rebuilt: dict) -> None:
+    sih = json.loads((ROOT / "research" / "sih-evidence.json").read_text("utf-8"))
+    assert sih["schema"] == "satsa-sih-evidence/3"
+    claims = _claims(rebuilt)
+    for item in sih["safe_demo_numbers"]:
+        assert item["context"], item["say"]
+        for claim_id in item["claim_ids"]:
+            assert claims[claim_id]["display"] in item["say"], (claim_id, item["say"])
+    steps = [s["step"] for s in sih["demo_flow"]["steps"]]
+    assert steps[0] == "LOGIN" and steps[-1] == "VERIFICATION"
+    assert len(steps) == 13
+
+
+def test_publication_snapshot_verifies_and_detects_tampering(tmp_path: Path) -> None:
+    from evaluation.research.publication import build_publication, verify_publication
+
+    out = tmp_path / "publication-test"
+    record = build_publication(
+        PAPER,
+        FREEZE,
+        out,
+        publication_id="publication-test",
+        paper_commit="test",
+        manuscript_version="test",
+        literature_snapshot_date="2026-09-27",
+    )
+    assert record["freeze"]["freeze_id"] == "satsa-evidence-freeze-v2"
+    assert "paper/data/paper-data.json" in record["files"]
+    assert not any(name.endswith(".aux") for name in record["files"])
+    assert verify_publication(out, repo_root=ROOT)["intact"]
+    with pytest.raises(FileExistsError):
+        build_publication(
+            PAPER,
+            FREEZE,
+            out,
+            publication_id="again",
+            paper_commit="test",
+            manuscript_version="test",
+            literature_snapshot_date="2026-09-27",
+        )
+    values = out / "paper" / "data" / "values.tex"
+    values.write_text(values.read_text("utf-8") + "% edit\n", encoding="utf-8")
+    (out / "paper" / "extra.txt").write_text("x", encoding="utf-8")
+    problems = verify_publication(out, repo_root=ROOT)["problems"]
+    assert "hash mismatch paper/data/values.tex" in problems
+    assert "unlisted file paper/extra.txt" in problems
+
+
 def test_generated_tables_and_figures_match_freeze() -> None:
     pytest.importorskip("matplotlib")
     from evaluation.research.paper_audit import audit_numbers
