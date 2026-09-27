@@ -95,6 +95,18 @@ The external run takes about 25 minutes locally (50 groups). A new freeze is
 built with `scripts/build_evidence_freeze.py --selection <file> --out
 research/evidence/freeze-vN`; never edit an existing freeze.
 
+### Phase 12: manuscript and publication package
+
+```powershell
+python scripts/build_paper_assets.py   # paper values, tables, figures, supplementary from freeze-v2
+python scripts/audit_paper.py          # numbers, citations, claim wording; non-zero exit on a problem
+cd paper; latexmk -pdf manuscript.tex
+python scripts/build_publication_snapshot.py --verify research/evidence/publication-v1
+```
+
+`paper/REPRODUCIBILITY.md` classifies what has been reproduced (Levels 1–5)
+and what cannot be.
+
 ## Manifest and hashes
 
 The manifest records experiment status, UTC creation time, controlled dataset
