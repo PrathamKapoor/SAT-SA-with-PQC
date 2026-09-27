@@ -1,41 +1,55 @@
-# Paper Evidence Index
+# Paper Evidence Index (freeze v1)
 
-Maps each candidate paper section and claim to the experiment and artifact
-that supports it, and to its current status. Experiment definitions and
-results: [EXPERIMENTS.md](EXPERIMENTS.md). Claims boundary:
-[RESEARCH_CLAIMS.md](RESEARCH_CLAIMS.md).
+Canonical evidence: `research/evidence/freeze-v1/` (verify with
+`python scripts/verify_evidence_freeze.py research/evidence/freeze-v1`).
+Tables: `freeze-v1/exports/*.{csv,md,tex}`; figure data:
+`freeze-v1/exports/figures/` with `figures-index.json`. Report:
+[EVIDENCE_FREEZE.md](EVIDENCE_FREEZE.md). Limitations:
+[RESEARCH_LIMITATIONS.md](RESEARCH_LIMITATIONS.md).
 
-Status values: **measured** (executed, bundle exists), **derived** (computed
-from a measured bundle), **configured** (a design parameter, not a result),
-**unverified**, **not executed**, **blocked**. "Artifact" paths are bundle
-directories outside the repository; each manifest names the commit, dataset,
-seed and configuration digest.
+Evidence categories are never merged: **S** controlled synthetic, **X**
+external dataset (partial), **O** real SOC operational data (none exists).
 
-| Paper section | Claim (wording must match the evidence) | Experiment | Artifact | Status |
-| --- | --- | --- | --- | --- |
-| System / methodology | SAT-SA runs deterministic detectors, risk, recommendation, human review and TRUST-SAT finalization on one hosted path | code + EXP-O01, EXP-D01 | `EXP-O01-orchestration-overhead/`; `docs/deployment.md` verification record | measured (local SQLite, local processes) |
-| Table 1 — dataset characteristics | Five authored catalog scenarios, 245 declared perturbations, 20-entity generated populations | EXP-C01, EXP-R01b, EXP-PR01 | respective `config.json` / `raw/results.json` | configured |
-| Controlled detection | In the five executable catalog scenarios, SAT-SA emitted every declared family (recall 1.0) with extra families (precision 0.417 shared DB; 0.556 isolated DBs) | EXP-C01, EXP-A01 | `controlled-final-seed-17/`; `EXP-A01-component-ablation/` | measured (synthetic) |
-| Table 2 — baseline comparison (closure) | Closure-time detector vs z-score/MAD/IQR/fixed/random on construction labels | EXP-C01 | `controlled-final-seed-17/processed/metrics.json` | measured (12 records) |
-| Table 2 / Figure 2 — prioritization | On 20 generated populations SAT-SA ranked above random order and alert-volume ranking in 18–20/20 populations per metric, and matched or exceeded a closure-speed heuristic in most but not all (recall@20%: 8 higher, 11 equal, 1 lower) | EXP-PR01 | `EXP-PR01-prioritization-replicated/`; `tables/prioritization*.{csv,md,tex}` | measured (synthetic; descriptive intervals) |
-| Table 3 / Figure 3 — ablation | Removing `fast-closure` or `negative-space` lowered catalog recall to 0.6; four workers lowered population ranking quality when present | EXP-A01 | `EXP-A01-component-ablation/` | measured (5 scenarios; 5 seeds, exploratory) |
-| Table 4 / Figure 5 — robustness | Hosted validation matched its declared contract in 245/245 conditions; staleness and cross-record contradictions are not detected | EXP-R01b | `EXP-R01b-evidence-robustness/` | measured (synthetic) |
-| Robustness — defect found | Evaluation exposed a withheld sequence-chronology finding, fixed in `da80046` | EXP-R01 → EXP-R01b | both bundles | measured |
-| Table 5 — integrity | TRUST-SAT detected all 13 tested canonical-state mutations; an unsigned operational field did not affect verification | EXP-T01 | `EXP-T01-trust-mutation-matrix/` | measured (one workflow) |
-| Table 6 — operational cost | Finalization median 0.288 s, verification 0.062 s, graph orchestration +0.096 s median (interval includes 0) on local SQLite | EXP-O01 | `EXP-O01-orchestration-overhead/` | measured (one machine) |
-| Figure 6 — recovery | 36/36 injected interruptions recovered with identical outputs and no repeated completed stage | EXP-O02 | `EXP-O02-orchestration-recovery/` | measured (in-process injection) |
-| Figure 4 — peer sensitivity | Peer finding requires ≥3 peers; detection depends on cohort spread and size | EXP-P01 | `EXP-P01-peer-sweep/` | measured (engineered cohorts) |
-| Deployment | API + worker processes completed the HTTP supervisory workflow | EXP-D01 | smoke JSON report | measured for local SQLite processes only; PostgreSQL, S3 and containers **unverified** |
-| Production-topology performance | Throughput/latency on PostgreSQL + S3 + API + worker | — | none | **blocked**: Docker unavailable; live PostgreSQL pending credentials |
-| External validation | Behaviour on independent public/real data | EXP-X01 | none | **blocked / not executed** |
-| Expert validation | Agreement with expert labels | — | none | **not executed** (template only) |
-| Human evaluation | Review-time or accuracy effect for human reviewers | EXP-H01 | none | **not executed** (protocol ready) |
-| Statistical inference | Any significance claim | — | none | **not made**: all comparisons are descriptive with bootstrap intervals |
+## Claim matrix
+
+| RQ | Claim (exact wording) | Exp. | Dataset | Baseline | Metric | Canonical result | Artifact | Cat. | Limits |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| RQ1 | In five controlled catalog scenarios SAT-SA emitted every declared finding family, with additional undeclared families | C01 | S: catalog v1.0 | declared labels | micro P/R/F1, action alignment | TP 5, FP 7, FN 0; P 0.417, R 1.0, F1 0.588; action 4/5 | `controlled-final-seed-17` | B | authored labels |
+| RQ2 | On 12 construction-labelled closures, SAT-SA's fast-closure detector matched fixed-threshold and MAD baselines (F1 1.0); z-score and IQR flagged none | C01 | S | z/MAD/IQR/fixed/random | F1 | SAT-SA 1.0 = fixed 1.0 = MAD 1.0; random 0.33 | `baseline_closure_time.*` | B | 12 records |
+| RQ2 | Across 20 generated populations SAT-SA ranked pathological entities above random order and alert-volume ranking in 18–20/20 populations per metric, and matched or exceeded a closure-speed heuristic in most but not all | PR01 | S: generator, seeds 100–119 | random, alert volume, fastest closure | P/R/NDCG@10/20/30% | recall@20% median 0.8 vs 0.6 (closure), 0.2 (volume), 0.20 (random); vs closure 8 higher / 11 equal / 1 lower | `EXP-PR01…`, `prioritization*.*`, FIG-2 | B | generator aligned with detectors |
+| RQ2 | Removing fast-closure or negative-space lowered catalog recall from 1.0 to 0.6; four workers lowered population ranking quality when present | A01 | S | full worker set | micro R; recall@20% | see EXPERIMENTS.md | `EXP-A01…`, `ablation_*`, FIG-3 | B | n=5 seeds exploratory |
+| RQ3 | Findings in the evaluated workflow cite resolvable source records through an authorized decision and a verifying receipt | T01, D01 | S | checklist | coverage | receipt verified; 18/18 HTTP checks | `EXP-T01…`, `supporting/EXP-D01…json` | C | one workflow |
+| RQ4 | Hosted validation matched its declared contract in 245/245 perturbed conditions; stale and contradictory records were accepted silently | R01b | S: 5 scenarios × 248 conditions | paired control | contract match, family change | 245/245; omission rejected 3/11/14 of 25; staleness 15/15 accepted, no change | `EXP-R01b…`, `robustness_*`, FIG-5 | B | authored fixtures |
+| RQ4 | Robustness evaluation exposed and fixed a withheld sequence-chronology finding | R01 → R01b | S | — | family emitted for re-sequenced duplicate steps | absent in 5/5 scenarios before `da80046` (R01); present in 5/5 after, 0 findings withheld (R01b) | `EXP-R01…` (superseded), `EXP-R01b…` | B | worker log messages from R01 were not recorded in its bundle |
+| RQ5 | TRUST-SAT detected all 13 tested single-field mutations of canonical state; an unsigned operational field did not affect verification | T01 | S: one workflow | valid control, negative control | detected / expected | 13/13 detected; control verified | `EXP-T01…`, `integrity_mutations.*` | D | not a detection rate |
+| RQ6 | A peer finding needs ≥3 peers and depends on cohort spread and size | P01 | S: 96 engineered cells | fixed policy | finding emitted, MAD deviation | tight: 7/8 subjects flagged from n=3; wide: extremes only, fast subjects from n≥5 | `EXP-P01…`, FIG-4 | B | closure metric only |
+| RQ7 | On one machine with SQLite, LangGraph orchestration added a median +0.096 s (95% interval −0.020 to +0.211) and 38 DB calls per workflow with identical outputs; supervisory finalization took a median 0.288 s | O01 | S: mixed scenario | direct execution; unreviewed config | paired median difference | as stated | `EXP-O01…`, `orchestration_*`, FIG-6a | C/E | one machine, SQLite |
+| RQ7 | 36/36 injected interruptions recovered with outputs identical to uninterrupted runs and no completed stage repeated | O02 | S | uninterrupted reference | recovery, duplication | 36/36 | `EXP-O02…`, `recovery.*`, FIG-6b | C/E | in-process injection |
+| EXT-1 | The unchanged pipeline ingested and analysed a real IT incident-workflow log (50 groups, 22,604 incidents) without rejections | X02 | X: UCI-498 | — | ingest/run status | 50/50 accepted, 50/50 completed; median 14 s per group | `EXP-X02…` | B | ITSM, not SOC |
+| EXT-2 | On this real distribution several detectors fired for every group | X02 | X | — | groups emitting family | 4 families 50/50; peer families 11–17/50 | `external_detector_saturation.*` | B (negative) | thresholds from synthetic data |
+| EXT-3 | SAT-SA's entity risk was not associated with the groups' SLA-miss rate; a resolution-time rule was | X02 | X | random, volume, slowest resolution, reassignment rate | Spearman ρ; top-quartile P/R/NDCG | SAT-SA ρ −0.11 (−0.42, 0.21); slowest resolution ρ 0.94; SAT-SA P@10% 0.40 vs random 0.25 | `external_association.*`, `external_ranking.*`, FIG-7 | B (negative) | SLA ≠ supervisory quality |
+| — | Real SOC operational effectiveness | — | O | — | — | **not yet demonstrated** | none | — | no data |
+| — | Expert agreement with SAT-SA findings | — | — | — | — | **not yet demonstrated** (ingestion ready) | none | — | no labels |
+| — | Human reviewers work faster or better with SAT-SA | H01 | — | evidence-only | — | **not yet demonstrated** (protocol ready) | none | — | no study |
+| — | Production-topology performance (PostgreSQL, S3, containers) | — | — | — | — | **not yet demonstrated** (blocked) | none | — | Docker/DSN unavailable |
+
+## Contribution classification
+
+| Contribution | Category | Basis |
+| --- | --- | --- |
+| Supervisor-side, record-level SOC assessment with evidence-cited findings | A — candidate research contribution (application framing), low confidence | [LITERATURE_POSITIONING.md](LITERATURE_POSITIONING.md) |
+| Absence-based (negative-space) supervisory checks | A candidate, low confidence; technique known (conformance checking) | same |
+| Controlled findings: robustness, ablation, prioritization, peer sensitivity, external association | B — empirical findings (including negative results) | freeze v1 |
+| Tenant-aware PostgreSQL/SQLite persistence, versioned submissions, queue and workers | C — engineering contribution | code; PostgreSQL unverified live |
+| LangGraph orchestration with review interrupt and recovery | C — engineering/orchestration capability | EXP-O01/O02 |
+| TRUST-SAT ML-DSA-65 signed supervisory receipts and hash-chained ledger | D — security/integrity capability | EXP-T01 |
+| API/worker deployment topology, smoke test, CI topology job | E — deployment capability | EXP-D01; containers unverified |
+| Research bundles, freeze, statistics, table/figure export, expert-label workflow | F — supporting infrastructure | code |
 
 ## Wording rules
 
-- Say "in the controlled synthetic scenarios" or "in the evaluated workflow"
-  for every measured result above; none is real-world evidence.
-- Say "detected all tested mutations", never "tamper-proof".
-- Say "on one machine with SQLite" for every timing.
-- Do not claim novelty, superiority or production scalability.
+- Qualify every result with its evidence category ("in controlled synthetic
+  scenarios", "on one external IT incident log").
+- "detected all tested mutations" — never "tamper-proof".
+- "on one machine with SQLite" for every timing.
+- No "first", "novel", "outperforms", "state of the art", "scalable".

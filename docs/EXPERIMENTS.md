@@ -9,6 +9,10 @@ live outside the repository (Phase 9 runs: `C:\tmp\satsa-phase9\`; Phase 8
 runs: `C:\tmp\satsa-phase8-final\`) and must be archived with the commit they
 name before being cited.
 
+**Canonical results are frozen in `research/evidence/freeze-v1/`** (see
+[EVIDENCE_FREEZE.md](EVIDENCE_FREEZE.md)); the `C:\tmp` copies are working
+copies only.
+
 Status vocabulary: **MEASURED** (executed, completed bundle, clean source
 tree), **IMPLEMENTED — NOT EXECUTED**, **BLOCKED: reason**, **PROTOCOL READY —
 NOT EXECUTED**. All data is synthetic or controlled unless stated otherwise.
@@ -30,7 +34,8 @@ stated otherwise; they are not production-topology measurements.
 | EXP-PR01 | Replicated prioritization with matched baselines | 20 generated populations of 20 entities (5 pathological) | 20 independent seeds | Random order; critical-alert volume; fastest median closure | `run_prioritization_experiment.py` | MEASURED (commit `9325fdd`) |
 | EXP-D01 | HTTP smoke across local API and worker processes (SQLite, local storage) | one smoke tenant | 18 checks, 1 run | — | `scripts/deployment_smoke.py --provision --report …` | MEASURED: 18/18 PASS (commit `aa79109`; report `EXP-D01-local-process-smoke.json`) |
 | EXP-H01 | Evidence-only vs SAT-SA-assisted human review | frozen case set (to be drawn) | not recruited | Evidence-only condition | — | PROTOCOL READY — NOT EXECUTED (`docs/HUMAN_REVIEW_PROTOCOL.md`) |
-| EXP-X01 | External public data (CIC-IDS2017, BOTS, GUIDE) | real public data | — | — | adapters in `public_benchmarks/` | BLOCKED: datasets not downloaded; see below |
+| EXP-X01 | External public security data (CIC-IDS2017, BOTS, GUIDE) | real public data | — | — | adapters in `public_benchmarks/` | NOT EXECUTED: unsuitable for workflow detectors and download blocked ([EXTERNAL_DATASETS.md](EXTERNAL_DATASETS.md)) |
+| EXP-X02 | External real IT incident-workflow log | UCI-498 (CC BY 4.0), 50 groups, 22,604 incidents | 50 assignment groups | random, incident volume, slowest median resolution, reassignment rate | `run_external_itsm_experiment.py` | MEASURED (commit `8f63aeb`) |
 
 ## Measured results
 
@@ -149,6 +154,13 @@ acknowledgement). Peer values are evenly spaced around a 610 s median.
   5 peers upward, as the MAD narrows.
 - A flagged subject ranked first by risk within its own cohort in every cell.
 
+### EXP-C01 closure-time baselines (Phase 8, canonical)
+
+On 12 construction-labelled critical closures (3 fast), SAT-SA's fast-closure
+detector, the fixed-threshold baseline and the MAD baseline each scored
+precision = recall = F1 = 1.0; z-score and IQR flagged nothing (recall 0);
+seeded random scored F1 0.33. The detector **ties** simple baselines here.
+
 ### EXP-A01 — component ablation
 
 - Scenario level (5 fixtures, one database each): full set micro TP 5, FP 4,
@@ -201,6 +213,35 @@ code 127 before writing any bundle (log kept as
   generator, whose pathological profile injects the behaviours SAT-SA's
   detectors target.
 
+### EXP-X02 — external real IT incident-workflow log
+
+UCI-498 (Amaral, Fantinato & Peres 2018, DOI 10.24432/C57S4H, CC BY 4.0):
+a real ServiceNow IT incident event log, **not SOC data**. Mapped by
+`uci498-adapter/1` (entity = final assignment group, ≥30 incidents; 50
+groups, 22,604 incidents, 47,420 investigation steps from work-state events,
+19,656 reassignment-escalation proxies). SLA labels were loaded only after
+SAT-SA's ranking existed.
+
+- **Feasibility:** 50/50 groups accepted with no rejected rows and 50/50
+  analyses completed through the unchanged pipeline; median analysis 14 s per
+  group (max 28 s), local SQLite.
+- **Detector saturation (negative):** acknowledgement-without-investigation,
+  missing-investigation, case-similarity and investigation-depth anomaly fired
+  for 50/50 groups; closure-time and investigation-duration anomaly for 49/50;
+  fast closure 43/50; peer deviations 11–17/50.
+- **Association with SLA-miss rate (n = 50 groups):** SAT-SA risk score
+  Spearman ρ −0.11 (95% bootstrap −0.42 to +0.21); incident volume −0.15
+  (−0.42, 0.16); reassignment rate 0.37 (0.08, 0.60); slowest median resolution
+  0.94 (0.86, 0.97) — expected, since SLA miss is a timeliness outcome.
+- **Top-quartile ranking (12 of 50 groups with SLA-miss rate ≥ 0.683):**
+  precision@10% SAT-SA 0.40, random 0.25, reassignment rate 0.20, volume 0.0,
+  slowest resolution 1.0; SAT-SA needed to review all 50 groups to find all 12
+  (slowest resolution: 24).
+- Interpretation: SAT-SA's supervisory risk does not track SLA timeliness on
+  this IT service desk, and several detectors need recalibration before they
+  can discriminate on real workflow distributions. This is partial external
+  evidence; it says nothing about SOC supervisory quality.
+
 ## External data (EXP-X01)
 
 | Dataset | Source / licence | What maps to SAT-SA | What does not | Status |
@@ -215,7 +256,10 @@ not be described as real-world validation (see `docs/PUBLIC_BENCHMARKS.md`).
 
 ## Expert labels
 
-Schema, import and layer validation exist (`sat-sa validate --expert-labels`,
-`docs/demo/EXPERT_LABELS.md`). The only label file is a template tagged
-`sample-template`. No expert has labelled SAT-SA output: expert validation is
-**NOT EXECUTED**.
+Schema v1 ingestion, validation and adjudication now exist in
+`evaluation/research/expert_labels.py` (pseudonymous annotator ids, UTC
+timestamps, per-finding/case/scenario labels, confidence, majority or explicit
+adjudication with unresolved ties left unresolved, pairwise percent agreement
+and Cohen's kappa). It refuses template labels. The category-level loader used
+by `sat-sa validate --expert-labels` is unchanged. **No expert has labelled
+SAT-SA output; expert validation is NOT EXECUTED.**

@@ -105,6 +105,64 @@ id, condition, timestamps, answers). Write results with
 case set digest. Never mix these results with synthetic experiment
 outputs.
 
+## Eligibility screen (ask before consent)
+
+1. Have you reviewed security alerts, incident tickets or SOC cases as part of
+   work, teaching or supervised training? (must be yes)
+2. Years of that experience: <1, 1–3, 3–5, >5 (recorded, not a criterion).
+3. Did you contribute to SAT-SA code, fixtures or this case set? (must be no)
+4. Have you seen any of the study cases before? (must be no)
+
+## Participant instructions (read verbatim)
+
+"You will review 8 short cases from a fictional organisation's security
+operations records. For each case, decide whether it needs supervisory
+follow-up, how severe it is, what evidence is missing, and what action you
+recommend. In some cases you will also see an automated analysis; it may be
+wrong, and you should use your own judgement. There is no penalty for saying
+evidence is insufficient. Work at your normal pace; each case closes after 15
+minutes. Your answers are recorded under a code, not your name."
+
+## Condition ordering
+
+With 8 cases (C1…C8) and two conditions (E = evidence-only, A = assisted),
+participants are assigned in blocks of four to these sequences, and case order
+within each sequence is shuffled with `seed = 20261001 + participant_index`:
+
+| Block position | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | E | A | E | A | E | A | E | A |
+| 2 | A | E | A | E | A | E | A | E |
+| 3 | E | E | A | A | E | E | A | A |
+| 4 | A | A | E | E | A | A | E | E |
+
+## Data collection record (one JSON object per case response)
+
+```json
+{"schema": "satsa-review-response/1", "participant_id": "p-012",
+ "case_id": "C3", "condition": "A", "sequence_position": 5,
+ "opened_at": "2026-10-01T10:02:11Z", "first_evidence_cited_at": "...",
+ "submitted_at": "...", "timed_out": false,
+ "answers": {"worthy_of_review": true, "severity": "high",
+             "missing_evidence": "...", "next_action": "...",
+             "priority_ranking_acceptable": null},
+ "issues_identified": ["execution_gap.fast_closure"]}
+```
+
+`priority_ranking_acceptable` is null in the evidence-only condition.
+Participant ids are pseudonyms; the key linking them to consent forms is kept
+offline by the study lead and never enters the repository.
+
+## Procedure
+
+1. Freeze the case set and ground truth; record their SHA-256 in the study
+   manifest; obtain approval where required.
+2. Pilot with 2 participants whose data are excluded; fix only instructions or
+   tooling, never the analysis plan.
+3. Run sessions; record every response, including timeouts and withdrawals.
+4. Analyse exactly as planned above; report every outcome, including null and
+   negative results.
+
 ## Current state
 
 - Implemented and tested: review packet construction and agreement
