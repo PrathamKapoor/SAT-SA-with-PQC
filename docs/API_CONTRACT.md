@@ -65,6 +65,7 @@ Unexpected failures do not return stack traces, SQL, paths, or secret material.
 | `GET /versions/{id}/artifacts`; `GET /artifacts/{id}` | pagination | evidence permission | paginated or `Artifact`; no storage path |
 | `POST /versions/{id}/complete`, `POST /versions/{id}/validate` | none | controlled Phase2 transitions | `Version`, durable `Validation` |
 | `GET /versions/{id}/validation`, `GET /versions/{id}/summary` | none | tenant version; summary contains canonical record counts only | `Validation`, `{version_id,counts}` |
+| `GET /versions/{id}/records` | pagination, optional `category` (`alerts`, `cases`, `investigation_steps`, `escalations`, `dispositions`, `assets`) | evidence permission; tenant version | `Page[CanonicalRecord]` `{record_id,category,payload,content_digest,source_record_id,artifact_id,locator,file_digest,original_record_digest}`; resolves a run's `/evidence` refs to record content |
 | `POST /runs` | `{submission_version_id,execution_mode:"graph"|"standard"}` + `Idempotency-Key` | requires validated version; both modes require review | `202 Run` |
 | `GET /runs`, `GET /runs/{id}` | pagination, optional `entity_id,status` | tenant scoped | `Page[Run]`, `Run` |
 | `POST /runs/{id}/cancel` | none | supervisor/admin only; cooperative cancellation | updated `Run` |

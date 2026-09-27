@@ -1,4 +1,4 @@
-"""Tenant-scoped entity prioritization over persisted run results."""
+"""Phase 16 API additions: entity prioritization and canonical records."""
 
 from test_phase6_api import dataset, headers
 
@@ -73,3 +73,58 @@ def test_priorities_do_not_cross_tenants(api):
         "/api/v1/priorities", headers={"X-Organization-ID": api["org"]}
     )
     assert unauthenticated.status_code == 401
+
+
+def test_canonical_records_page_filter_and_evidence_link(api):
+    c = api["client"]
+    _, _, _, version, _ = dataset(api)
+    counts = c.get(
+        f"/api/v1/versions/{version['id']}/summary", headers=headers(api)
+    ).json()["counts"]
+    assert counts.get("alerts", 0) >= 1
+    total = sum(counts.values())
+    page = c.get(
+        f"/api/v1/versions/{version['id']}/records?category=alerts&limit=200",
+        headers=headers(api, "viewer"),
+    )
+    assert page.status_code == 200, page.text
+    items = page.json()["items"]
+    assert len(items) == counts["alerts"]
+    assert all(r["category"] == "alerts" and r["payload"] for r in items)
+    assert "payload_json" not in items[0]
+
+    first = c.get(
+        f"/api/v1/versions/{version['id']}/records?limit=1", headers=headers(api)
+    ).json()
+    assert len(first["items"]) == 1
+    assert first["has_more"] is (total > 1)
+    bad = c.get(
+        f"/api/v1/versions/{version['id']}/records?category=secrets",
+        headers=headers(api),
+    )
+    assert bad.status_code == 422
+
+    foreign = c.get(
+        f"/api/v1/versions/{version['id']}/records", headers=headers(api, "outsider")
+    )
+    assert foreign.status_code in {403, 404}
+
+
+def test_finding_evidence_resolves_to_record_content(api):
+    c = api["client"]
+    _, run, _ = _analysed_run(api)
+    version = c.get(f"/api/v1/runs/{run}", headers=headers(api)).json()[
+        "submission_version_id"
+    ]
+    evidence = c.get(f"/api/v1/runs/{run}/evidence", headers=headers(api)).json()[
+        "items"
+    ]
+    records = c.get(
+        f"/api/v1/versions/{version}/records?limit=200", headers=headers(api)
+    ).json()["items"]
+    by_source = {r["source_record_id"]: r for r in records}
+    assert evidence, "the analysed run cites no source records"
+    for ref in evidence:
+        record = by_source[ref["source_record_id"]]
+        assert record["record_id"] == ref["record_id"]
+        assert record["content_digest"] == ref["canonical_record_digest"]

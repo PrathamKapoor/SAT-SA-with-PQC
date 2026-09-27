@@ -745,6 +745,34 @@ def create_app(
             "counts": submissions(t).count_canonical_records(version_id),
         }
 
+    @app.get(
+        "/api/v1/versions/{version_id}/records",
+        response_model=s.Page[s.CanonicalRecord],
+        tags=["validation"],
+        operation_id="canonical_records",
+    )
+    def records(
+        version_id: str,
+        t: Tenant,
+        limit: Limit = 50,
+        offset: Offset = 0,
+        category: Annotated[
+            str | None,
+            Query(
+                pattern="^(alerts|cases|investigation_steps|escalations|dispositions|assets)$"
+            ),
+        ] = None,
+    ):
+        rows = submissions(t).list_canonical_records(
+            version_id, category=category, limit=limit + 1, offset=offset
+        )
+        return {
+            "items": rows[:limit],
+            "limit": limit,
+            "offset": offset,
+            "has_more": len(rows) > limit,
+        }
+
     @app.post(
         "/api/v1/runs",
         response_model=s.Run,

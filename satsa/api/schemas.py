@@ -300,3 +300,15 @@ class EntityPriority(Schema):
     rationale: str
     top_dimensions: list[str]
     high_signal_count: int
+
+
+class CanonicalRecord(Schema):
+    record_id: str
+    category: str
+    payload: dict[str, Any]
+    content_digest: str
+    source_record_id: str
+    artifact_id: str
+    locator: str
+    file_digest: str
+    original_record_digest: str
