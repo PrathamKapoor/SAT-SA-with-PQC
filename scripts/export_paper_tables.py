@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 
 from evaluation.research.figures import export_figures
-from evaluation.research.tables import export_tables
+from evaluation.research.tables import export_evidence_summaries, export_tables
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -51,12 +51,19 @@ def main(argv: list[str] | None = None) -> int:
     ]
     record = export_tables(bundles, args.out, expected_manifests=expected)
     figures = export_figures(bundles, args.out / "figures", expected_manifests=expected)
+    summaries = export_evidence_summaries(
+        bundles,
+        args.out,
+        expected_manifests=expected,
+        supporting_dir=args.freeze / "supporting" if args.freeze else None,
+    )
     print(
         json.dumps(
             {
                 "sources": [s["bundle"] for s in record["sources"]],
                 "skipped": record["skipped"],
-                "tables": len(record["tables"]),
+                "tables": len(record["tables"]) + len(summaries["tables"]),
+                "statistical_audit_rows": summaries["audit_rows"],
                 "figures": [
                     f["figure_id"] for f in figures["figures"] if "data_file" in f
                 ],

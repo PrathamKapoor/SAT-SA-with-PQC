@@ -194,7 +194,56 @@ def _external(results: dict[str, Any]) -> tuple[list[dict], dict]:
     return rows, meta
 
 
+def _trust_overhead(results: dict[str, Any]) -> tuple[list[dict], dict]:
+    rows = [
+        {
+            "trial": t["trial"],
+            "mode": t["mode"],
+            "finalization_seconds": t["stage_seconds"].get("trust_finalization"),
+            "run_attestation_seconds": t["stage_seconds"].get("trust_run_attestation"),
+            "verification_seconds": t["trust_verification_seconds"],
+        }
+        for t in results["metrics"]["trials"]
+        if t["mode"] in {"direct", "graph"}
+    ]
+    meta = {
+        "x": "execution mode",
+        "y": "TRUST-SAT finalization, attestation and verification time",
+        "units": "seconds",
+        "aggregation": "per-trial values",
+        "sample_size": results["metrics"]["design"]["trials_per_mode"],
+    }
+    return rows, meta
+
+
+def _failure(results: dict[str, Any]) -> tuple[list[dict], dict]:
+    rows = [
+        {
+            "group": name,
+            "sla_miss_rate": g["sla_miss_rate"],
+            "fast_closure_rate": g["prevalence"]["fast_closure_rate"],
+            "cases_without_steps_rate": g["prevalence"]["cases_without_steps_rate"],
+            "execution_gap_dimension": g["risk_dimensions"]["execution_gap"],
+            "risk_total": g["risk_total"],
+        }
+        for name, g in sorted(results["metrics"]["groups"].items())
+    ]
+    meta = {
+        "x": "fast-closure prevalence (detector input condition)",
+        "y": "SLA-miss rate; execution-gap risk dimension",
+        "units": "fraction; score",
+        "aggregation": "one point per assignment group",
+        "sample_size": len(rows),
+    }
+    return rows, meta
+
+
 FIGURES = {
+    "FIG-6c-trust-overhead": ("satsa-orchestration-overhead-v1", _trust_overhead),
+    "FIG-8-external-construct-inversion": (
+        "satsa-external-itsm-failure-analysis-v1",
+        _failure,
+    ),
     "FIG-2-prioritization": ("satsa-prioritization-replicated-v1", _prioritization),
     "FIG-3-ablation": ("satsa-component-ablation-v1", _ablation),
     "FIG-4-peer-sensitivity": ("peer-cohort-sweep-v1", _peer),
