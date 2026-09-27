@@ -2,8 +2,8 @@
   "schema": "satsa-overleaf-manifest/1",
   "zip": {
     "path": "paper/overleaf-springer.zip",
-    "sha256": "fb1926d096036e897318f3723bce4db35f8de019896224205faa6a8a57dc553e",
-    "size": 238260,
+    "sha256": "4c553bd8d54b23cf4c95f53f010e5f3e1e29da9f4ad6e82a8bf557f103770a4a",
+    "size": 238015,
     "files": 56
   },
   "files": [
@@ -58,8 +58,8 @@
     },
     {
       "file": "main.pdf",
-      "sha256": "7a86ab0b64a1447204e0a1f94c791dbd59e7aa4a35f66c3204da70e369f10756",
-      "size": 398562,
+      "sha256": "85679efdc879897d4ca1223615496cf9a40e235e3c5e3c1f3be8d17b2c18f509",
+      "size": 397831,
       "purpose": "compiled PDF (not in ZIP)",
       "in_zip": false
     },
@@ -79,8 +79,8 @@
     },
     {
       "file": "README.md",
-      "sha256": "cfea3fba0b6713544465b42de8bdbe5fe66893bbb81a27698595239864b1f455",
-      "size": 4538,
+      "sha256": "d253d9897b823685cc4d51657fdeea4051b1cb234917d2e38526274a971e3b45",
+      "size": 4618,
       "purpose": "package documentation",
       "in_zip": true
     },
@@ -177,8 +177,8 @@
     },
     {
       "file": "sections/12-declarations.tex",
-      "sha256": "5eb691db5ad1505259a4be65a9b85f51f850bee17d624bc9a8048df2c3e00581",
-      "size": 716,
+      "sha256": "34e3522d48eef1438b1e9f3e00816490f7cba6103e566655fe04b59091486eb9",
+      "size": 163,
       "purpose": "manuscript section",
       "in_zip": true
     },

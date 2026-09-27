@@ -35,7 +35,7 @@
 | Negative external result preserved | [x] | Section 7: ρ = −0.11 (−0.42 to 0.21) against slowest resolution ρ = 0.94; construct mismatch, saturation, missing dimensions; no tuning |
 | Limitations preserved | [x] | Section 9: synthetic/controlled data, construction labels, own generator, SQLite on one machine, no human study, no expert labels, deployment not executed; baseline ties; silent stale/contradictory evidence; peer-cohort dependence |
 | Author block | [x] | `metadata.tex`: Pratham Kapoor; Department of Information Technology, Mukesh Patel School of Technology Management & Engineering, SVKM's NMIMS University, Mumbai, India (format of the author's own paper; no e-mail or ORCID line) |
-| AI declaration | [x] | `sections/12-declarations.tex` states factually that Claude (Anthropic, through Claude Code) was used to draft the text, write the evidence-generation code and run and screen the literature searches, and that the author takes responsibility. This follows Springer Nature's AI policy (checked 2026-09-27) |
+| AI declaration | omitted | Removed at the author's decision. Springer Nature's AI policy (checked 2026-09-27) asks authors to declare AI use beyond copy editing; compliance is the author's responsibility at submission |
 | Funding statement | omitted | No funding; the block is removed at the author's decision |
 | Disclosure of interests | omitted | Removed at the author's decision. Springer normally requires this statement, so check the venue's rules before submission |
 | Placeholders | [x] | Search for TODO/TBD/FIXME/placeholder/brackets/`??`: 0 hits in the manuscript ("anonymized" in the supplementary material describes the dataset) |
@@ -44,9 +44,11 @@
 
 ## Open items (author decisions; nothing was guessed)
 
-1. Disclosure of Interests: omitted at the author's decision; Springer
+1. AI-use declaration: omitted at the author's decision; Springer Nature's
+   policy asks for one. Confirm before submission.
+2. Disclosure of Interests: omitted at the author's decision; Springer
    normally requires it. Confirm against the chosen venue.
-2. Target conference and series. Check its page limit before submission.
+3. Target conference and series. Check its page limit before submission.
    - **Current length:** 36 pages at the author's 12 pt typography, including
      about 5.5 pages of references for 48 sources. Springer's guidance is
      "full papers (12–15 (or more) pages)".
@@ -55,6 +57,6 @@
        (peer grid) to the supplementary material;
      - shorten Table 1 (related work);
      - trim references to the ones used in Sections 2 and 7.
-3. Release tag or archive DOI for the code, if the venue wants one. The paper
+4. Release tag or archive DOI for the code, if the venue wants one. The paper
    cites the frozen evidence commit `85b7763`; no tag exists.
-4. Human proofread.
+5. Human proofread.

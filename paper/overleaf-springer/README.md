@@ -39,13 +39,13 @@ the project is generated at compile time.
 - **Author block.** Name, department, school, university, city and country, with no
   e-mail or ORCID line. It follows the author's paper *Noise-Robust Quantum Machine
   Learning for Building Energy Performance* and is edited only in `metadata.tex`.
-- **Declarations** (`sections/12-declarations.tex`):
-  - an ethics statement;
-  - a declaration of AI use.
+- **Declarations** (`sections/12-declarations.tex`): an ethics statement.
 - **Omitted at the author's decision:**
   - an acknowledgments or funding block (the work received no funding);
   - a disclosure-of-interests block. Springer proceedings normally require that
-    statement, so add it if the chosen venue asks for it.
+    statement, so add it if the chosen venue asks for it;
+  - a declaration of AI use. Springer Nature's AI policy asks for one where AI
+    use goes beyond copy editing.
 - **Target venue:** not set. The manuscript names no conference.
 
 ## Typography
