@@ -3,22 +3,8 @@
 
 \begin{figure}[t]
 \centering
-\begin{tikzpicture}[node distance=4mm and 6mm, every node/.style={font=\footnotesize},
-  box/.style={draw, rounded corners=1pt, align=center, minimum width=34mm, minimum height=6mm},
-  arr/.style={-{Stealth[length=2mm]}}]
-\node[box] (sub) {Periodic evidence submission\\(alerts, cases, steps, escalations,\\dispositions, assets)};
-\node[box, below=of sub] (val) {Validation and normalization\\(per-record provenance, all-or-nothing)};
-\node[box, below=of val, minimum height=14mm] (ana) {Analytical workers (\V{CODE-workers})\\execution gap $\cdot$ negative space\\anomaly $\cdot$ peer deviation\\coverage $\cdot$ workflow $\cdot$ \ldots};
-\node[box, below=of ana] (risk) {Correlation, risk (\V{CODE-dimensions} dimensions)\\and prioritization};
-\node[box, right=12mm of sub] (find) {Evidence-cited findings\\and recommendations};
-\node[box, below=of find] (rev) {Human supervisory review\\(review interrupt)};
-\node[box, below=of rev] (dec) {Authorised decision};
-\node[box, below=of dec] (trust) {TRUST-SAT finalization\\SHA3-256 canonical record,\\\V{CODE-signature} receipt, ledger};
-\node[box, below=of trust] (ver) {Verification and audit};
-\draw[arr] (sub) -- (val); \draw[arr] (val) -- (ana); \draw[arr] (ana) -- (risk);
-\draw[arr] (risk.east) -| ++(4mm,0) |- (find.west);
-\draw[arr] (find) -- (rev); \draw[arr] (rev) -- (dec); \draw[arr] (dec) -- (trust); \draw[arr] (trust) -- (ver);
-\end{tikzpicture}
+% TikZ source: figures-src/fig-architecture.tex (values from data/values.tex).
+\includegraphics[width=\linewidth,height=62mm,keepaspectratio]{figures-static/fig-architecture.pdf}
 \caption{SAT-SA supervisory workflow as implemented. Analytics are deterministic;
 orchestration (direct worker or LangGraph) sequences the stages and pauses for the
 human decision.}
@@ -61,7 +47,7 @@ supervisory attention. Findings receive recommendations.
 Runs can require review. In \emph{direct} mode the worker pauses the run after
 analysis and recommendations; in \emph{graph} mode a LangGraph graph with
 \V{CODE-graph-nodes} nodes (readiness, analysis, recommendations, human review,
-trust boundary) checkpoints its state and interrupts at the review node~\citep{langgraph2026docs}.
+trust boundary) checkpoints its state and interrupts at the review node~\cite{langgraph2026docs}.
 Only a supervisor (or organisation administrator) can record the decision; the worker then
 resumes.
 
@@ -80,4 +66,4 @@ CI job that would run it. All measurements in this paper were taken with SQLite 
 local storage on one machine; the containerized topology, live PostgreSQL and live
 S3 storage were not executed (Table~\ref{tab:deployment}).
 
-\input{tables/tab-system}
+\widetable{tables/tab-system}

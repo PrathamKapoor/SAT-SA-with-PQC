@@ -2,7 +2,7 @@
 \label{sec:external}
 
 \paragraph{Setup.}
-The unchanged pipeline analysed the UCI-498 incident log~\citep{amaral2018uci498},
+The unchanged pipeline analysed the UCI-498 incident log~\cite{amaral2018uci498},
 a real IT service-desk event log of one organisation, with each final assignment
 group of sufficient size treated as an entity: \V{X02b-groups} groups,
 \V{X02b-incidents} of \V{X02b-incidents-total} incidents, \V{X02b-events}
@@ -10,6 +10,8 @@ investigation-step proxies from work-state events and \V{X02b-reassign}
 reassignment-based escalation proxies. The only available outcome is the final
 service-level flag; SLA labels were loaded only after SAT-SA's ranking existed and
 never entered a submission. \textbf{This is IT incident data, not SOC data.}
+The same log has been used to model which factors predict meeting the SLA~\cite{swain2022sla};
+we do not predict SLA attainment and use it only as an external outcome.
 
 \paragraph{Feasibility.}
 All \V{X02b-rows-received} submitted rows were accepted

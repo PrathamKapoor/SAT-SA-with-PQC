@@ -2,16 +2,19 @@
 \label{sec:intro}
 
 Security operations centres (SOCs) triage large alert volumes under limited analyst
-capacity~\citep{vielberth2020soc,tariq2025alertfatigue}, and qualitative studies
+capacity~\cite{vielberth2020soc,tariq2025alertfatigue}, and qualitative studies
 document recurring process problems: false-positive-dominated alarms, mismatched
-expectations between SOC staff and management, and burnout~\citep{alahmadi2022falsepositives,kokulu2019soc,sundaramurthy2015burnout}.
+expectations between SOC staff and management, and burnout~\cite{alahmadi2022falsepositives,kokulu2019soc,sundaramurthy2015burnout}.
 When an external body supervises many SOCs---for example a national authority
 responsible for critical infrastructure---it needs to judge periodically whether
 each monitored organisation actually investigated, escalated and closed its work
 properly. The instruments available for this are mostly maturity self-assessments
-such as SOC-CMM~\citep{vanos2016soccmm}, metric catalogues~\citep{forsberg2023metrics},
-analyst-performance models~\citep{agyepong2023analyst}, and manual examination of
-records.
+such as SOC-CMM~\cite{vanos2016soccmm}, metric catalogues~\cite{forsberg2023metrics},
+analyst-performance models~\cite{agyepong2023analyst}, and manual examination of
+records. Automated assessment of an incident-management process against a reference
+model has been demonstrated for auditors~\cite{palma2024compliance}, and the
+performance of an operational SOC has been measured by injecting synthetic
+attacks~\cite{rosso2020saibersoc}.
 
 This paper studies a narrower, record-level question: \emph{can a system analyse
 the operational records an organisation submits each period and produce
@@ -36,7 +39,9 @@ their strength):
 \item \emph{Application framing (candidate, low confidence):} SOC supervision posed as
   record-level analytics for an external supervisor, producing findings that cite
   the submitted records they depend on. The underlying techniques---conformance-style
-  absence checks, robust deviation rules, peer comparison---are established.
+  absence checks, robust deviation rules, peer comparison---are established, and
+  record-based compliance assessment of incident management for auditors
+  exists~\cite{palma2024compliance}; the framing is a combination of known parts.
 \item \emph{Empirical findings:} controlled evaluations of detection against declared
   labels and simple baselines, one-component ablation, imperfect-evidence robustness,
   peer-cohort sensitivity, orchestration overhead and recovery, and an external

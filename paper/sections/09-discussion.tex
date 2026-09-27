@@ -40,11 +40,13 @@ for any supervisory use where submissions are adversarial.
 The analytics are deterministic; LangGraph provides checkpointed sequencing and a
 review interrupt, at a small cost on this workload, and does not make analytical
 decisions. SAT-SA is decision support: the supervisor decides, and TRUST-SAT records
-what was decided on which evidence. Automation bias~\citep{parasuraman2010automation}
+what was decided on which evidence. Automation bias~\cite{parasuraman2010automation}
 is a real risk for such tools and was not studied.
 
 \paragraph{Contribution strength.}
 The empirical findings, including the negative ones, and the reproducibility
 infrastructure are the most defensible contributions. The integrity layer is an
 integration of standard primitives. The application framing is a low-confidence
-candidate: our literature search was focused, not systematic.
+candidate: our literature search was structured but not systematic, and it found
+close prior work on automated, record-based assessment of incident handling for
+auditors~\cite{palma2024compliance}.

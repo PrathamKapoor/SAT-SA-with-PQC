@@ -34,6 +34,30 @@ INCLUDE = (
     "figures",
     "data",
     "supplementary",
+    # Phase 13: pre-rendered Figure 1, venue build, literature search, audits.
+    "figures-static",
+    "figures-src",
+    "literature-review",
+    "venue",
+    "submission",
+    "make_submission.py",
+    "venue-matrix.csv",
+    "VENUE_DECISION.md",
+    "VENUE_COMPLIANCE.md",
+    "CONTRIBUTION_AUDIT.md",
+    "reviewer-response-template.md",
+)
+# Build intermediates inside included directories are never part of a snapshot.
+_INTERMEDIATE = (
+    ".aux",
+    ".bbl",
+    ".blg",
+    ".fdb_latexmk",
+    ".fls",
+    ".log",
+    ".out",
+    ".synctex.gz",
+    ".pyc",
 )
 
 
@@ -48,7 +72,11 @@ def _package_files(paper_dir: Path) -> list[Path]:
         if path.is_file():
             files.append(path)
         elif path.is_dir():
-            files.extend(p for p in sorted(path.rglob("*")) if p.is_file())
+            files.extend(
+                p
+                for p in sorted(path.rglob("*"))
+                if p.is_file() and not p.name.endswith(_INTERMEDIATE)
+            )
         else:
             raise FileNotFoundError(f"publication file missing: {path}")
     return files

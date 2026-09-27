@@ -12,7 +12,7 @@ data, and is its risk associated with an outcome available there? (RQ3, analyst
 utility, requires a human study that was not run.) Table~\ref{tab:experiments}
 maps questions to experiments.
 
-\input{tables/tab-experiments}
+\widetable{tables/tab-experiments}
 
 \paragraph{Data.}
 \emph{Controlled catalog:} \V{C01-action-total} executable scenarios authored
@@ -24,14 +24,14 @@ mechanism responds to its designed inputs, not that it detects real misconduct.
 \V{PR01-entities} entities each, \V{PR01-pathological} of them declared
 pathological, seeded independently. \emph{Engineered peer cohorts} (P01):
 \V{P01-cells} cells crossing cohort size, dispersion and deviation.
-\emph{External:} the UCI incident management process event log~\citep{amaral2018uci498}
+\emph{External:} the UCI incident management process event log~\cite{amaral2018uci498}
 (dataset 498), a real IT service-desk log of one organisation, mapped to SAT-SA
 categories by an adapter and analysed per assignment group
 (\V{X02b-groups} groups with enough incidents). It is IT incident data, not SOC
-data. Two security datasets were assessed and not used: GUIDE~\citep{freitas2024guide}
+data. Two security datasets were assessed and not used: GUIDE~\cite{freitas2024guide}
 has real triage-graded SOC incidents but no acknowledgement, closure,
 investigation-step or escalation records (and its download requires an
-authenticated account), and CIC-IDS2017~\citep{sharafaldin2018cicids} contains
+authenticated account), and CIC-IDS2017~\cite{sharafaldin2018cicids} contains
 network flows rather than SOC workflow records.
 
 \paragraph{Baselines.}
@@ -44,7 +44,7 @@ outcome's own construct and is included as an upper reference, not a competitor.
 
 \paragraph{Metrics.}
 Precision, recall and F1 against construction labels; precision, recall and
-NDCG~\citep{jarvelin2002ndcg} within the top $k\in\{10,20,30\}$\% of entities
+NDCG~\cite{jarvelin2002ndcg} within the top $k\in\{10,20,30\}$\% of entities
 (written P@$k$, R@$k$, NDCG@$k$);
 review volume needed to find all pathological entities; conformance with the
 validation contract and change of emitted finding families relative to a paired control;
@@ -53,7 +53,7 @@ Spearman $\rho$ against the SLA-miss rate.
 
 \paragraph{Statistics policy.}
 We report medians; 95th percentiles only when $n\ge20$; seeded percentile
-bootstrap intervals~\citep{efron1993bootstrap} only when $n\ge10$ independent
+bootstrap intervals~\cite{efron1993bootstrap} only when $n\ge10$ independent
 units; paired differences with counts of units where one arm was higher, equal or
 lower; and no $p$-values or multiple-comparison claims. The independent unit is
 stated for each experiment (Table~\ref{tab:experiments}); repeated trials within

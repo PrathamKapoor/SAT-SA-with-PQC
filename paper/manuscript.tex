@@ -9,6 +9,10 @@
 \usepackage[hidelinks]{hyperref}
 \usetikzlibrary{arrows.meta,positioning,fit}
 \input{data/values.tex}
+% Layout hooks shared with the IEEE Access build (paper/venue/): here a wide
+% table is an ordinary table and figures keep their single-column widths.
+\newcommand{\widetable}[1]{\input{#1}}
+\newcommand{\figscale}[1]{#1}
 
 \title{Record-Level Supervisory Analytics for Security Operations Centres:\\
 Controlled Evaluation, Cryptographic Decision Binding, and an External Negative Result}

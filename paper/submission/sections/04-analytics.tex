@@ -1,0 +1,35 @@
+\section{Analytical Methodology}
+\label{sec:analytics}
+
+The workers fall into rule families that the experiments exercise directly.
+
+\paragraph{Execution gaps.} Rules over individual records: an alert closed faster
+than a severity-specific limit (e.g.\ critical within ten minutes, above a floor),
+an acknowledged medium-or-higher alert whose case has fewer than two investigation
+steps, a critical alert without escalation, repeated shallow investigation patterns,
+recurring alerts without remediation, and very high closure rates with little
+investigation. Most fire when at least one qualifying record exists
+(\emph{existence rules}).
+
+\paragraph{Negative space.} Absence of expected work: cases without investigation
+steps, missing escalations or dispositions, and critical assets without alerts.
+These are rule-encoded conformance checks~\cite{carmona2018conformance}.
+
+\paragraph{Anomaly and peer deviation.} Within-entity outliers are values more than
+three MADs from the entity's median~\cite{leys2013mad}; peer deviation compares an
+entity's metric with the median and MAD of a declared cohort of at least three
+peers and flags deviations of two MADs or more.
+
+\paragraph{Coverage and completeness.} Assets without monitoring and missing
+evidence categories.
+
+\paragraph{Fusion.} Findings from different rule families that name the same
+subject are reported as corroborating clusters, which do not change the score;
+dimension scores saturate in summed confidence, with weights
+\V{RISK-w-execution-gap} (execution gap), \V{RISK-w-peer-deviation} (peer deviation),
+\V{RISK-w-detection-gap} (detection gap), \V{RISK-w-negative-space} (negative space),
+\V{RISK-w-anomaly} (anomaly), \V{RISK-w-investigation-quality} (investigation quality)
+and \V{RISK-w-escalation-discipline} (escalation discipline); the entity ranking
+sorts by the total.
+A property that matters later: the fusion sums finding confidences and does not
+use how \emph{prevalent} a problem is within the submission.

@@ -1,0 +1,61 @@
+\section{Introduction}
+\label{sec:intro}
+
+Security operations centres (SOCs) triage large alert volumes under limited analyst
+capacity~\cite{vielberth2020soc,tariq2025alertfatigue}, and qualitative studies
+document recurring process problems: false-positive-dominated alarms, mismatched
+expectations between SOC staff and management, and burnout~\cite{alahmadi2022falsepositives,kokulu2019soc,sundaramurthy2015burnout}.
+When an external body supervises many SOCs---for example a national authority
+responsible for critical infrastructure---it needs to judge periodically whether
+each monitored organisation actually investigated, escalated and closed its work
+properly. The instruments available for this are mostly maturity self-assessments
+such as SOC-CMM~\cite{vanos2016soccmm}, metric catalogues~\cite{forsberg2023metrics},
+analyst-performance models~\cite{agyepong2023analyst}, and manual examination of
+records. Automated assessment of an incident-management process against a reference
+model has been demonstrated for auditors~\cite{palma2024compliance}, and the
+performance of an operational SOC has been measured by injecting synthetic
+attacks~\cite{rosso2020saibersoc}.
+
+This paper studies a narrower, record-level question: \emph{can a system analyse
+the operational records an organisation submits each period and produce
+evidence-cited supervisory findings and priorities, while leaving the decision
+to a human supervisor and making the reviewed state verifiable afterwards---and
+how does such a system behave under controlled perturbation and on independent
+data?} We describe SAT-SA, an implementation of this workflow built for the Smart
+India Hackathon problem SIH26157, and report what a frozen evaluation of it shows
+and does not show.
+
+The paper's emphasis is the evidence rather than the architecture. Every number
+comes from a hash-verified experiment bundle; negative findings are reported with
+the same prominence as positive ones. Three of them bound the conclusions:
+simple baselines match parts of SAT-SA on controlled data; stale and contradictory
+evidence is accepted silently; and on a real external IT incident log SAT-SA's risk
+was not associated with the outcome available there, for reasons we diagnose.
+
+\paragraph{Contributions.}
+We separate contribution types explicitly (Section~\ref{sec:discussion} returns to
+their strength):
+\begin{itemize}
+\item \emph{Application framing (candidate, low confidence):} SOC supervision posed as
+  record-level analytics for an external supervisor, producing findings that cite
+  the submitted records they depend on. The underlying techniques---conformance-style
+  absence checks, robust deviation rules, peer comparison---are established, and
+  record-based compliance assessment of incident management for auditors
+  exists~\cite{palma2024compliance}; the framing is a combination of known parts.
+\item \emph{Empirical findings:} controlled evaluations of detection against declared
+  labels and simple baselines, one-component ablation, imperfect-evidence robustness,
+  peer-cohort sensitivity, orchestration overhead and recovery, and an external
+  negative result with a failure analysis.
+\item \emph{Engineering:} a tenant-aware submission, analysis and review workflow with
+  a durable queue and a LangGraph review interrupt.
+\item \emph{Security capability (integration):} supervisory decisions bound to the
+  analysed state with standard primitives (SHA3-256, ML-DSA-65) and a hash-chained
+  ledger, evaluated with a mutation matrix.
+\item \emph{Reproducibility infrastructure:} write-once experiment bundles, an evidence
+  freeze with verification, and a paper data layer that generates every reported
+  number.
+\end{itemize}
+
+We make no claim of novelty, superiority, real-world SOC effectiveness or
+large-scale operational use; Section~\ref{sec:limitations} lists what the evidence
+does not support.

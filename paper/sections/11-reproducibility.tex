@@ -37,12 +37,22 @@ We classify what has actually been demonstrated:
 \end{itemize}
 
 \paragraph{Commands.}
-\begin{verbatim}
-# Level 1
-python scripts/verify_evidence_freeze.py research/evidence/freeze-v2
-# Level 2
-python scripts/build_paper_assets.py
-python scripts/audit_paper.py
-# Level 3: scripts/run_*_experiment.py with each bundle's recorded config
-\end{verbatim} The supplementary material lists the full commands, seeds,
-dataset provenance and what cannot be reproduced.
+All commands are Python scripts in the repository's \texttt{scripts} directory.
+Level~1 runs \texttt{verify\_\allowbreak evidence\_\allowbreak freeze.py} on the
+freeze; Level~2 runs \texttt{build\_\allowbreak paper\_\allowbreak assets.py} and then
+\texttt{audit\_\allowbreak paper.py}; Level~3 re-runs
+the experiment runners with each bundle's recorded configuration. The supplementary
+material lists the full commands, seeds, dataset provenance and what cannot be
+reproduced.
+
+\paragraph{Code, data and artifact availability.}
+The SAT-SA source code, experiment runners, evidence freeze, paper data layer and
+the literature-search scripts are in the project repository under the MIT licence
+(\url{https://github.com/PrathamKapoor/SAT-SA-with-PQC}); the commit that
+contains this manuscript and the publication snapshot is identified in the
+supplementary material. All controlled data are synthetic and regenerate from the
+recorded seeds and configurations. The external dataset~\cite{amaral2018uci498}
+is public under a Creative Commons Attribution (CC BY) licence and is not
+redistributed; the experiment downloads it
+and verifies its checksum. No personal data, no data from a real SOC and no
+human-participant data were used.
