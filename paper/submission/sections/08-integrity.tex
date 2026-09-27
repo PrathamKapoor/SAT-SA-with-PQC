@@ -7,11 +7,11 @@ with write access to the database or ledger file changes a decision, finding,
 risk profile, recommendation, source record or receipt after the supervisor
 decided. It does not address compromise of the signing key, of the running
 process before finalization, of the operating system, or submission of false
-records by the monitored organisation; it binds what was analysed and decided,
+records by the monitored organization; it binds what was analysed and decided,
 not whether the submitted records are true.
 
 \paragraph{Mechanism.}
-Finalization serialises a canonical document of the reviewed state (decision,
+Finalization serializes a canonical document of the reviewed state (decision,
 findings, observations, risk, recommendations, submission records and their
 provenance), hashes it with SHA3-256~\cite{nist2015fips202}, signs the digest with
 \V{CODE-signature}~\cite{nist2024fips204}, and appends a ledger entry whose hash

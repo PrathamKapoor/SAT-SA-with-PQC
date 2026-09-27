@@ -24,6 +24,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 RAW = HERE / "raw"
@@ -259,11 +260,11 @@ def arxiv(qid: str, q: str):
         "o": "http://a9.com/-/spec/opensearch/1.1/",
     }
     root = ET.fromstring(body)
-    total = int(root.find("o:totalResults", ns).text)
+    total = int(root.findtext("o:totalResults", "0", ns))
     recs = []
     for e in root.findall("a:entry", ns):
-        title = " ".join(e.find("a:title", ns).text.split())
-        year = int(e.find("a:published", ns).text[:4])
+        title = " ".join(e.findtext("a:title", "", ns).split())
+        year = int(e.findtext("a:published", "", ns)[:4])
         recs.append(
             dict(
                 title=title,
@@ -271,8 +272,8 @@ def arxiv(qid: str, q: str):
                 doi="",
                 venue="arXiv",
                 type="preprint",
-                abstract=" ".join(e.find("a:summary", ns).text.split())[:1200],
-                url=e.find("a:id", ns).text,
+                abstract=" ".join(e.findtext("a:summary", "", ns).split())[:1200],
+                url=e.findtext("a:id", "", ns),
             )
         )
     time.sleep(3)
@@ -290,7 +291,8 @@ def norm_title(t: str) -> str:
 
 
 def main() -> None:
-    searches, cands = [], {}
+    searches: list[dict[str, Any]] = []
+    cands: dict[str, dict[str, Any]] = {}
     for qid, q, aq, topic in QUERIES:
         for source, fn, query in (
             ("OpenAlex", openalex, q),
@@ -351,8 +353,8 @@ def main() -> None:
         w.writerows(searches)
     rows = sorted(cands.values(), key=lambda c: (-len(c["hits"]), c["title"].lower()))
     with (HERE / "candidates.csv").open("w", newline="", encoding="utf-8") as f:
-        w = csv.writer(f)
-        w.writerow(
+        cw = csv.writer(f)
+        cw.writerow(
             [
                 "cand_id",
                 "title",
@@ -367,7 +369,7 @@ def main() -> None:
             ]
         )
         for i, c in enumerate(rows, 1):
-            w.writerow(
+            cw.writerow(
                 [
                     f"C{i:04d}",
                     c["title"],
@@ -381,7 +383,7 @@ def main() -> None:
                     c["abstract"],
                 ]
             )
-    raw_total = sum(s["retrieved"] for s in searches)
+    raw_total = sum(int(s["retrieved"]) for s in searches)
     print(f"searches={len(searches)} retrieved={raw_total} unique={len(rows)}")
 
 

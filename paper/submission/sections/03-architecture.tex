@@ -15,7 +15,7 @@ Figure~\ref{fig:architecture} shows the workflow; Table~\ref{tab:system} lists t
 facts the experiments rely on, generated from the source code.
 
 \paragraph{Submission and validation.}
-An analyst of the monitored organisation creates a versioned submission for an
+An analyst of the monitored organization creates a versioned submission for an
 assessment period and uploads one file per evidence category through an HTTP API
 (\V{CODE-api-routes} routes). Validation parses each record, resolves references
 (an investigation step must reference an existing case), enforces chronology
@@ -48,7 +48,7 @@ Runs can require review. In \emph{direct} mode the worker pauses the run after
 analysis and recommendations; in \emph{graph} mode a LangGraph graph with
 \V{CODE-graph-nodes} nodes (readiness, analysis, recommendations, human review,
 trust boundary) checkpoints its state and interrupts at the review node~\cite{langgraph2026docs}.
-Only a supervisor (or organisation administrator) can record the decision; the worker then
+Only a supervisor (or organization administrator) can record the decision; the worker then
 resumes.
 
 \paragraph{TRUST-SAT finalization and verification.}
@@ -61,8 +61,8 @@ decision binding, signature and ledger chain (Section~\ref{sec:integrity}).
 
 \paragraph{Deployment.}
 The repository contains a container image, a compose topology (PostgreSQL,
-SeaweedFS object storage, migration and key-initialisation jobs, API, worker) and a
-CI job that would run it. All measurements in this paper were taken with SQLite and
+SeaweedFS object storage, migration and key-initialization jobs, API, worker) and a
+continuous-integration (CI) job that would run it. All measurements in this paper were taken with SQLite and
 local storage on one machine; the containerized topology, live PostgreSQL and live
 S3 storage were not executed (Table~\ref{tab:deployment}).
 

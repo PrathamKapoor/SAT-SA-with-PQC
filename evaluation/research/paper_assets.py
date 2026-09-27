@@ -201,7 +201,7 @@ def build_tables(ev: Evidence) -> dict[str, str]:
                 "EXT",
                 "X02b, X03",
                 "UCI-498 IT incident log",
-                "group of one organisation (\\V{X02b-groups})",
+                "group of one organization (\\V{X02b-groups})",
             ],
         ],
     )
@@ -441,7 +441,7 @@ def build_tables(ev: Evidence) -> dict[str, str]:
         ev,
         ("X02b",),
         "tab:external",
-        "External IT incident log (X02b): association with the SLA-miss rate over 50 groups of one organisation.",
+        "External IT incident log (X02b): association with the SLA-miss rate over 50 groups of one organization.",
         "lrr",
         ["Score", "Spearman $\\rho$", "95\\% bootstrap"],
         [

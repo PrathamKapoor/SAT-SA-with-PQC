@@ -4,7 +4,7 @@
 \paragraph{Search method.}
 We positioned SAT-SA with a structured search rather than a systematic review. On
 27 September 2026 we ran 20 queries covering SOC assessment and metrics, alert
-prioritisation and alert fatigue, security process mining and conformance checking,
+prioritization and alert fatigue, security process mining and conformance checking,
 peer-group analytics, supervisory technology, and tamper-evident and post-quantum
 audit records. Each query was run against OpenAlex (title and abstract) and Crossref,
 and the 25 top-ranked records per query and source were retrieved. This gave 656
@@ -29,7 +29,7 @@ not necessarily further the SOC's goals~\cite{morin2025mismatched}, which cautio
 against reading operational metrics as quality. SAIBERSOC evaluates the performance
 of operational SOCs empirically by injecting synthetic attacks and measuring outputs
 such as detection accuracy and time to investigation, with 124 students acting as
-analysts~\cite{rosso2020saibersoc}. Surveys and qualitative studies characterise SOC
+analysts~\cite{rosso2020saibersoc}. Surveys and qualitative studies characterize SOC
 building blocks, challenges and human
 factors~\cite{vielberth2020soc,kokulu2019soc,sundaramurthy2015burnout,sundaramurthy2016contradictions}.
 These instruments measure maturity, define metrics, explain practice or test a SOC
@@ -38,9 +38,9 @@ submits to an external supervisor.
 
 \paragraph{Record-based assessment of incident handling.}
 The closest prior work is the compliance assessment system of Palma et
-al.~\cite{palma2024compliance}. It aligns an organisation's incident-management
+al.~\cite{palma2024compliance}. It aligns an organization's incident-management
 event log with a reference process derived from frameworks such as ITIL and ISO
-27035, classifies deviations with a taxonomy, prioritises them with a cost model,
+27035, classifies deviations with a taxonomy, prioritizes them with a cost model,
 and supports an auditor. It was validated on a benchmark and demonstrated on a public
 real incident-management log. A companion benchmark compares such process-based
 assessment models quantitatively~\cite{palma2024benchimp}. Automated, record-based
@@ -54,20 +54,20 @@ alerts~\cite{chiba2022domainprio}. SAT-SA differs from Palma et al.\ in mechanis
 and scope rather than in kind. It uses rule-encoded checks over SOC evidence
 categories (alerts, cases, investigation steps, escalations, dispositions, assets)
 instead of alignment with a process model. It compares an entity with a declared peer
-cohort, ranks monitored organisations by a fused risk, and binds the supervisor's
+cohort, ranks monitored organizations by a fused risk, and binds the supervisor's
 decision to the analysed state cryptographically. We did not compare SAT-SA with
 that system experimentally.
 
-\paragraph{Alert prioritisation and alert fatigue.}
+\paragraph{Alert prioritization and alert fatigue.}
 A large literature ranks alerts or incidents for SOC analysts. Jalalvand et
-al.\ review 89 prioritisation papers through a human--AI teaming
+al.\ review 89 prioritization papers through a human--AI teaming
 lens~\cite{jalalvand2024prioritisation}, and Tariq et al.\ survey alert-fatigue
 mitigations~\cite{tariq2025alertfatigue}. Systems include resource-aware
-optimisation of which alerts to investigate~\cite{shah2019alertselection},
+optimization of which alerts to investigate~\cite{shah2019alertselection},
 provenance-based triage (NoDoze~\cite{hassan2019nodoze}), guided response trained on
 customer triage labels~\cite{freitas2024guide}, large-scale incident
 ranking~\cite{freitas2026aip} and learning to defer to analysts~\cite{jalalvand2025l2d}.
-SAT-SA differs in unit and user: it ranks \emph{monitored organisations} for a
+SAT-SA differs in unit and user: it ranks \emph{monitored organizations} for a
 \emph{supervisor} from rule-based findings about how work was handled, not individual
 alerts for an analyst. It is not a competitor to these systems and is not compared
 with them.
@@ -106,14 +106,14 @@ cloud~\cite{fugkeaw2026pqabl}. W3C PROV provides a provenance
 vocabulary~\cite{w3c2013provdm}. SAT-SA does not propose a logging scheme or new
 cryptography. It composes standard primitives, SHA3-256~\cite{nist2015fips202} and
 ML-DSA-65~\cite{nist2024fips204}, to bind one canonical supervisory record to the
-authorised decision.
+authorized decision.
 
 \paragraph{Gap, stated conservatively.}
 Record-based assessment of incident handling~\cite{palma2024compliance}, supervisory
 analysis of submitted data~\cite{broeders2018suptech}, peer comparison and
 tamper-evident records each exist. In the structured search we did not find a work
 that combines them in the way SAT-SA does: supervisor-side analysis of SOC evidence
-submissions across monitored organisations, with record-cited findings, peer-cohort
+submissions across monitored organizations, with record-cited findings, peer-cohort
 comparison, entity risk ranking and a cryptographically bound human decision. This
 is a combination of established parts, identified by a search with the limits
 stated above. We therefore offer the framing only as a low-confidence candidate

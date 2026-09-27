@@ -14,7 +14,10 @@ promotional. Companion documents: [PAPER_EVIDENCE_INDEX.md](PAPER_EVIDENCE_INDEX
 with every number generated into `paper/data/paper-data.json` / `values.tex` by
 `scripts/build_paper_assets.py` and checked by `scripts/audit_paper.py`. Reproduction
 package: `paper/REPRODUCIBILITY.md`; supplementary material: `paper/supplementary/`;
-literature matrix: `paper/literature-matrix.csv` (33 verified sources). Hackathon
+literature matrix: `paper/literature-matrix.csv` (48 verified, cited sources; 33 from
+Phase 12 plus 15 from the Phase 13 structured search in `paper/literature-review/`,
+77 sources included there in total). IEEE Access package: `paper/submission/`; release
+candidate and gate: `paper/release-candidate/`, `docs/SUBMISSION_GATE.md`. Hackathon
 narrative: [SIH_TECHNICAL_NARRATIVE.md](SIH_TECHNICAL_NARRATIVE.md).
 
 ## Paper-safe title candidates

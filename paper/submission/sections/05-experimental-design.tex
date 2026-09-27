@@ -25,7 +25,7 @@ mechanism responds to its designed inputs, not that it detects real misconduct.
 pathological, seeded independently. \emph{Engineered peer cohorts} (P01):
 \V{P01-cells} cells crossing cohort size, dispersion and deviation.
 \emph{External:} the UCI incident management process event log~\cite{amaral2018uci498}
-(dataset 498), a real IT service-desk log of one organisation, mapped to SAT-SA
+(dataset 498), a real IT service-desk log of one organization, mapped to SAT-SA
 categories by an adapter and analysed per assignment group
 (\V{X02b-groups} groups with enough incidents). It is IT incident data, not SOC
 data. Two security datasets were assessed and not used: GUIDE~\cite{freitas2024guide}
@@ -36,7 +36,7 @@ network flows rather than SOC workflow records.
 
 \paragraph{Baselines.}
 For closure-time detection: fixed threshold, MAD rule, z-score and
-interquartile-range rules, and random. For prioritization: random order
+interquartile-range (IQR) rules, and random. For prioritization: random order
 (\V{PR01-replicates} populations with repeated random trials), critical-and-high alert volume and a
 closure-speed heuristic (fastest median closure time first). Externally: random, volume,
 reassignment rate and slowest median resolution---the last is close to the
@@ -44,12 +44,13 @@ outcome's own construct and is included as an upper reference, not a competitor.
 
 \paragraph{Metrics.}
 Precision, recall and F1 against construction labels; precision, recall and
-NDCG~\cite{jarvelin2002ndcg} within the top $k\in\{10,20,30\}$\% of entities
+normalized discounted cumulative gain (NDCG)~\cite{jarvelin2002ndcg} within the top $k\in\{10,20,30\}$\% of entities
 (written P@$k$, R@$k$, NDCG@$k$);
 review volume needed to find all pathological entities; conformance with the
 validation contract and change of emitted finding families relative to a paired control;
 wall-clock seconds, database statements and share of time outside the analytics;
-Spearman $\rho$ against the SLA-miss rate.
+Spearman $\rho$ against the share of incidents that missed their service-level
+agreement (SLA-miss rate).
 
 \paragraph{Statistics policy.}
 We report medians; 95th percentiles only when $n\ge20$; seeded percentile

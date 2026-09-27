@@ -23,6 +23,7 @@ import csv
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 HERE = Path(__file__).resolve().parent
 
@@ -57,7 +58,9 @@ def main() -> None:
             return "doi:" + r["doi"].lower()
         return "t:" + re.sub(r"[^a-z0-9]+", " ", r["title"].lower()).strip()
 
-    screening, included, excluded = [], [], []
+    screening: list[dict[str, Any]] = []
+    included: list[dict[str, Any]] = []
+    excluded: list[dict[str, Any]] = []
     for r in cands:
         k = key(r)
         d = decisions.get(k)
