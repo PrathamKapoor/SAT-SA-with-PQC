@@ -157,13 +157,18 @@ def _purpose(rel: str) -> tuple[str, str]:
     )
 
 
-def git_state(repo: Path) -> dict[str, Any]:
+def git_state(repo: Path, exclude: Path | None = None) -> dict[str, Any]:
+    """HEAD and whether the paper sources differ from it (the output dir excluded)."""
+
     def run(*args: str) -> str:
         return subprocess.run(
             ["git", *args], cwd=repo, capture_output=True, text=True, check=True
         ).stdout.strip()
 
-    dirty = run("status", "--porcelain", "--", "paper", "evaluation", "scripts")
+    specs = ["paper", "evaluation", "scripts"]
+    if exclude is not None:
+        specs.append(f":(exclude){Path(exclude).as_posix()}")
+    dirty = run("status", "--porcelain", "--", *specs)
     return {"commit": run("rev-parse", "HEAD"), "paper_tree_dirty": bool(dirty)}
 
 
