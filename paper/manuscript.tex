@@ -1,0 +1,45 @@
+% SAT-SA manuscript -- venue-neutral LaTeX. No venue compliance is claimed.
+% Every result number is a \V{claim-id} macro from data/values.tex, generated
+% from research/evidence/freeze-v2 by scripts/build_paper_assets.py.
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern,amsmath,booktabs,graphicx,tikz,xcolor,adjustbox}
+\usepackage[margin=1in]{geometry}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage[hidelinks]{hyperref}
+\usetikzlibrary{arrows.meta,positioning,fit}
+\input{data/values.tex}
+
+\title{Record-Level Supervisory Analytics for Security Operations Centres:\\
+Controlled Evaluation, Cryptographic Decision Binding, and an External Negative Result}
+\author{PrathamKapoor}
+\date{Manuscript draft; evidence freeze \texttt{satsa-evidence-freeze-v2}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\input{sections/00-abstract}
+\end{abstract}
+
+\noindent\textbf{Keywords:} security operations; supervisory analytics; SOC assessment;
+alert and entity prioritization; human-in-the-loop decision support; evidence provenance;
+post-quantum signatures; process conformance
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-architecture}
+\input{sections/04-analytics}
+\input{sections/05-experimental-design}
+\input{sections/06-results}
+\input{sections/07-external}
+\input{sections/08-integrity}
+\input{sections/09-discussion}
+\input{sections/10-limitations}
+\input{sections/11-reproducibility}
+\input{sections/12-conclusion}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
