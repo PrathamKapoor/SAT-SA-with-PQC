@@ -24,6 +24,19 @@ No aspect is classified as established research novelty. Inherited QSMLOps,
 LangGraph, cryptographic algorithms, databases, and standard statistical
 methods are not claimed as SAT-SA inventions.
 
+## Evidence categories (never merged)
+
+| Category | Meaning | What exists |
+| --- | --- | --- |
+| Controlled synthetic | mechanism and robustness validation on authored or generated data | EXP-C01, R01b, O01, O02, T01, P01, A01, PR01 (freeze v1) |
+| External dataset | partial independent validation on real data of a different domain | EXP-X02: UCI-498 real IT incident log — feasibility, detector saturation, no association with SLA-miss rate |
+| Real operational SOC data | effectiveness on the target domain | **not evaluated** |
+
+The authoritative claim-to-artifact matrix is
+[PAPER_EVIDENCE_INDEX.md](PAPER_EVIDENCE_INDEX.md); literature positioning is
+in [LITERATURE_POSITIONING.md](LITERATURE_POSITIONING.md); limitations in
+[RESEARCH_LIMITATIONS.md](RESEARCH_LIMITATIONS.md).
+
 ## Claims/evidence matrix
 
 | Claim under consideration | Why it matters | Component | Metric and unit | Dataset / baseline / experiment | Artifact | Threats / current status |

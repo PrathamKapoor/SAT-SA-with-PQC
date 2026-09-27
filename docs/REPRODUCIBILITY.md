@@ -79,6 +79,22 @@ for the same commit.
 C:\sat-sa-results\tables` regenerates CSV, Markdown and LaTeX tables from
 completed bundles (it never edits a bundle).
 
+### Phase 10: external data and evidence freeze
+
+```powershell
+# UCI-498 (CC BY 4.0): download and check the recorded checksum first
+curl -L -o incident_event_log.zip "https://archive.ics.uci.edu/static/public/498/incident+management+process+enriched+event+log.zip"
+# ZIP sha256 6294e29a311647306bfdfc85783f7df66517c197b9cd49aa5ee36ba9c525d1d6
+python scripts/run_external_itsm_experiment.py --source-csv <dir>\incident_event_log.csv --expected-sha256 fd184bbfd62329cfe093e99da2ea7071905f2ead91900b448eb2635870821bef --out C:\sat-sa-results --experiment-id EXP-X02-external-itsm
+
+python scripts/verify_evidence_freeze.py research/evidence/freeze-v1
+python scripts/export_paper_tables.py --freeze research/evidence/freeze-v1 --out C:\sat-sa-results\tables
+```
+
+The external run takes about 25 minutes locally (50 groups). A new freeze is
+built with `scripts/build_evidence_freeze.py --selection <file> --out
+research/evidence/freeze-vN`; never edit an existing freeze.
+
 ## Manifest and hashes
 
 The manifest records experiment status, UTC creation time, controlled dataset

@@ -151,6 +151,24 @@ Each layer is classified separately; nothing here is inferred from another.
 | HTTP smoke against the compose topology | **Not executed** locally (blocked by Docker); defined in CI. | — |
 | Hosted deployment | **Not verified** in Phase 9. The Render site hosts the separate web UI, not this API/worker topology. | — |
 
+Phase 10 re-check (2026-09-27): Docker is still not installed (Windows and
+WSL) and `SATSA_TEST_POSTGRES_DSN` is still unset at process, user and machine
+level, so container, compose, SeaweedFS, live-PostgreSQL and
+PostgreSQL-vs-SQLite measurements remain **blocked**; no result is claimed.
+The SeaweedFS service relies on the image's default `mini -dir=/data` mode,
+which serves S3 on port 8333 and pre-creates `S3_BUCKET` — confirmed from the
+upstream Dockerfile and documentation, not by execution. To unblock:
+
+1. PostgreSQL: create a scratch database and set
+   `SATSA_TEST_POSTGRES_DSN=postgresql://<user>:<password>@localhost:5432/<db>`,
+   then run `python -m pytest tests/test_postgres_engine.py
+   tests/test_postgres_migrations.py tests/test_tenant_schema.py
+   tests/test_tenant_boundary.py tests/test_phase2_submission_platform.py
+   tests/test_phase3_analysis_execution.py tests/test_phase4_langgraph.py
+   tests/test_phase7_runtime.py -ra`.
+2. Containers: install Docker, or push the branch so the `saas-topology-smoke`
+   CI job runs the compose topology and uploads `smoke-report.json`.
+
 ## Legacy offline deployment
 
 The following CLI/Jinja deployment is the offline-compatible single-machine
