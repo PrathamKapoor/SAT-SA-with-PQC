@@ -1,16 +1,18 @@
 \begin{table}[t]
 \caption{Orchestration cost on one machine with SQLite (O01, \V{O01-pairs} paired
-trials per mode; the human decision excluded). Graph $-$ direct: median
+trials per mode; the human decision excluded). Median and p95 in seconds; Outside =
+seconds outside the domain stages; DB = database statements. Graph $-$ direct: median
 \V{O01-diff-proc}\,s, 95\% bootstrap \V{O01-diff-proc-lo} to \V{O01-diff-proc-hi}\,s
 (graph slower in \V{O01-diff-proc-greater} of \V{O01-pairs} pairs). Finalization took
 \V{O01-final-median}\,s, receipt verification \V{O01-verify-median}\,s and run and
 finding attestation \V{O01-attest-median}\,s (medians).}
 \label{tab:orch}
 \centering
-\scriptsize
-\begin{tabular}{@{}lrrrr@{}}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}L{4.2cm}rrrr@{}}
 \toprule
-Mode & Median (s) & p95 (s) & Outside domain stages (s) & DB statements \\
+Mode & Median & p95 & Outside & DB \\
 \midrule
 Direct (reviewed) & \V{O01-direct-median} & \V{O01-direct-p95} & \V{O01-direct-outside} & \V{O01-direct-db} \\
 LangGraph (reviewed) & \V{O01-graph-median} & \V{O01-graph-p95} & \V{O01-graph-outside} & \V{O01-graph-db} \\

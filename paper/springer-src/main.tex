@@ -11,6 +11,10 @@
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{booktabs}
+\usepackage{array}
+\usepackage{microtype}
+% Ragged-right wrapping table column: L{width}.
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
 \usepackage{xcolor}
@@ -19,6 +23,41 @@
 % Springer eBook style for URLs (from the template):
 \renewcommand\UrlFont{\color{blue}\rmfamily}
 \urlstyle{rm}
+
+% ---------------------------------------------------------------------
+% Author's typography (overrides llncs defaults without editing the class):
+% Times (newtxtext) at 12 pt everywhere, the title at 14 pt, and bold used
+% only for headings. Delete this block to return to the standard llncs sizes.
+% ---------------------------------------------------------------------
+\makeatletter
+\renewcommand\normalsize{\@setfontsize\normalsize{12}{14.5}%
+  \abovedisplayskip 12\p@ \@plus3\p@ \@minus7\p@
+  \abovedisplayshortskip \z@ \@plus3\p@
+  \belowdisplayshortskip 7\p@ \@plus3\p@ \@minus3\p@
+  \belowdisplayskip \abovedisplayskip}
+\renewcommand\small{\@setfontsize\small{12}{14.5}}
+\renewcommand\footnotesize{\@setfontsize\footnotesize{12}{14.5}}
+\renewcommand\scriptsize{\@setfontsize\scriptsize{12}{14.5}}
+\renewcommand\tiny{\@setfontsize\tiny{12}{14.5}}
+\renewcommand\large{\@setfontsize\large{12}{14.5}}   % section headings
+\renewcommand\Large{\@setfontsize\Large{14}{17}}     % title
+\normalsize
+% Caption labels ("Table 1.", "Fig. 1.") in regular weight.
+\long\def\@makecaption#1#2{%
+  \small
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{#1. #2}%
+  \ifdim \wd\@tempboxa >\hsize
+    #1. #2\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+\makeatother
+% 12 pt text on the proceedings line width: allow slightly looser spacing
+% instead of lines running into the margin.
+\setlength{\emergencystretch}{1.5em}
 
 \begin{document}
 
