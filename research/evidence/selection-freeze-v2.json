@@ -1,0 +1,24 @@
+{
+  "freeze_id": "satsa-evidence-freeze-v2",
+  "bundles": [
+    {"path": "research/evidence/freeze-v1/bundles/controlled-final-seed-17", "role": "canonical", "note": "EXP-C01 controlled benchmark (Phase 8)"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-R01b-evidence-robustness", "role": "canonical", "note": "EXP-R01b imperfect-evidence robustness"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-O01-orchestration-overhead", "role": "canonical", "note": "EXP-O01 direct vs LangGraph overhead, TRUST-SAT cost"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-O02-orchestration-recovery", "role": "canonical", "note": "EXP-O02 interruption and recovery"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-T01-trust-mutation-matrix", "role": "canonical", "note": "EXP-T01 TRUST-SAT mutation matrix"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-P01-peer-sweep", "role": "canonical", "note": "EXP-P01 factorial peer sweep"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-A01-component-ablation", "role": "canonical", "note": "EXP-A01 scenario and population ablation"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-PR01-prioritization-replicated", "role": "canonical", "note": "EXP-PR01 replicated prioritization"},
+    {"path": "C:/tmp/satsa-phase11/EXP-X02b-external-itsm", "role": "canonical", "note": "EXP-X02b external IT incident log, corrected ingestion bookkeeping (commit c1206dd); analytical outputs identical to X02"},
+    {"path": "C:/tmp/satsa-phase11/EXP-X03-external-failure-analysis", "role": "canonical", "note": "EXP-X03 diagnostic failure analysis of the external result; no detector, threshold or weight changed"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-X02-external-itsm", "role": "superseded", "note": "original external run; ingest_totals recorded null (bookkeeping bug fixed in 52c5d44); superseded by EXP-X02b"},
+    {"path": "research/evidence/freeze-v1/bundles/EXP-R01-evidence-robustness", "role": "superseded", "note": "before fix da80046; superseded by EXP-R01b"},
+    {"path": "research/evidence/freeze-v1/bundles/evidence-robustness-pilot", "role": "superseded", "note": "first robustness pilot; superseded by EXP-R01b"},
+    {"path": "research/evidence/freeze-v1/bundles/trust-integrity-final", "role": "superseded", "note": "Phase 8 eight-mutation run; superseded by EXP-T01"},
+    {"path": "research/evidence/freeze-v1/bundles/peer-sensitivity-final", "role": "historical", "note": "Phase 8 peer pilot; EXP-P01 is canonical"}
+  ],
+  "supporting_files": [
+    {"path": "research/evidence/freeze-v1/supporting/EXP-D01-local-process-smoke.json", "note": "EXP-D01 HTTP smoke, local API + worker processes, SQLite, commit aa79109: 18/18 PASS"},
+    {"path": "research/dataset-suitability.json", "note": "final dataset suitability matrix"}
+  ]
+}

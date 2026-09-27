@@ -85,3 +85,24 @@ def test_catalog_reads_facts_from_freeze_and_requires_explicit_status(tmp_path):
                 [{"experiment_id": "R01", "bundle": "EXP-R01-evidence-robustness"}],
             ),
         )
+
+
+def test_committed_freeze_v2_is_intact_and_catalog_is_current():
+    from evaluation.research.freeze import verify_freeze
+
+    freeze = ROOT / "research" / "evidence" / "freeze-v2"
+    result = verify_freeze(freeze)
+    assert result["intact"] is True, result["problems"]
+    rebuilt = build_catalog(
+        Path("research/evidence/freeze-v2"),
+        ROOT / "research" / "evidence" / "catalog-spec.json",
+    )
+    committed = json.loads(
+        (ROOT / "research" / "evidence" / "catalog.json").read_text(encoding="utf-8")
+    )
+    assert rebuilt == committed
+    record = json.loads((freeze / "freeze.json").read_text(encoding="utf-8"))
+    roles = {b["bundle"]: b["role"] for b in record["bundles"]}
+    assert roles["EXP-X02b-external-itsm"] == "canonical"
+    assert roles["EXP-X02-external-itsm"] == "superseded"
+    assert (ROOT / "research" / "evidence" / "freeze-v1" / "freeze.json").is_file()

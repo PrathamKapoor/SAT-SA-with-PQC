@@ -1,0 +1,16 @@
+% generated from bundle EXP-X03-external-failure-analysis; do not edit
+\begin{tabular}{llll}
+\hline
+classification & concept & measures\_satsa\_concept & source \\
+\hline
+directly observed & alert workload & yes (volume only) & incident count per final group \\
+directly observed & closure behaviour & partly: SAT-SA treats unusually fast closure of security alerts as a possible skipped investigation; in IT service management fast resolution is the service goal & resolved\_at - opened\_at \\
+derived & acknowledgement & approximately & first non-New event time \\
+proxy & investigation quality & no: state changes are not investigation steps; ITSM tickets often resolve directly from New & number of Active/Awaiting state events \\
+proxy & escalation quality & no: reassignment routes work, it is not a severity escalation & reassignment\_count increments \\
+proxy & disposition quality & no: outcome semantics unavailable & closed\_code (anonymized) \\
+unavailable & evidence completeness / monitoring coverage & not evaluable & assets (cmdb\_ci known for 54 of 24,918 incidents) \\
+derived & peer deviation & only as valid as the underlying proxy metrics & groups of one organisation compared on the metrics above \\
+directly observed & external outcome: SLA miss & no: timeliness against a service target, not supervisory execution quality & final made\_sla flag \\
+\hline
+\end{tabular}

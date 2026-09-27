@@ -1,0 +1,9 @@
+<!-- generated from bundle EXP-X02b-external-itsm; do not edit -->
+
+| method | precision@10% | recall@10% | ndcg@10% | precision@20% | recall@20% | ndcg@20% | precision@30% | recall@30% | ndcg@30% | review_volume_to_find_all |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| incident_volume | 0 | 0 | 0 | 0 | 0 | 0 | 0.1333 | 0.1667 | 0.1063 | 48 |
+| random | 0.2514 | 0.1047 | 0.2529 | 0.2415 | 0.2013 | 0.2452 | 0.2388 | 0.2985 | 0.2792 | undefined |
+| reassignment_rate | 0.2 | 0.08333 | 0.1461 | 0.3 | 0.25 | 0.2344 | 0.2667 | 0.3333 | 0.2639 | 44 |
+| satsa_priority | 0.4 | 0.1667 | 0.4852 | 0.3 | 0.25 | 0.3811 | 0.3333 | 0.4167 | 0.4394 | 50 |
+| slowest_median_resolution | 1 | 0.4167 | 1 | 0.9 | 0.75 | 0.9364 | 0.6667 | 0.8333 | 0.8902 | 24 |

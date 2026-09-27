@@ -1,0 +1,1 @@
+{"baselines":["random","incident_volume","slowest_median_resolution","reassignment_rate"],"experiment":"satsa-external-itsm-v1","label":"final made_sla (false = SLA missed), hidden from SAT-SA","min_incidents_per_group":30,"relevant_set":"top quartile of groups by SLA-miss rate","seed":0}
