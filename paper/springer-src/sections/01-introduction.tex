@@ -25,22 +25,20 @@ supervisory setting is narrower: an analysis of the heterogeneous records a moni
 SOC submits (alerts, cases, investigation steps, escalations, dispositions, assets)
 that yields findings citing those records, ranks organizations against each other,
 keeps a human supervisor as the decision authority, and makes the decided state
-verifiable afterwards---together with an honest account of how such an analysis
-behaves on controlled and on independent data.
+verifiable afterwards---together with an evaluation of how such an analysis
+behaves under controlled and independent conditions.
 
-This paper studies that question with an implemented system, SAT-SA (developed for
-the Smart India Hackathon problem SIH26157), and a frozen evaluation. Its emphasis is
+This paper studies that question with an implemented system, SAT-SA, and a frozen evaluation. Its emphasis is
 the evidence rather than the architecture: every number is taken from a hash-verified
-experiment bundle, and negative findings are reported with the same prominence as
-positive ones.
+experiment bundle.
 
-\paragraph{Contributions.} We separate contribution types and state their strength.
+\paragraph{Contributions.} The contributions are of five types.
 \begin{itemize}
-\item \emph{Application framing (low-confidence candidate).} Supervisor-side,
+\item \emph{Application framing.} Supervisor-side,
 record-level analytics over SOC evidence submissions, with findings that cite
 records, cross-organization peer comparison, entity ranking and a bound human
-decision. Each ingredient has prior art (Section~\ref{sec:related}); the combination
-is offered without a novelty claim.
+decision. Each ingredient has prior art (Section~\ref{sec:related}); the contribution
+is their combination and evaluation for the supervisory setting.
 \item \emph{Empirical findings.} Controlled evaluations of detection against declared
 labels and simple baselines, one-worker ablation, imperfect-evidence robustness,
 peer-cohort sensitivity, orchestration cost and recovery, and an external negative
@@ -53,8 +51,8 @@ ledger), evaluated with a mutation matrix.
 \item \emph{Reproducibility practice.} Write-once experiment bundles, an evidence
 freeze and a data layer that generates every reported number.
 \end{itemize}
-We make no claim of algorithmic novelty, superiority over existing systems, or
-effectiveness in real SOCs.
+The analytical methods are established ones, and effectiveness in operational SOCs
+is not evaluated (Section~\ref{sec:threats}).
 
 The remainder of the paper reviews related work (Section~\ref{sec:related}), formalizes
 the problem and the implemented analysis (Sections~\ref{sec:formulation}

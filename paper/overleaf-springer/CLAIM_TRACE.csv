@@ -9,7 +9,7 @@ sections/00-abstract.tex,12,T01-detected,13,T01,"{'bundle': 'EXP-T01-trust-mutat
 sections/00-abstract.tex,13,O02-runs,36,O02,"{'args': {'path': ['metrics', 'trials']}, 'bundle': 'EXP-O02-orchestration-recovery', 'derivation': 'len_path', 'kind': 'derived', 'manifest_sha256': 'ddd3bef48"
 sections/00-abstract.tex,19,X02b-rho-risk,\ensuremath{-}0.11,X02b,"{'bundle': 'EXP-X02b-external-itsm', 'kind': 'path', 'manifest_sha256': '036652ed89089874a31689354c0ddac26e4140e0f4e7b774f4341408a4d9b9d0', 'path': ['metrics', "
 sections/00-abstract.tex,20,X02b-rho-slowest,0.94,X02b,"{'bundle': 'EXP-X02b-external-itsm', 'kind': 'path', 'manifest_sha256': '036652ed89089874a31689354c0ddac26e4140e0f4e7b774f4341408a4d9b9d0', 'path': ['metrics', "
-sections/02-related-work.tex,35,X02b-incidents-total,"24,918",X02b,"{'bundle': 'EXP-X02b-external-itsm', 'kind': 'path', 'manifest_sha256': '036652ed89089874a31689354c0ddac26e4140e0f4e7b774f4341408a4d9b9d0', 'path': ['metrics', "
+sections/02-related-work.tex,36,X02b-incidents-total,"24,918",X02b,"{'bundle': 'EXP-X02b-external-itsm', 'kind': 'path', 'manifest_sha256': '036652ed89089874a31689354c0ddac26e4140e0f4e7b774f4341408a4d9b9d0', 'path': ['metrics', "
 sections/03-problem-formulation.tex,15,CODE-workers,16,code,"{'fact': 'default_worker_count', 'kind': 'code'}"
 sections/03-problem-formulation.tex,54,CODE-dimensions,7,code,"{'fact': 'risk_dimension_count', 'kind': 'code'}"
 sections/03-problem-formulation.tex,55,RISK-w-execution-gap,25,code,"{'fact': 'risk_weight:execution_gap', 'kind': 'code'}"

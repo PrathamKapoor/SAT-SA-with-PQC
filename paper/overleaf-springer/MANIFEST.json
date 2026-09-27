@@ -2,14 +2,14 @@
   "schema": "satsa-overleaf-manifest/1",
   "zip": {
     "path": "paper/overleaf-springer.zip",
-    "sha256": "4c553bd8d54b23cf4c95f53f010e5f3e1e29da9f4ad6e82a8bf557f103770a4a",
-    "size": 238015,
+    "sha256": "84814e4bfc56b06a37fe9f6fb0405f49bd35297b2c8ba560b617e43d9a045442",
+    "size": 237910,
     "files": 56
   },
   "files": [
     {
       "file": "CLAIM_TRACE.csv",
-      "sha256": "7da873f81b908007b680f194ed1efe21df0fdb22ba0d6d04bc4be3ced7f71a33",
+      "sha256": "5e19bd082ccf5dd668f47f034e9847bd8e130c05a0f2deb91986328264fb2df7",
       "size": 60362,
       "purpose": "provenance / build metadata (not in ZIP)",
       "in_zip": false
@@ -58,8 +58,8 @@
     },
     {
       "file": "main.pdf",
-      "sha256": "85679efdc879897d4ca1223615496cf9a40e235e3c5e3c1f3be8d17b2c18f509",
-      "size": 397831,
+      "sha256": "4b3faa40b9c8aa68c14171f19c312e592a6042132367379560dff01c0c03680f",
+      "size": 398122,
       "purpose": "compiled PDF (not in ZIP)",
       "in_zip": false
     },
@@ -79,8 +79,8 @@
     },
     {
       "file": "README.md",
-      "sha256": "d253d9897b823685cc4d51657fdeea4051b1cb234917d2e38526274a971e3b45",
-      "size": 4618,
+      "sha256": "7813da5497e651d9654f3d898d15c3c123b5b77f6b2c88d0f5dac56655049748",
+      "size": 4481,
       "purpose": "package documentation",
       "in_zip": true
     },
@@ -93,22 +93,22 @@
     },
     {
       "file": "sections/00-abstract.tex",
-      "sha256": "34d02214d9a943ebc0f4a2365bbdb7098357fcf79568f1951773be573bb94548",
-      "size": 1881,
+      "sha256": "9e9ad7fd44eb78c8a902fdba4c3ca3f9529830056e51ba1a3f0642b395532e21",
+      "size": 1859,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/01-introduction.tex",
-      "sha256": "2ed78660760dbd25f3460e4ab656989fc051a8d0856a3f86117d75a85f8cdf77",
-      "size": 4285,
+      "sha256": "00a81d27bcf0a890027d4f11aee9b72cdafb0e114320fda003247310711a3c48",
+      "size": 4155,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/02-related-work.tex",
-      "sha256": "b44c7b4495c930cc8c9865705b1a5231c669ab87ca22a442f33b8ad275c2339b",
-      "size": 5827,
+      "sha256": "5e77e0e78faecc9905e3d7611271d9a1050a17aaacb7b9f8be3abbbb3ebac149",
+      "size": 6011,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -121,8 +121,8 @@
     },
     {
       "file": "sections/04-system.tex",
-      "sha256": "87628dd572ae6db0627a4e950a7a36063ab162bb44daae1ebd81b1b466ad703e",
-      "size": 5657,
+      "sha256": "db4ee3599b4eaed2dbbd8d2a6d0d82ae937b109639ef13bb4669bf650efb9186",
+      "size": 5647,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -163,8 +163,8 @@
     },
     {
       "file": "sections/10-reproducibility.tex",
-      "sha256": "f99e4b8280e499d7f0f9948a14d21a250dec62f6ee28339f775db90b741ec8d7",
-      "size": 2448,
+      "sha256": "39133f5dfb7f8a826ab80f69b73ddcd12c00e1e1d8027860a4706535e411dbd5",
+      "size": 2411,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -177,15 +177,15 @@
     },
     {
       "file": "sections/12-declarations.tex",
-      "sha256": "34e3522d48eef1438b1e9f3e00816490f7cba6103e566655fe04b59091486eb9",
-      "size": 163,
+      "sha256": "d0147a1a1af8b3c40b4047f5ac6ac9b46362fbe94875b2182c377f39504e8e7d",
+      "size": 210,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "SOURCE_MAP.md",
-      "sha256": "defe59758c6e4cdd541478891a6bc8876e830d0cd7812817dc2be40986bd5079",
-      "size": 3672,
+      "sha256": "f181586cab52044b54523b17d127603ecdb16539b00a8c81b9c099cd4c5ecf77",
+      "size": 3668,
       "purpose": "package documentation",
       "in_zip": false
     },

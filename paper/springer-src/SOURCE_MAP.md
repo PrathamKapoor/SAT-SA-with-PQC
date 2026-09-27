@@ -34,7 +34,7 @@ Values:
 | 9 Threats | `sections/09-threats.tex` | PR01, D01 (deployment smoke) | — |
 | 10 Reproducibility | `sections/10-reproducibility.tex` | freeze verification; publication snapshots | — |
 | 11 Conclusion | `sections/11-conclusion.tex` | — | — |
-| Declarations | `sections/12-declarations.tex` | — (ethics; declaration of AI use) | — |
+| Declarations | `sections/12-declarations.tex` | — (ethics approval statement) | — |
 
 Figures 2–5 are copied unchanged from `paper/figures/`, generated from freeze-v2 with
 provenance in `paper/figures/figures.json`. Methodology constants (bootstrap resamples
