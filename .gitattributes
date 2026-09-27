@@ -14,3 +14,6 @@ paper/submission/data/** -text
 paper/submission/tables/** -text
 paper/submission/figures/** -text
 paper/submission/supplementary/generated/** -text
+
+# Release candidate: files must keep the bytes hashed in its MANIFEST.json.
+paper/release-candidate/** -text

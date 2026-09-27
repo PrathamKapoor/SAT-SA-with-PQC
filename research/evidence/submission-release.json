@@ -1,0 +1,122 @@
+{
+  "article_type": "Applied Research",
+  "article_type_status": "AUTHOR CONFIRMATION REQUIRED",
+  "author_inputs_open": [
+    "Full author name(s)",
+    "Affiliation(s)",
+    "E-mail address(es)",
+    "ORCID(s)",
+    "Biography/biographies",
+    "Conflict-of-interest statement",
+    "Funding statement",
+    "AI disclosure confirmation",
+    "Final article type",
+    "Originality confirmation",
+    "APC approval (US$2,160)",
+    "Code publication (push or archive)",
+    "Human grammar proofread"
+  ],
+  "build_date_utc": "2026-09-27T15:40:50.314218+00:00",
+  "figures": {
+    "figures-static/fig-architecture.pdf": "79185612256c9f99e0a175b1f40290a9eb29768dccb3412aa01dcf0dc28a630e",
+    "figures/fig-ablation.pdf": "33186154e4d7452af886aa2cbad1ff1faccf04195b021b8b89e1bf68f9183c84",
+    "figures/fig-external.pdf": "cfc3fe9a2e576e4c21e4f45a4fc66d65aee1bc76734c7d7f67d5e5334aeb55df",
+    "figures/fig-orchestration.pdf": "85542ed0f712952de614a0adb672badfe44dbd1e28f2f0dfd06eaac66ba708f1",
+    "figures/fig-peer.pdf": "7bbc6e30cb4dd72ca646d895028d520e5e9d7951eb5ee2a44bc6ca6c307c6da2",
+    "figures/fig-prioritization.pdf": "f28c39f8042d7a6b5b9760e8ff3152582c611ba88e8c869c22181d4c73ea8aaf",
+    "figures/fig-robustness.pdf": "30637efe8cc3a75303c5f043d5c3031552d36e9eabe67ccefc0038572a4b87f9",
+    "figures/figures.json": "45ad07d459f0b6e05736d59fca671dc8a78f92c24bd9919701bd0b8bd63546ea"
+  },
+  "freeze": {
+    "freeze_json_sha256": "2ac93ef3f2967f908c35b05c1fed97dc60282aa503d1a97594275deae3a1ff0a",
+    "path": "research/evidence/freeze-v2"
+  },
+  "manuscript": {
+    "pages": 13,
+    "pdf_sha256": "a3ad4b2bc2ff8ba2f06dc3a3014467f0689a72649b741f6865fee1743172ea73",
+    "tex_sha256": "4ef452e3947fe7b622355836d9e59e9721bd3ca700ad8152eacfe5c5f7646040"
+  },
+  "paper_tree_dirty": false,
+  "publication_snapshot": {
+    "path": "research/evidence/publication-v3",
+    "publication_json_sha256": "fbe774f76861bbaf633e303746eb2435b743c265bb52d051d3e36a4aab5ec603"
+  },
+  "references_sha256": "5796323d1090f75803e5f90507b1aef15ca1d6947557e55c515d64362de48263",
+  "release_candidate_manifest_sha256": "801efe3307c2e4726aac8c1f3f341f76a25abc4fedbf1b34e0076207d185871d",
+  "schema": "satsa-submission-release/1",
+  "source_commit": "baa2950b38f0ff29d240cc5c0baf30012fc69cb6",
+  "submission_ready": false,
+  "supplementary": {
+    "supplementary/README.md": "ffb9f12046b56258d275df4a57152fd377bf2d2657ca5424e2ea6be1181d1817",
+    "supplementary/S2-metric-definitions.md": "4fe1e3626ea63ce07b1719c8d7135b0777c18a03709edcea3d33c8e52f8d076f",
+    "supplementary/S7-dataset-mapping.md": "fca0eb8f467fc987bd7cb8d06c5a1ae75dbaee422569c445e6cd1f4785b107d2",
+    "supplementary/S8-limitations.md": "e7ec8e3d46b352421f25aa62f753c9c45b8a0c7913d7eae5d6a2ff8568da83f3",
+    "supplementary/S9-reproducibility.md": "89fa2d7b4f5b3313ede2192157c3101c92577b1b391b58ad54467b9e9340a2d5",
+    "supplementary/generated/S1-configurations.md": "907b63c75806c38ed8e1a1d10b5fb5cdaa7457404568d6709d850db36ac94050",
+    "supplementary/generated/S10-additional-results.md": "499b360feaf12ef14e28e69df921cfac380c594ca8b9f92f7a1c3c9b6fff9cdd",
+    "supplementary/generated/S3-robustness.md": "7b710c5136f37ef374e97fac7d70ed6cf67ead531862161d5a27a8f8a2a3de6f",
+    "supplementary/generated/S4-mutation-matrix.md": "d575421479214b33fe372490c911a49330789f4604bbfc54595e5106856df9aa",
+    "supplementary/generated/S5-peer-sweep.md": "9cfca309b7863d8da2fd3b7b9251c4c8ee302086d6e0294ef6d039de0059df80",
+    "supplementary/generated/S6-statistical-audit.md": "1f97a2ee378f067c48384ff03cfff51db643e68b92795365264c7b4e2560d965",
+    "supplementary/generated/experiments.json": "28230285b4f74e88957b6d2fdd346fcc20f16de8570d19f64780dd4acbf908ca",
+    "supplementary/literature-review/abstract-stage-decisions.json": "0fe507835c60b44430938d2c3e6bb12279ea92c98fa75e0826f5caf84a326b94",
+    "supplementary/literature-review/additional-sources.csv": "406757d2dd8bea4d24fcede10cf6417bf75d9317a397d5841331a40a54bf8b60",
+    "supplementary/literature-review/candidates.csv": "70995928a9d1b74228e50b487fc1ddadccfb0746c3e57c81d9f20af75dcd47db",
+    "supplementary/literature-review/excluded.csv": "2b5b5bcaa0bf5446ff99e735506b06c1a0026bacb51e8b21668b13b130eca406",
+    "supplementary/literature-review/extraction.csv": "666db9af7cf401899f5847a3218bfd9b9107711d90e29cc041e3ab14faec6f7b",
+    "supplementary/literature-review/gap-matrix.csv": "a1e7915db2db5bc581313eadf5e298f37be169f0140856370f86e104b0bffca1",
+    "supplementary/literature-review/included.csv": "2fc97da5fe95ebb5235d24a8ff324f63af831c82bc08ed06d026a201a0e881db",
+    "supplementary/literature-review/protocol.md": "02fdb493e0c63fbe53b2d5a92502f95317dbd908cd2e3c2854291aa5493076a7",
+    "supplementary/literature-review/run_searches.py": "16db5c2f7d7ccd5029f37005088df379cedb55c18304e1a45e81570be4b110f6",
+    "supplementary/literature-review/screen.py": "77e74657fdea5fcfdd38e697bca10aa4d9b9623b960230e85b0d4dbf9bbdf6a9",
+    "supplementary/literature-review/screening.csv": "8d947e881823a21e4230c62913cec610b4379a485f9b2bbbe800c20e8c066092",
+    "supplementary/literature-review/searches.csv": "3ebae94b8b7fa276771285f96c41455a76be70d72787a791ff32e078d139759b"
+  },
+  "tables": {
+    "tables/tab-ablation.tex": "9484b5f92b77a34712ecf0031955a15a73580726b5f69744e22416c49b8d17cf",
+    "tables/tab-baselines-closure.tex": "7d55c97244b69dc687a28010ced2c7a8a1722c33e967fa4894ca1a77add78d56",
+    "tables/tab-baselines-prioritization.tex": "a79e085575896687eab65cec160374af41e6b23428cd8b878dd9bb4a411ad281",
+    "tables/tab-deployment.tex": "ac1f8aef21f74b20658a1bf3a952f2e20fe2c23a9d32c170ea4be4afbc314c0a",
+    "tables/tab-experiments.tex": "8d4ab9d3dcb2bca05973f62f3c4df26369cb5fbf51f2e12327cfe15c8000172f",
+    "tables/tab-external.tex": "4782a6fbc88919b62ee6d4eea5b4ae20962084fe3922518b2d9d88f5aa9d5536",
+    "tables/tab-orchestration.tex": "10a68243fc1df0abef645e2339646852f5641c9d37e8d0bedf4d835d5ed8aa18",
+    "tables/tab-peer.tex": "d2704664f2e2d52caa77f63593f21b2af58a4d13d1a7b6c38ee38b3e3bbebe13",
+    "tables/tab-recovery.tex": "a8c7604ae0e58d77bc91d14c020ebfc5091db57300cb062775b49a99f680125b",
+    "tables/tab-robustness.tex": "d5ac39093083d32b7996bfbef58fec85a20624f88c8babbc46b3702a9f41d963",
+    "tables/tab-system.tex": "9270fb74ed703dc7b91b836291e4cca56332ad99fbba8a87057407a0119c78a8",
+    "tables/tab-trust.tex": "79aad6dc04a995f023656de541b88fcbb420a6d98024da00932aabb72eb4b801"
+  },
+  "venue": "IEEE Access",
+  "verification": {
+    "audits": {
+      "paper": {
+        "bib_entries": 48,
+        "citations": 48,
+        "claims": 286,
+        "claims_used_in_text": 155,
+        "matrix_rows": 48,
+        "ok": true,
+        "problems": {}
+      },
+      "submission": {
+        "bib_entries": 48,
+        "citations": 48,
+        "claims": 286,
+        "claims_used_in_text": 155,
+        "matrix_rows": 48,
+        "ok": true,
+        "problems": {}
+      }
+    },
+    "release_candidate_compile": {
+      "assets_checked": 33,
+      "compiled": true,
+      "latex_errors": 0,
+      "ok": true,
+      "pages": 13,
+      "problems": [],
+      "undefined_references": 0
+    },
+    "technical_checks_pass": true
+  }
+}
