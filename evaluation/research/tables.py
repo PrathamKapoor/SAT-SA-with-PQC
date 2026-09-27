@@ -281,7 +281,58 @@ def _external(results: dict[str, Any]) -> dict[str, list[Row]]:
     }
 
 
+def _failure(results: dict[str, Any]) -> dict[str, list[Row]]:
+    metrics = results["metrics"]
+    saturation = [
+        {
+            "family": family,
+            **{
+                k: v[k]
+                for k in (
+                    "groups_evaluated",
+                    "groups_flagged",
+                    "flagging_rate",
+                    "rule_type",
+                )
+            },
+        }
+        for family, v in sorted(
+            metrics["detector_saturation"].items(),
+            key=lambda item: -item[1]["flagging_rate"],
+        )
+    ]
+    prevalence = [
+        {
+            "prevalence_metric": name,
+            "rho_vs_sla_miss": v["spearman_rho"],
+            "ci_lower": (v["bootstrap_interval"] or {}).get("lower"),
+            "ci_upper": (v["bootstrap_interval"] or {}).get("upper"),
+            "rho_vs_satsa_risk": metrics["prevalence_vs_risk"][name]["spearman_rho"],
+        }
+        for name, v in metrics["prevalence_vs_sla_miss"].items()
+    ]
+    dimensions = [
+        {
+            "risk_dimension": name,
+            "groups_nonzero": v["groups_nonzero"],
+            "distinct_values": v["distinct_values"],
+            "min": v["min"],
+            "max": v["max"],
+            "rho_vs_sla_miss": v["vs_sla_miss"]["spearman_rho"],
+        }
+        for name, v in metrics["risk"]["dimensions"].items()
+    ]
+    constructs = [dict(row) for row in metrics["construct_validity"]]
+    return {
+        "external_failure_saturation": saturation,
+        "external_failure_prevalence": prevalence,
+        "external_failure_risk_dimensions": dimensions,
+        "external_construct_validity": constructs,
+    }
+
+
 BUILDERS: dict[str, Callable[[dict[str, Any]], dict[str, list[Row]]]] = {
+    "satsa-external-itsm-failure-analysis-v1": _failure,
     "satsa-controlled-supervisory-benchmark": _controlled,
     "satsa-external-itsm-v1": _external,
     "satsa-evidence-perturbation-v1": _robustness,
@@ -401,3 +452,73 @@ def export_tables(
         json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     return record
+
+
+def export_evidence_summaries(
+    bundles: list[Path],
+    out: Path,
+    *,
+    expected_manifests: dict[str, str] | None = None,
+    supporting_dir: Path | None = None,
+) -> dict[str, Any]:
+    """Statistical audit, dataset characteristics and deployment smoke tables.
+
+    Built only from verified bundles and, when given, the freeze's supporting
+    files; absent evidence produces no table rather than invented rows.
+    """
+    from evaluation.research.audit import audit_bundle
+
+    out = Path(out)
+    out.mkdir(parents=True, exist_ok=True)
+    audit_rows: list[Row] = []
+    characteristics: list[Row] = []
+    for bundle in sorted(bundles):
+        try:
+            manifest, results = load_bundle(
+                bundle,
+                expected_manifest_sha256=(expected_manifests or {}).get(bundle.name),
+            )
+        except (BundleIntegrityError, FileNotFoundError, KeyError):
+            continue
+        audit_rows.extend(audit_bundle(bundle.name, results))
+        dataset = manifest.get("dataset") or {}
+        characteristics.append(
+            {
+                "bundle": bundle.name,
+                "experiment": results.get("experiment")
+                or results.get("benchmark_name", ""),
+                "dataset": dataset.get("id"),
+                "dataset_version": dataset.get("version"),
+                "data_origin": dataset.get("data_origin"),
+                "seed": manifest.get("seed"),
+                "code_commit": (manifest.get("code") or {}).get("commit", "")[:7],
+            }
+        )
+    written = {}
+    (out / "statistical-audit.json").write_text(
+        json.dumps(audit_rows, indent=2, sort_keys=True, default=str) + "\n",
+        encoding="utf-8",
+    )
+    for name, rows in (
+        ("statistical_audit", audit_rows),
+        ("dataset_characteristics", characteristics),
+    ):
+        if rows:
+            for path in write_table(out, name, rows, "canonical bundles"):
+                written[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    smoke = (
+        next(Path(supporting_dir).glob("EXP-D01*.json"), None)
+        if supporting_dir
+        else None
+    )
+    if smoke is not None:
+        report = json.loads(smoke.read_text(encoding="utf-8"))
+        rows = [
+            {k: check[k] for k in ("check", "status", "duration_seconds", "request_id")}
+            for check in report["checks"]
+        ]
+        for path in write_table(
+            out, "deployment_smoke_local_processes", rows, smoke.name
+        ):
+            written[path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return {"audit_rows": len(audit_rows), "tables": written}
