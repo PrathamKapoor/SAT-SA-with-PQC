@@ -1,0 +1,20 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We evaluated record-level supervisory analytics for SOCs as implemented in SAT-SA:
+rule-based analysis of the records a monitored organization submits, saturating risk
+fusion and ranking, a human supervisory decision, and cryptographic binding of that
+decision to the analysed state. Under controlled conditions the mechanisms behave as
+specified---declared findings are emitted, validation follows its contract, the tested
+alterations of the decided record are detected, and the evaluated interruptions
+recover---but simple rules match much of the detection and ranking performance, and
+stale and contradictory evidence passes silently. On a public IT incident log the
+supervisory risk did not track the only outcome available, because that outcome
+measures timeliness, which the fast-closure signal treats in the opposite direction,
+and because existence rules saturate at scale. What can be concluded is therefore
+mechanism-level: the pipeline is inspectable and behaves as designed, while its
+usefulness for supervision is untested. The evidence needed next is not more
+controlled experiments but SOC records with independent outcomes held out from
+development, expert-labelled findings, a study with supervisors, prevalence-aware
+scoring and consistency checks for stale and conflicting records, and validation of
+the containerized PostgreSQL deployment.

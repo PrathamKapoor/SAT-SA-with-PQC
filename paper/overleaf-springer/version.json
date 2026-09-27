@@ -1,0 +1,11 @@
+{
+  "paper_version": "springer-proceedings-draft-1",
+  "source_commit": "c4acc1dd705e788e7afa05d9a09f45fb8a1b56c3",
+  "evidence_freeze": "satsa-evidence-freeze-v2",
+  "freeze_json_sha256": "2ac93ef3f2967f908c35b05c1fed97dc60282aa503d1a97594275deae3a1ff0a",
+  "generation_date": "2026-09-27T18:03:25.437370+00:00",
+  "template_source": "Springer LaTeX2e Proceedings Template (official ZIP, link.springer.com/series/558)",
+  "template_version": "llncs.cls v2.25 (2026-09-03); splncs04.bst",
+  "literature_search_date": "2026-09-27 (structured search) + 2026-09-27 (update search)",
+  "environment_reproduction": "not demonstrated"
+}
