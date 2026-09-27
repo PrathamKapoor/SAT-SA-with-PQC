@@ -79,6 +79,17 @@ def _spearman_interval(x: list[float], y: list[float], seed: int) -> dict | None
     return bootstrap_interval(indices, statistic, seed=seed, resamples=2000)
 
 
+def _ingest_counts(categories: dict[str, Any]) -> dict[str, dict[str, int]]:
+    return {
+        name: {
+            key: int(summary.get(key, 0))
+            for key in ("received", "accepted", "rejected")
+        }
+        for name, summary in sorted(categories.items())
+        if isinstance(summary, dict)
+    }
+
+
 def _group_features(engine, entity_id: str) -> dict[str, float]:
     alerts = engine.query_all(
         "SELECT created_at,closed_at FROM satsa_alerts WHERE entity_id=?",
@@ -156,7 +167,10 @@ def run_external_itsm_experiment(
                 "entity_id": entity.id,
                 "assessment_id": assessment.id,
                 "ingest_status": ingest.status,
-                "ingest_totals": ingest.to_dict().get("totals"),
+                # IngestionResult has no "totals" key (the X02 run recorded
+                # null here); per-category received/accepted/rejected
+                # counts come from the category summaries.
+                "ingest_counts": _ingest_counts(ingest.categories),
                 "ingest_seconds": round(time.perf_counter() - ingest_started, 4),
             }
         # Analyze only after every group is ingested, so peer baselines see
@@ -275,6 +289,14 @@ def run_external_itsm_experiment(
                 "run_status_counts": {
                     status: sum(e["run_status"] == status for e in entities.values())
                     for status in {e["run_status"] for e in entities.values()}
+                },
+                "ingest_row_totals": {
+                    key: sum(
+                        counts[key]
+                        for e in entities.values()
+                        for counts in e["ingest_counts"].values()
+                    )
+                    for key in ("received", "accepted", "rejected")
                 },
                 "analysis_seconds": describe(
                     [e["analysis_seconds"] for e in entities.values()], unit="s"
