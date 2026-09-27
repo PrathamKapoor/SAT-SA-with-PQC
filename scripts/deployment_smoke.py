@@ -377,6 +377,39 @@ def run_smoke(
             raise SmokeFailure("no recommendations")
         return {"run_id": state["run"]["id"]}
 
+    def evidence_records():
+        _, evidence = request(
+            base,
+            "GET",
+            f"/api/v1/runs/{state['run']['id']}/evidence?limit=100",
+            credential=analyst,
+            organization=organization,
+        )
+        _, records = request(
+            base,
+            "GET",
+            f"/api/v1/versions/{state['version']['id']}/records?limit=200",
+            credential=analyst,
+            organization=organization,
+        )
+        digests = {r["source_record_id"]: r["content_digest"] for r in records["items"]}
+        for ref in evidence["items"]:
+            if digests.get(ref["source_record_id"]) != ref["canonical_record_digest"]:
+                raise SmokeFailure("cited evidence does not resolve to a record")
+        return {"run_id": state["run"]["id"]}
+
+    def priorities():
+        _, page = request(
+            base,
+            "GET",
+            "/api/v1/priorities?limit=200",
+            credential=analyst,
+            organization=organization,
+        )
+        if state["run"]["id"] not in {row["run_id"] for row in page["items"]}:
+            raise SmokeFailure("analysed entity missing from the priority ranking")
+        return {"run_id": state["run"]["id"]}
+
     def decision():
         request(
             base,
@@ -446,6 +479,8 @@ def run_smoke(
         ("findings", findings),
         ("risk", risk),
         ("recommendations", recommendations),
+        ("evidence_records", evidence_records),
+        ("priorities", priorities),
         ("decision", decision),
         ("trust_finalization", trust_finalization),
         ("verification", verification),
