@@ -17,7 +17,8 @@ canonical evidence freeze `research/evidence/freeze-v2`
 | `figures/*.pdf`, `figures/figures.json` | figures with experiments, source, data hash, axes, units, aggregation, sample size, caption | generated |
 | `supplementary/generated/` | S1 configurations, S3–S6 and S10 result tables, `experiments.json` | generated |
 | `supplementary/*.md` | S2 metric definitions, S7 dataset mapping, S8 limitations, S9 index | hand-written |
-| `references.bib`, `literature-matrix.csv` | 33 verified sources and their review matrix | hand-written, audited |
+| `references.bib`, `literature-matrix.csv` | 48 verified, cited sources and their review matrix | hand-written, audited |
+| `literature-review/` | structured literature search (queries, counts, screening, extraction, gap matrix; 77 included sources) | scripts + single-screener decisions |
 | `manuscript.pdf` | compiled manuscript (MiKTeX, latexmk) | build output |
 
 ## Environment
@@ -107,11 +108,18 @@ unchanged as history.
 
 ## Publication snapshot
 
-`research/evidence/publication-v1/` is a write-once copy of this package with
-`publication.json` recording the freeze id and `freeze.json` hash, the commit
-containing the paper, dataset versions, literature snapshot date, environment
-and the SHA-256 of every file. Verify it with:
+`research/evidence/publication-v1/` (Phase 12 manuscript), `publication-v2/`
+(Phase 13 IEEE Access draft) and `publication-v3/` (Phase 14 release candidate)
+are write-once copies of this package. Each has a `publication.json` recording:
+
+- the freeze id and `freeze.json` hash;
+- the commit containing the paper;
+- dataset versions and the literature snapshot date;
+- the environment;
+- the SHA-256 of every file.
+
+Verify a snapshot with:
 
 ```powershell
-python scripts/build_publication_snapshot.py --verify research/evidence/publication-v1
+python scripts/build_publication_snapshot.py --verify research/evidence/publication-v3
 ```

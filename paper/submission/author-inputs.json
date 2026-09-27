@@ -1,0 +1,19 @@
+{
+  "schema": "satsa-author-inputs/1",
+  "note": "Status of every author-only input. Values are never filled by tooling; status changes only when the author supplies or confirms the item. Allowed status: NOT PROVIDED, AUTHOR CONFIRMATION REQUIRED, AUTHOR ACTION REQUIRED, PROVIDED.",
+  "fields": [
+    {"field": "Full author name(s)", "category": "author input", "status": "NOT PROVIDED", "used_in": ["manuscript.tex \\author and \\markboth", "manuscript.tex \\corresp", "biography heading", "cover-letter.md signature", "IEEE Author Portal metadata"]},
+    {"field": "Affiliation(s)", "category": "author input", "status": "NOT PROVIDED", "used_in": ["manuscript.tex \\address", "cover-letter.md signature", "IEEE Author Portal metadata"]},
+    {"field": "E-mail address(es)", "category": "author input", "status": "NOT PROVIDED", "used_in": ["manuscript.tex \\address and \\corresp", "IEEE Author Portal metadata"]},
+    {"field": "ORCID(s)", "category": "author input", "status": "NOT PROVIDED", "used_in": ["IEEE Author Portal metadata"]},
+    {"field": "Biography/biographies", "category": "author input", "status": "NOT PROVIDED", "used_in": ["manuscript.tex IEEEbiographynophoto (below references)"]},
+    {"field": "Conflict-of-interest statement", "category": "author input", "status": "NOT PROVIDED", "used_in": ["IEEE Author Portal declaration", "cover-letter.md declarations"]},
+    {"field": "Funding statement", "category": "author input", "status": "NOT PROVIDED", "used_in": ["manuscript.tex \\tfootnote", "cover-letter.md declarations", "IEEE Author Portal metadata"]},
+    {"field": "AI disclosure confirmation", "category": "author decision", "status": "AUTHOR CONFIRMATION REQUIRED", "used_in": ["manuscript.tex Acknowledgment (draft present)", "cover-letter.md declarations"]},
+    {"field": "Final article type", "category": "author decision", "status": "AUTHOR CONFIRMATION REQUIRED", "used_in": ["IEEE Author Portal article-type selection", "cover-letter.md"]},
+    {"field": "Originality confirmation", "category": "author decision", "status": "AUTHOR CONFIRMATION REQUIRED", "used_in": ["IEEE Author Portal declaration", "cover-letter.md declarations"]},
+    {"field": "APC approval (US$2,160)", "category": "author decision", "status": "AUTHOR CONFIRMATION REQUIRED", "used_in": ["payment on acceptance (IEEE Access)"]},
+    {"field": "Code publication (push or archive)", "category": "author action", "status": "AUTHOR ACTION REQUIRED", "used_in": ["sections/11-reproducibility.tex availability statement", "cover-letter.md availability"]},
+    {"field": "Human grammar proofread", "category": "author action", "status": "AUTHOR ACTION REQUIRED", "used_in": ["whole manuscript"]}
+  ]
+}

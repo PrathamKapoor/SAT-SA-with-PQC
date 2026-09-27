@@ -116,4 +116,5 @@ assessment.
 
 first, novel, state-of-the-art, outperforms, best, tamper-proof,
 production-scale, enterprise-scale, SOC-validated, validated on real SOCs,
-expert-validated, fully autonomous, AI-powered, deployed/production-ready.
+expert-validated, human-validated, fully autonomous, AI-powered,
+deployed/production-ready.

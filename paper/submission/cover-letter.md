@@ -7,7 +7,8 @@ Dear Editor,
 
 We submit the manuscript **"Record-Level Supervisory Analytics for Security
 Operations Centres: Controlled Evaluation, Cryptographic Decision Binding, and an
-External Negative Result"** for consideration as an **Applied Research** article.
+External Negative Result"** for consideration as an **Applied Research** article. [AUTHORS: confirm the
+article type before upload.]
 
 **Problem.** Authorities that supervise many security operations centres (SOCs)
 must judge periodically whether each monitored organisation detected,
@@ -24,8 +25,18 @@ record review.
 - binds the reviewed state with a post-quantum (ML-DSA-65) signed, hash-chained
   receipt.
 
-The contribution is an engineering system with a rigorous, fully reproducible
-evaluation. We do not claim novelty. Automated, record-based assessment of
+The contributions are:
+
+- controlled empirical findings about this system, including negative ones;
+- the engineering of a tenant-aware submission, analysis and review workflow;
+- a security capability that integrates standard primitives (SHA3-256,
+  ML-DSA-65, a hash-chained ledger) to bind the supervisor's decision to the
+  analysed state;
+- reproducibility infrastructure that generates every reported number from
+  frozen, hash-verified evidence.
+
+The application framing is offered only as a low-confidence candidate
+contribution. We do not claim novelty. Automated, record-based assessment of
 incident-management processes for auditors already exists, and the manuscript
 cites it and positions SAT-SA as a combination of established parts.
 

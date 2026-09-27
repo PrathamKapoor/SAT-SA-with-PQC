@@ -19,7 +19,7 @@
 \node[box, below=of ana] (risk) {Correlation, risk (\V{CODE-dimensions} dimensions)\\and prioritization};
 \node[box, right=12mm of sub] (find) {Evidence-cited findings\\and recommendations};
 \node[box, below=of find] (rev) {Human supervisory review\\(review interrupt)};
-\node[box, below=of rev] (dec) {Authorised decision};
+\node[box, below=of rev] (dec) {Authorized decision};
 \node[box, below=of dec] (trust) {TRUST-SAT finalization\\SHA3-256 canonical record,\\\V{CODE-signature} receipt, ledger};
 \node[box, below=of trust] (ver) {Verification and audit};
 \draw[arr] (sub) -- (val); \draw[arr] (val) -- (ana); \draw[arr] (ana) -- (risk);
