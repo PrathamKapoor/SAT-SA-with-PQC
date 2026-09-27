@@ -1,0 +1,67 @@
+\section{System Architecture and Analytical Methodology}
+\label{sec:system}
+
+Figure~\ref{fig:architecture} shows the workflow as implemented. An analyst of the
+monitored organization uploads one file per evidence category through an HTTP API;
+validation stores per-record provenance; a separate worker process claims queued
+runs under a lease and executes the analysis; a supervisor reviews and decides; and
+the decision is finalized and bound.
+
+\begin{figure}[t]
+\centering
+\input{figures/fig-architecture}
+\caption{SAT-SA supervisory workflow. All analytics are deterministic and rule-based;
+orchestration (direct worker or LangGraph) sequences the stages and pauses for the
+human decision.}
+\label{fig:architecture}
+\end{figure}
+
+\subsection{Analytical workers}
+The \V{CODE-workers} default workers fall into five functional groups.
+\emph{Execution and process rules} (fast closure, acknowledgement without
+investigation, critical alert without escalation, repeated shallow investigation,
+recurrence without remediation, potential metric gaming) check individual records and
+short record chains against expected handling. \emph{Negative-space analysis} detects
+the absence of expected work: cases without investigation steps, missing escalations
+or dispositions, critical assets without alerts; these are rule-encoded conformance
+checks. \emph{Deviation analysis} comprises within-entity anomalies, drift and the peer
+rule of Eq.~\eqref{eq:peer}. \emph{Coverage and completeness} (coverage gap, evidence
+completeness) flag unmonitored assets and missing evidence categories, and
+entity--asset resolution links records to the assets they concern. \emph{Context workers} (workflow reconstruction, case similarity,
+cross-entity insights) describe structure and corroborate findings. The capability
+registry lists \V{CODE-registry} components, of which the experiments exercise these
+default workers only. No worker uses a language model or a learned model.
+
+\subsection{Fusion, prioritization and recommendations}
+Signal findings are fused by Eq.~\eqref{eq:risk} into an entity risk decomposed by
+dimension, so that a supervisor sees which findings produce which part of the score.
+Entities are ordered by Eq.~\eqref{eq:priority}, and each finding family maps to a
+recommended supervisory action.
+
+\subsection{Human supervisory review}
+Runs can require review. The system never decides: only a supervisor, or an
+organization administrator, can record the decision, after which the worker resumes.
+Automation assists; the supervisor retains terminal authority.
+
+\subsection{Stateful orchestration}
+The same stages run in two modes. In \emph{direct} mode the worker pauses the run after
+analysis and recommendations. In \emph{graph} mode a LangGraph~\cite{langgraph2026docs}
+graph with \V{CODE-graph-nodes} nodes (readiness, analysis, recommendations, human
+review, trust boundary) checkpoints its state and interrupts at the review node.
+LangGraph provides checkpointing, interrupt/resume and recovery; it does not replace or
+alter the deterministic workers, and both modes produce identical findings and risk
+(Section~\ref{sec:results}).
+
+\subsection{Integrity layer}
+After the decision, finalization binds the reviewed state as defined in
+Section~\ref{sec:formulation}: canonical serialization, a SHA3-256
+commitment~\cite{nist2015fips202}, an \V{CODE-signature}~\cite{nist2024fips204}
+signature, a stored receipt and a hash-chained ledger entry in the spirit of
+tamper-evident logging~\cite{schneier1999logs,crosby2009logging}. The threat model is
+after-the-fact alteration of the supervisory record by someone with write access to
+the database or ledger file. Out of scope are compromise of the signing key, of the
+running process before finalization or of the operating system, and false records
+submitted by the monitored organization: TRUST-SAT binds what was analysed and
+decided, not whether the submitted records are true. An attacker who can rewrite the
+database and re-sign with the service key, or substitute a key pair consistently, is
+not detected unless the public key is pinned out of band.
