@@ -34,17 +34,19 @@ particular conference or series.
 Numbers in the text and tables are ordinary LaTeX, so edit them directly. Nothing in
 the project is generated at compile time.
 
-## Author block and remaining author items
+## Author block and declarations
 
-The author block (name, department, school, university, city, country; no e-mail or
-ORCID line) follows the author's paper *Noise-Robust Quantum Machine Learning for
-Building Energy Performance*, and is edited only in `metadata.tex`.
-
-| Item | Location | Status |
-| --- | --- | --- |
-| Funding statement | `sections/12-declarations.tex` | AUTHOR INPUT (bracketed placeholder) |
-| Disclosure of interests (required by Springer) | `sections/12-declarations.tex` | AUTHOR INPUT (bracketed placeholder) |
-| Target venue and series | not set | AUTHOR DECISION: the manuscript names no conference |
+- **Author block.** Name, department, school, university, city and country, with no
+  e-mail or ORCID line. It follows the author's paper *Noise-Robust Quantum Machine
+  Learning for Building Energy Performance* and is edited only in `metadata.tex`.
+- **Declarations** (`sections/12-declarations.tex`):
+  - an ethics statement;
+  - a declaration of AI use.
+- **Omitted at the author's decision:**
+  - an acknowledgments or funding block (the work received no funding);
+  - a disclosure-of-interests block. Springer proceedings normally require that
+    statement, so add it if the chosen venue asks for it.
+- **Target venue:** not set. The manuscript names no conference.
 
 ## Typography
 

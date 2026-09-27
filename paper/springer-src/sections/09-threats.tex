@@ -2,14 +2,21 @@
 \label{sec:threats}
 
 \paragraph{Construct validity.} Controlled labels are construction labels written by
-the system's authors. The external outcome (SLA miss) measures timeliness, not
+the system's developers. The external outcome (SLA miss) measures timeliness, not
 supervisory execution quality, and investigation and escalation are proxies there.
 Risk scores have no validated meaning as probabilities or severities.
 
 \paragraph{Internal validity.} Populations for prioritization and ablation come from
 SAT-SA's own generator, which injects the behaviours its detectors target and favours
-SAT-SA. Precision depends on database layout. Thresholds were set by design, never
-fitted, and never tuned on independent development data.
+SAT-SA; the ranking results are therefore controlled mechanism evidence, not an
+unbiased benchmark. Precision depends on database layout. Thresholds and confidence
+rules were set by design, never fitted, and never tuned on independent development
+data.
+
+\paragraph{Worker complexity.} The one-worker ablation does not show that all
+\V{CODE-workers} analytical workers are necessary or that the set is optimal: on the
+generated populations, removing some workers raised the ranking metric. Whether any
+worker helps or harms on real supervisory data is untested.
 
 \paragraph{External validity.} The evaluation is predominantly synthetic and
 controlled. There is no SOC data from a real organization; the external dataset is one

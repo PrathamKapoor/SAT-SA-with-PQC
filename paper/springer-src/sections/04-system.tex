@@ -7,17 +7,36 @@ validation stores per-record provenance; a separate worker process claims queued
 runs under a lease and executes the analysis; a supervisor reviews and decides; and
 the decision is finalized and bound.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \input{figures/fig-architecture}
-\caption{SAT-SA supervisory workflow. All analytics are deterministic and rule-based;
-orchestration (direct worker or LangGraph) sequences the stages and pauses for the
-human decision.}
+\caption{SAT-SA supervisory workflow along the evaluated path. The analytical-worker
+stage is the evaluated subset of the registered agents (Table~\ref{tab:architecture}).
+All analytics are deterministic and rule-based; orchestration (direct worker or
+LangGraph) sequences the stages and pauses for the human decision.}
 \label{fig:architecture}
 \end{figure}
 
+\subsection{Architecture layers}
+The implementation registers \V{CODE-registry} components that it calls
+\emph{agents} (Table~\ref{tab:architecture}): \V{CODE-registry-satsa} supervisory agents
+and \V{CODE-registry-mlops} MLOps agents retained from the platform SAT-SA was built on.
+An agent here is a registered specification (purpose, inputs, outputs, evidence types)
+that maps to deterministic code; none is a language-model or autonomous agent. Eleven
+supervisory agents cover the analysis families and group the \V{CODE-workers} default
+analytical workers evaluated in this paper; the other twelve cover the pipeline around
+them, from ingestion and normalization through correlation, risk scoring,
+prioritization and recommendation to review, trust and provenance, reporting and
+validation. The reported experiments exercise the analytical workers and the
+pipeline from ingestion to trust; evidence assembly, meta-audit, report generation,
+the calibration-oriented validation agent and the retained MLOps agents are not
+evaluated. The count of \V{CODE-workers} therefore refers to the analytical workers
+only, not to the whole architecture.
+
+\input{tables/tab-architecture}
+
 \subsection{Analytical workers}
-The \V{CODE-workers} default workers fall into five functional groups.
+The \V{CODE-workers} default analytical workers fall into five functional groups.
 \emph{Execution and process rules} (fast closure, acknowledgement without
 investigation, critical alert without escalation, repeated shallow investigation,
 recurrence without remediation, potential metric gaming) check individual records and
@@ -29,13 +48,12 @@ rule of Eq.~\eqref{eq:peer}. \emph{Coverage and completeness} (coverage gap, evi
 completeness) flag unmonitored assets and missing evidence categories, and
 entity--asset resolution links records to the assets they concern. \emph{Context workers} (workflow reconstruction, case similarity,
 cross-entity insights) reconstruct sequences and clusters; their signals also feed risk
-dimensions. Table~\ref{tab:workers} lists all \V{CODE-workers} workers with the
+dimensions. Tables~\ref{tab:workers} and~\ref{tab:workers-b} list all \V{CODE-workers} workers with the
 dimension each feeds and its confidence rule. Because a rule's dimension is assigned by
 name prefix, the escalation-discipline and investigation-quality dimensions are fed only
 by workflow reconstruction (and by keyword-matching drift or cross-entity rules), while
-critical alerts without escalation count towards the execution gap. The capability
-registry lists \V{CODE-registry} components, of which the experiments exercise these
-default workers only. No worker uses a language model or a learned model.
+critical alerts without escalation count towards the execution gap. No worker uses a
+language model or a learned model.
 
 \input{tables/tab-workers}
 

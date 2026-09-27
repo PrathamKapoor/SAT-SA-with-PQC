@@ -2,15 +2,15 @@
   "schema": "satsa-overleaf-manifest/1",
   "zip": {
     "path": "paper/overleaf-springer.zip",
-    "sha256": "ca6e0ceb2a6ca8e8759e340828a5b15d47d1761acf461520ab0210160078d4dc",
-    "size": 235878,
-    "files": 55
+    "sha256": "fb1926d096036e897318f3723bce4db35f8de019896224205faa6a8a57dc553e",
+    "size": 238260,
+    "files": 56
   },
   "files": [
     {
       "file": "CLAIM_TRACE.csv",
-      "sha256": "09df9a5fb7256d798614fa95b3bebc96af29d05c7b07c061646c4b684419f9e9",
-      "size": 58559,
+      "sha256": "7da873f81b908007b680f194ed1efe21df0fdb22ba0d6d04bc4be3ced7f71a33",
+      "size": 60362,
       "purpose": "provenance / build metadata (not in ZIP)",
       "in_zip": false
     },
@@ -58,29 +58,29 @@
     },
     {
       "file": "main.pdf",
-      "sha256": "74cf2c3b87817edd8eaac695725ea00235b2f34acd5a9543b07cbe8b534b4e87",
-      "size": 389131,
+      "sha256": "7a86ab0b64a1447204e0a1f94c791dbd59e7aa4a35f66c3204da70e369f10756",
+      "size": 398562,
       "purpose": "compiled PDF (not in ZIP)",
       "in_zip": false
     },
     {
       "file": "main.tex",
-      "sha256": "5e1098da41edb7b14bdbfa80378123225f0a4193f9673f755d25486a1d66c4b6",
-      "size": 2943,
+      "sha256": "bb852947b3fb588974d504093498f5796f35dadb65e814406a9d615828ad2da1",
+      "size": 3060,
       "purpose": "manuscript main file",
       "in_zip": true
     },
     {
       "file": "metadata.tex",
-      "sha256": "7d0b8042d0068e28d38bf1320fdc23314bd51e3e81d327ccb9b62d0d5775c09c",
-      "size": 959,
+      "sha256": "b1b4d386b3bcbc1409219b681a2d7febce2182cef9931ea9e46d7e1080e7a1d9",
+      "size": 936,
       "purpose": "author metadata",
       "in_zip": true
     },
     {
       "file": "README.md",
-      "sha256": "d8670533f7d85f4f6a6cfd9276ee4b3824966873d9c7aa2dd6a9857a22da8c63",
-      "size": 4469,
+      "sha256": "cfea3fba0b6713544465b42de8bdbe5fe66893bbb81a27698595239864b1f455",
+      "size": 4538,
       "purpose": "package documentation",
       "in_zip": true
     },
@@ -93,8 +93,8 @@
     },
     {
       "file": "sections/00-abstract.tex",
-      "sha256": "f5a6d94456b6beca57a833565b3b1a0900a2fd7cae8bf25a8cd4361ade67f824",
-      "size": 1887,
+      "sha256": "34d02214d9a943ebc0f4a2365bbdb7098357fcf79568f1951773be573bb94548",
+      "size": 1881,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -114,15 +114,15 @@
     },
     {
       "file": "sections/03-problem-formulation.tex",
-      "sha256": "eaf9e121b3d481a5e527839ce0e5443e5a93a01a7fe388d35e32042be03fc46d",
-      "size": 5107,
+      "sha256": "607b159f8fe05ee4d823e213faa7d07b30ca2546b6bfcfe81c5237eb1f395cd2",
+      "size": 5132,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/04-system.tex",
-      "sha256": "ddca345fcdd4b0f9d71e8fe1a50368b0c92acf3ca619ba4832a16b5d83e08aa6",
-      "size": 4497,
+      "sha256": "87628dd572ae6db0627a4e950a7a36063ab162bb44daae1ebd81b1b466ad703e",
+      "size": 5657,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -135,29 +135,29 @@
     },
     {
       "file": "sections/06-results.tex",
-      "sha256": "1624c261da5fd4e0575d335ef81b41590dd13dc91d0dd09b9bbc204a870946de",
-      "size": 7246,
+      "sha256": "2f2d6da4bb1a67dd4a98986f58c2e7fc0a399c438d8e37d09191080a2a898271",
+      "size": 8473,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/07-external-evaluation.tex",
-      "sha256": "2a449ec7ae54cb4fceb8d8b58731451c565819a104b02d027adc6e5596831ef8",
-      "size": 4284,
+      "sha256": "a0efffa51b5205347992348248c8d3e54bfcaaf7d3a65b6aefb845db74f6f9d3",
+      "size": 4288,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/08-discussion.tex",
-      "sha256": "02fb97b0c1bed46b9c9ecbeba8a60254ee9648d13c3b1e4823dd66ae5af94de0",
-      "size": 3080,
+      "sha256": "aeb5ad98d404b5f407d2830382f94d90580f0c2f82ebed6fdfc083d753f7222d",
+      "size": 3200,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/09-threats.tex",
-      "sha256": "7ccb00d14ee20eaf7b5f602c494ef42975874ae425a66cc193e45d7675d1f324",
-      "size": 2275,
+      "sha256": "4d855341b094ee5ddb8ba4ea99a8bcbb1982f955033dc4befe387e3bb6e3b64b",
+      "size": 2685,
       "purpose": "manuscript section",
       "in_zip": true
     },
@@ -170,22 +170,22 @@
     },
     {
       "file": "sections/11-conclusion.tex",
-      "sha256": "6463131c805dd36349e652847da473c02df8cd303cb2a43bbf7246ee14f19902",
-      "size": 1405,
+      "sha256": "2dc246c808848ad88d9c066d0584d1a2fb142b929f1b1ca14cea5f18a6105c82",
+      "size": 1527,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "sections/12-declarations.tex",
-      "sha256": "113ce2e764656376e013c8e18e0f55dab1b3a18e165d4025d5c6592f21091845",
-      "size": 541,
+      "sha256": "5eb691db5ad1505259a4be65a9b85f51f850bee17d624bc9a8048df2c3e00581",
+      "size": 716,
       "purpose": "manuscript section",
       "in_zip": true
     },
     {
       "file": "SOURCE_MAP.md",
-      "sha256": "a94eeeda5617ddbce2476bf08e1deb4e1cbf5873dad981838c28ae732d05b2ae",
-      "size": 3359,
+      "sha256": "defe59758c6e4cdd541478891a6bc8876e830d0cd7812817dc2be40986bd5079",
+      "size": 3672,
       "purpose": "package documentation",
       "in_zip": false
     },
@@ -352,64 +352,71 @@
     },
     {
       "file": "tables/tab-ablation.tex",
-      "sha256": "602dbbea03d5973c30d8335382911edac22400007600af2bdfaac9383c62b1a5",
-      "size": 913,
+      "sha256": "c7af8fb83f8023ebe98aa05d4dc9580fb60ea57acee86601013bd3b9d27ad31e",
+      "size": 917,
+      "purpose": "manuscript table",
+      "in_zip": true
+    },
+    {
+      "file": "tables/tab-architecture.tex",
+      "sha256": "4bef1e4910219d42b857f0b6f856a353b468a7a3ec8a6391a1560f16b0179d3d",
+      "size": 1482,
       "purpose": "manuscript table",
       "in_zip": true
     },
     {
       "file": "tables/tab-design.tex",
-      "sha256": "cc8516b0fe1846cf58043eb1755615a562df0118f0235fd26a64548ac24351d5",
-      "size": 1390,
+      "sha256": "a79ebf95f183ab8b078cae47ee2ddd25a260faa301b4c486b553f093228fd70d",
+      "size": 1394,
       "purpose": "manuscript table",
       "in_zip": true
     },
     {
       "file": "tables/tab-external.tex",
-      "sha256": "8063018419dfa34bbe9779e7140b6f4d3a44c9e5fca351b63c3ab8e75e555ce4",
-      "size": 866,
+      "sha256": "9d46c6ecfd4b05ef22e67e5dcc483eaef6459a13463f61ff15615d04cf054686",
+      "size": 870,
       "purpose": "manuscript table",
       "in_zip": true
     },
     {
       "file": "tables/tab-orch.tex",
-      "sha256": "0462d4687cf2ac311b58bb39d17ca0687d1b7ea818331787057f816d8da794b0",
-      "size": 817,
+      "sha256": "a2c20bd82cc438e5d72c81959babf362ad6531db0c4458bce47b1b960b12cd00",
+      "size": 821,
       "purpose": "manuscript table",
       "in_zip": true
     },
     {
       "file": "tables/tab-prio.tex",
-      "sha256": "0759389d9dc027652be8df66c33233a0c6394e515f763b730bb409ca9b1ede3e",
-      "size": 767,
+      "sha256": "ace9c95f97fda3686b148b7acce4fc5869f911e96bade8d07a2812ca3db4ee14",
+      "size": 858,
       "purpose": "manuscript table",
       "in_zip": true
     },
     {
       "file": "tables/tab-related.tex",
-      "sha256": "0c80fa86894fb9295b68d813f47ba2dadfea0e5981ecf17318e9090c88bc3b3a",
-      "size": 1177,
+      "sha256": "6e3d85411f548ea9677b8f190b923b778b1a6375fa1287382d791b03831373d7",
+      "size": 1181,
       "purpose": "manuscript table",
       "in_zip": true
     },
     {
       "file": "tables/tab-robust.tex",
-      "sha256": "cfe7925cb26683159eec0e55844b5a9fff94872b39ba1cbbfff9933addb674d7",
-      "size": 736,
+      "sha256": "bdfb729e1858836a6baa5d39f10ee009b4c09e10f85103a5373ec4ac30bc915b",
+      "size": 740,
       "purpose": "manuscript table",
       "in_zip": true
     },
     {
       "file": "tables/tab-trust.tex",
-      "sha256": "3a75746fefc6d5d58ad599af949d892dc64813b924fdbe269611e5476f06bb76",
-      "size": 891,
+      "sha256": "9afb1fc988097004b3d9ee97e215cfb297b4e9fa9bb48e8ffb24a98a6fed2771",
+      "size": 895,
       "purpose": "manuscript table",
       "in_zip": true
     },
     {
       "file": "tables/tab-workers.tex",
-      "sha256": "5ba4c1a0edfc3614002b0de900ff2c532d0f1f5ff183b41b9d97d64d1d7206fe",
-      "size": 2369,
+      "sha256": "63b8b25f779f0f24f3af0c31842ea42bbc0007c2522ed7a6f60b0c6cdd9f6a1a",
+      "size": 2698,
       "purpose": "manuscript table",
       "in_zip": true
     }
