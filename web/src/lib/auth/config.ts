@@ -7,7 +7,7 @@ import "server-only";
  *   SATSA_AUTH_ADAPTER=development  Frontend-only development identities for local preview.
  *
  * When unset, `next dev` uses the development adapter and every production
- * build (`next build` / `next start`, Docker, Render) uses the backend adapter.
+ * build (`next build` / `next start`, Docker) uses the backend adapter.
  * A production deployment only gets development sessions if someone sets
  * SATSA_AUTH_ADAPTER=development explicitly, and the UI then labels every page.
  */
