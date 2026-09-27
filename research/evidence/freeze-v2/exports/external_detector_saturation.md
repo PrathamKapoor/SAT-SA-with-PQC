@@ -1,0 +1,20 @@
+<!-- generated from bundle EXP-X02b-external-itsm; do not edit -->
+
+| family | groups_emitting | of_groups |
+| --- | --- | --- |
+| anomaly.closure_time.high | 49 | 50 |
+| anomaly.escalation_rate.low | 5 | 50 |
+| anomaly.investigation_depth.high | 50 | 50 |
+| anomaly.investigation_duration.high | 49 | 50 |
+| case_similarity.template_cluster | 50 | 50 |
+| execution_gap.ack_without_investigation | 50 | 50 |
+| execution_gap.critical_without_escalation | 26 | 50 |
+| execution_gap.fast_closure | 43 | 50 |
+| execution_gap.potential_metric_gaming | 5 | 50 |
+| execution_gap.repeated_investigation_pattern | 39 | 50 |
+| negative_space.missing_escalation | 26 | 50 |
+| negative_space.missing_investigation | 50 | 50 |
+| peer_benchmark.critical_closure_median_seconds.deviation | 11 | 50 |
+| peer_benchmark.escalation_rate.deviation | 17 | 50 |
+| peer_benchmark.investigation_depth_median.deviation | 12 | 50 |
+| workflow_reconstruction.sequence_chronology_mismatch | 1 | 50 |

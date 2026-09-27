@@ -1,0 +1,13 @@
+cell,trials,recovered,outputs_match,trust_verified,repeated_completed_stages,recovery_median_s
+direct:analysis_stage_crash,3,3,3,3,0,0.08965
+direct:analysis_stage_transient,3,3,3,3,0,0.09541
+direct:finalization_crash,3,3,3,3,0,1.285
+direct:finalization_transient,3,3,3,3,0,1.199
+direct:recommendations_transient,3,3,3,3,0,0.03218
+direct:worker_restart_at_review,3,3,3,3,0,1.337
+graph:analysis_stage_crash,3,3,3,3,0,0.124
+graph:analysis_stage_transient,3,3,3,3,0,0.1247
+graph:finalization_crash,3,3,3,3,0,1.376
+graph:finalization_transient,3,3,3,3,0,0.9473
+graph:recommendations_transient,3,3,3,3,0,0.05554
+graph:worker_restart_at_review,3,3,3,3,0,1.857

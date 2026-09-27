@@ -1,0 +1,21 @@
+% generated from bundle EXP-T01-trust-mutation-matrix; do not edit
+\begin{tabular}{llllll}
+\hline
+mutation & target & expected & outcome & failure\_category & verification\_ms \\
+\hline
+decision & satsa\_run\_review\_decisions.action & tampered & tampered & canonical integrity failure: decision digest mismatch & 0.4216 \\
+finding & satsa\_findings.rationale & tampered & tampered & canonical integrity failure: finding digest mismatch & 1.617 \\
+risk & satsa\_run\_risk.profile\_json & tampered & tampered & canonical integrity failure: risk digest mismatch & 3.544 \\
+recommendation & satsa\_run\_recommendations.recommendation\_json & tampered & tampered & canonical integrity failure: recommendation digest mismatch & 2.755 \\
+source\_provenance & satsa\_source\_records.locator & tampered & tampered & canonical integrity failure: reviewed context changed before finalization & 4.649 \\
+canonical\_payload & satsa\_trust\_finalizations.canonical\_json & tampered & tampered & live canonical state mismatch & 4.021 \\
+receipt\_signature & satsa\_trust\_receipts.signature & tampered & tampered & signature does not verify & 4.773 \\
+ledger\_chain & audit ledger JSONL (last entry prev\_hash) & tampered & tampered & ledger integrity failure: chain break at entry 13 & 54.54 \\
+decision\_reason & satsa\_run\_review\_decisions.reason & tampered & tampered & canonical integrity failure: decision digest mismatch & 0.9752 \\
+observation\_scope & satsa\_observations.scope\_json & tampered & tampered & canonical integrity failure: reviewed context changed before finalization & 4.725 \\
+version\_record\_payload & satsa\_version\_records.payload\_json & tampered & tampered & canonical integrity failure: submission snapshot mismatch & 4.149 \\
+artifact\_digest & satsa\_artifacts.sha3\_256\_digest & tampered & tampered & canonical integrity failure: submission snapshot mismatch & 4.198 \\
+receipt\_public\_key & satsa\_trust\_receipts.public\_key & tampered & tampered & signature does not verify & 5.064 \\
+operational\_queue\_field\_control & satsa\_execution\_jobs.lease\_owner (unsigned by design) & verified & verified & undefined & 42.73 \\
+\hline
+\end{tabular}

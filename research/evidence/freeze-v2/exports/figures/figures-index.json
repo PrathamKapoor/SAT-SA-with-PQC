@@ -1,0 +1,117 @@
+{
+  "figures": [
+    {
+      "aggregation": "per-trial values",
+      "data_file": "FIG-6c-trust-overhead.csv",
+      "data_sha256": "9aad08c750078d898f4e73849a58fb5132316eb36769ee45bb56a62016ce456d",
+      "experiment": "satsa-orchestration-overhead-v1",
+      "figure_id": "FIG-6c-trust-overhead",
+      "sample_size": 30,
+      "source_bundle": "EXP-O01-orchestration-overhead",
+      "units": "seconds",
+      "x": "execution mode",
+      "y": "TRUST-SAT finalization, attestation and verification time"
+    },
+    {
+      "aggregation": "one point per assignment group",
+      "data_file": "FIG-8-external-construct-inversion.csv",
+      "data_sha256": "060cd8ec11660d01c48b2e8e4d4aaf6b80106f827077f178703e909ce19df5e6",
+      "experiment": "satsa-external-itsm-failure-analysis-v1",
+      "figure_id": "FIG-8-external-construct-inversion",
+      "sample_size": 50,
+      "source_bundle": "EXP-X03-external-failure-analysis",
+      "units": "fraction; score",
+      "x": "fast-closure prevalence (detector input condition)",
+      "y": "SLA-miss rate; execution-gap risk dimension"
+    },
+    {
+      "aggregation": "one row per population seed; plot medians with per-seed points",
+      "data_file": "FIG-2-prioritization.csv",
+      "data_sha256": "7e5144b3883506a7599566cacec09e0c890d3ca7acb3eeb475a4bb09f2911a82",
+      "experiment": "satsa-prioritization-replicated-v1",
+      "figure_id": "FIG-2-prioritization",
+      "sample_size": 20,
+      "series": "method",
+      "source_bundle": "EXP-PR01-prioritization-replicated",
+      "units": "fraction",
+      "x": "top-k budget (percent of entities)",
+      "y": "recall@k and NDCG@k"
+    },
+    {
+      "aggregation": "micro over 5 catalog scenarios",
+      "data_file": "FIG-3-ablation.csv",
+      "data_sha256": "498cd8e74369f3b8417461fb18d103935123e6cb0a2673f78598719f50177a7c",
+      "experiment": "satsa-component-ablation-v1",
+      "figure_id": "FIG-3-ablation",
+      "sample_size": 5,
+      "source_bundle": "EXP-A01-component-ablation",
+      "units": "fraction",
+      "x": "worker removed",
+      "y": "micro precision / recall / F1 against catalog labels"
+    },
+    {
+      "aggregation": "none (one deterministic cell each)",
+      "data_file": "FIG-4-peer-sensitivity.csv",
+      "data_sha256": "0c80e74bb9a0b780fbb98c88a45d91c900a3bdbe17bda51066be31c0383928c7",
+      "experiment": "peer-cohort-sweep-v1",
+      "figure_id": "FIG-4-peer-sensitivity",
+      "sample_size": 96,
+      "series": "cohort size, facet by spread",
+      "source_bundle": "EXP-P01-peer-sweep",
+      "units": "seconds; MAD units",
+      "x": "subject closure value",
+      "y": "finding emitted / deviation in MAD units"
+    },
+    {
+      "aggregation": "count over 5 scenarios x 5 seeds",
+      "data_file": "FIG-5-missing-evidence-robustness.csv",
+      "data_sha256": "5973a478562156ccae4932196f0e5ee0f1ec4435ca5bb128212d80c3dd42d57c",
+      "experiment": "satsa-evidence-perturbation-v1",
+      "figure_id": "FIG-5-missing-evidence-robustness",
+      "sample_size": 25,
+      "series": "independent vs cascade omission",
+      "source_bundle": "EXP-R01b-evidence-robustness",
+      "units": "fraction",
+      "x": "record omission rate",
+      "y": "fraction of replicates rejected / with changed finding families"
+    },
+    {
+      "aggregation": "per-trial values; plot distribution (box) with median",
+      "data_file": "FIG-6a-langgraph-overhead.csv",
+      "data_sha256": "9bcb72bcbbeef16643717cabf40351fcdbb7dae70658529222d46535501e59b4",
+      "experiment": "satsa-orchestration-overhead-v1",
+      "figure_id": "FIG-6a-langgraph-overhead",
+      "sample_size": 30,
+      "source_bundle": "EXP-O01-orchestration-overhead",
+      "units": "seconds",
+      "x": "execution mode",
+      "y": "processing time excluding the human decision"
+    },
+    {
+      "aggregation": "per-trial values",
+      "data_file": "FIG-6b-recovery.csv",
+      "data_sha256": "d46936848a39dedc5b4edcc62a703f1f0aeaa7269e33b7ac3226ae924ccab6d5",
+      "experiment": "satsa-orchestration-recovery-v1",
+      "figure_id": "FIG-6b-recovery",
+      "sample_size": 36,
+      "series": "mode",
+      "source_bundle": "EXP-O02-orchestration-recovery",
+      "units": "seconds",
+      "x": "interruption point",
+      "y": "recovery latency"
+    },
+    {
+      "aggregation": "one point per assignment group",
+      "data_file": "FIG-7-external-risk-vs-sla.csv",
+      "data_sha256": "dadb1ecb27bd1035dca2e540333b361c8dc749b27cd1dd883c7afa0b9469c6aa",
+      "experiment": "satsa-external-itsm-v1",
+      "figure_id": "FIG-7-external-risk-vs-sla",
+      "sample_size": 50,
+      "source_bundle": "EXP-X02b-external-itsm",
+      "units": "score; fraction",
+      "x": "SAT-SA entity risk score",
+      "y": "SLA-miss rate recorded by the source organisation"
+    }
+  ],
+  "skipped": []
+}

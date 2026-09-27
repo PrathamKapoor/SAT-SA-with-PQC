@@ -1,0 +1,63 @@
+{
+  "schema": "satsa-dataset-suitability/1",
+  "assessed_on": "2026-09-27",
+  "detail": "docs/EXTERNAL_DATASETS.md",
+  "datasets": [
+    {
+      "dataset": "UCI-498 Incident management process enriched event log",
+      "domain": "IT service management (ServiceNow service desk), not a SOC",
+      "license": "CC BY 4.0",
+      "source": "https://doi.org/10.24432/C57S4H",
+      "available_fields": ["number", "incident_state", "sys_updated_at", "sys_mod_count", "reassignment_count", "opened_at", "resolved_at", "closed_at", "priority", "assignment_group", "closed_code (anonymized)", "made_sla"],
+      "supervisory_constructs_represented": ["alert workload (observed)", "closure timing (observed)", "acknowledgement timing (derived)"],
+      "constructs_missing_or_proxy": ["investigation quality (proxy: state changes)", "escalation quality (proxy: reassignment)", "disposition quality (anonymized)", "monitoring coverage / assets (unavailable)", "investigation notes (unavailable)"],
+      "detectors_supported": ["fast-closure (construct differs: fast resolution is a service goal)", "anomaly (distribution)", "peer-benchmark (on proxy metrics)", "workflow-reconstruction"],
+      "detectors_unsupported": ["coverage-gap", "negative-space missing monitoring", "disposition checks", "note-based repeated-investigation rule", "escalation semantics"],
+      "evaluation_type": "independent feasibility validation; negative independent evidence on outcome association; domain-mismatched",
+      "status": "integrated",
+      "reason": "only legally usable, downloadable dataset found with workflow timestamps and an organisation-recorded outcome"
+    },
+    {
+      "dataset": "Microsoft GUIDE",
+      "domain": "SOC incidents (Microsoft Defender XDR customers)",
+      "license": "CDLA-Permissive-2.0",
+      "source": "arXiv:2407.09017; Kaggle",
+      "available_fields": ["IncidentId", "AlertId", "Timestamp (alert creation)", "DetectorId", "Category", "MitreTechniques", "IncidentGrade", "ActionGrouped", "ActionGranular", "entity/evidence fields", "OrgId"],
+      "supervisory_constructs_represented": ["alert volume", "triage outcome", "remediation action"],
+      "constructs_missing_or_proxy": ["acknowledgement and closure times", "investigation steps", "escalations", "analyst identities"],
+      "detectors_supported": [],
+      "detectors_unsupported": ["all execution-gap, negative-space, closure-time, escalation and investigation detectors"],
+      "evaluation_type": "none",
+      "status": "unsuitable (download also blocked: authenticated Kaggle account)",
+      "reason": "no workflow timing or investigation fields"
+    },
+    {
+      "dataset": "CIC-IDS2017",
+      "domain": "network intrusion flows",
+      "license": "University of New Brunswick CIC terms",
+      "source": "Canadian Institute for Cybersecurity",
+      "available_fields": ["CICFlowMeter flow features", "attack label"],
+      "supervisory_constructs_represented": ["alert volume (after adapter)"],
+      "constructs_missing_or_proxy": ["cases", "investigation", "escalation", "disposition", "analyst workflow"],
+      "detectors_supported": ["ingestion and volume only"],
+      "detectors_unsupported": ["all workflow detectors"],
+      "evaluation_type": "none",
+      "status": "unsuitable (download also blocked: multi-GB, registration form)",
+      "reason": "telemetry without analyst workflow"
+    },
+    {
+      "dataset": "Splunk BOTS v1-v3",
+      "domain": "security telemetry capture-the-flag data",
+      "license": "Splunk research release terms",
+      "source": "Splunk Boss of the SOC",
+      "available_fields": ["pre-indexed Splunk events"],
+      "supervisory_constructs_represented": ["alert volume (after extraction)"],
+      "constructs_missing_or_proxy": ["analyst workflow"],
+      "detectors_supported": ["ingestion only"],
+      "detectors_unsupported": ["all workflow detectors"],
+      "evaluation_type": "none",
+      "status": "unsuitable (blocked: requires Splunk to export)",
+      "reason": "telemetry without analyst workflow"
+    }
+  ]
+}

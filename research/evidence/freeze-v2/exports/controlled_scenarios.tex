@@ -1,0 +1,12 @@
+% generated from bundle controlled-final-seed-17; do not edit
+\begin{tabular}{lllllll}
+\hline
+scenario & expected & emitted & tp & fp & fn & action\_ok \\
+\hline
+healthy & [] & [] & 0 & 0 & 0 & True \\
+eg-fast-closure & ["execution\_gap.fast\_closure"] & ["execution\_gap.fast\_closure", "execution\_gap.recurring\_without\_remediation"] & 1 & 1 & 0 & True \\
+ns-missing-investigation & ["negative\_space.missing\_investigation"] & ["negative\_space.missing\_investigation"] & 1 & 0 & 0 & True \\
+mixed & ["execution\_gap.fast\_closure", "negative\_space.missing\_monitoring"] & ["coverage\_gap.missing\_monitoring", "execution\_gap.fast\_closure", "execution\_gap.recurring\_without\_remediation", "negative\_space.missing\_monitoring", "peer\_benchmark.alerts\_per\_critical\_asset.deviation", "peer\_benchmark.monitoring\_coverage.deviation", "peer\_benchmark.recurrence\_median.deviation"] & 2 & 5 & 0 & False \\
+missing-evidence & ["evidence\_completeness.missing\_categories"] & ["evidence\_completeness.missing\_categories", "negative\_space.missing\_disposition"] & 1 & 1 & 0 & True \\
+\hline
+\end{tabular}
