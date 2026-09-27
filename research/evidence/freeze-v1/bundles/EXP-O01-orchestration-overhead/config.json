@@ -1,0 +1,1 @@
+{"bootstrap":{"confidence":0.95,"resamples":10000,"seed":0},"experiment":"satsa-orchestration-overhead-v1","modes":["direct","graph","direct_unreviewed"],"order_policy":"rotated per trial","scenario":"mixed","trials_per_mode":30,"warm_up_runs_per_mode":1}

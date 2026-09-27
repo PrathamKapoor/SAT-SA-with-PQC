@@ -1,0 +1,15 @@
+mutation,target,expected,outcome,failure_category,verification_ms
+decision,satsa_run_review_decisions.action,tampered,tampered,canonical integrity failure: decision digest mismatch,0.4216
+finding,satsa_findings.rationale,tampered,tampered,canonical integrity failure: finding digest mismatch,1.617
+risk,satsa_run_risk.profile_json,tampered,tampered,canonical integrity failure: risk digest mismatch,3.544
+recommendation,satsa_run_recommendations.recommendation_json,tampered,tampered,canonical integrity failure: recommendation digest mismatch,2.755
+source_provenance,satsa_source_records.locator,tampered,tampered,canonical integrity failure: reviewed context changed before finalization,4.649
+canonical_payload,satsa_trust_finalizations.canonical_json,tampered,tampered,live canonical state mismatch,4.021
+receipt_signature,satsa_trust_receipts.signature,tampered,tampered,signature does not verify,4.773
+ledger_chain,audit ledger JSONL (last entry prev_hash),tampered,tampered,ledger integrity failure: chain break at entry 13,54.54
+decision_reason,satsa_run_review_decisions.reason,tampered,tampered,canonical integrity failure: decision digest mismatch,0.9752
+observation_scope,satsa_observations.scope_json,tampered,tampered,canonical integrity failure: reviewed context changed before finalization,4.725
+version_record_payload,satsa_version_records.payload_json,tampered,tampered,canonical integrity failure: submission snapshot mismatch,4.149
+artifact_digest,satsa_artifacts.sha3_256_digest,tampered,tampered,canonical integrity failure: submission snapshot mismatch,4.198
+receipt_public_key,satsa_trust_receipts.public_key,tampered,tampered,signature does not verify,5.064
+operational_queue_field_control,satsa_execution_jobs.lease_owner (unsigned by design),verified,verified,undefined,42.73

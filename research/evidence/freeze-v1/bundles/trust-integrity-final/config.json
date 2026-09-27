@@ -1,0 +1,1 @@
+{"experiment":"trust-sat-controlled-mutation-v1","mutations":["decision","finding","risk","recommendation","source_provenance","canonical_payload","receipt_signature","ledger_chain"],"protocol":"verify valid control; mutate one scratch field at a time; restore and re-verify"}
