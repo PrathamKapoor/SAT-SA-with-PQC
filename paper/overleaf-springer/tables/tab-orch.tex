@@ -1,0 +1,20 @@
+\begin{table}[t]
+\caption{Orchestration cost on one machine with SQLite (O01, 30 paired
+trials per mode; the human decision excluded). Graph $-$ direct: median
+0.096\,s, 95\% bootstrap \ensuremath{-}0.020 to 0.211\,s
+(graph slower in 19 of 30 pairs). Finalization took
+0.288\,s, receipt verification 0.062\,s and run and
+finding attestation 0.853\,s (medians).}
+\label{tab:orch}
+\centering
+\scriptsize
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Mode & Median (s) & p95 (s) & Outside domain stages (s) & DB statements \\
+\midrule
+Direct (reviewed) & 1.276 & 2.010 & 0.055 & 420 \\
+LangGraph (reviewed) & 1.433 & 2.206 & 0.115 & 458 \\
+Unreviewed benchmark mode & 0.976 & 1.655 & 0.029 & 253 \\
+\bottomrule
+\end{tabular}
+\end{table}

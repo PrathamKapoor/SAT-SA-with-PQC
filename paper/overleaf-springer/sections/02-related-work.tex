@@ -1,0 +1,85 @@
+\section{Related Work and Research Gap}
+\label{sec:related}
+
+\paragraph{Search method.} We positioned the work with a structured search, not a
+systematic review. Twenty queries on SOC assessment, alert prioritization, security
+process mining, peer analytics, supervisory technology and tamper-evident records
+were run on OpenAlex and Crossref (656 unique records; one screener; 106 abstracts
+read; 51 included and joined with 26 sources of an earlier focused review), followed
+by an update search for closest prior art and counterevidence. arXiv throttled the
+automated queries and records beyond rank 25 per query were not screened, so absence
+from this review is not evidence of absence. Queries, counts and decisions are in
+the supplementary material.
+
+\paragraph{SOC assessment and measurement.} Maturity models score capability through
+self- or expert assessment~\cite{vanos2016soccmm,schlette2021ctisoc2m2}; metric
+work defines and weights indicators of analyst or technical
+performance~\cite{agyepong2019review,agyepong2023analyst,forsberg2023metrics}.
+A case study in one academic SOC found that analysts who scored well on key
+performance indicators did not necessarily further the SOC's goals~\cite{morin2025mismatched},
+a caution for any metric-based supervision. SAIBERSOC measures an operational SOC
+empirically by injecting synthetic attacks and observing outputs such as detection
+accuracy and time to investigation, in an experiment with 124 students acting as
+analysts~\cite{rosso2020saibersoc}. These approaches assess capability or test a SOC
+actively; none analyses the records a SOC submits to an external supervisor.
+
+\paragraph{Record-based assessment of incident handling (closest prior art).}
+Palma et al.\ built a system that assesses an organization's incident-management
+process for compliance with a reference process derived from ITIL and ISO/IEC~27035:
+it aligns the event log with the model, classifies deviations with a taxonomy,
+prioritizes them with a cost model and supports an auditor; it was validated on a
+benchmark and demonstrated on a public real incident-management log~\cite{palma2024compliance}.
+A companion benchmark compares such assessment models~\cite{palma2024benchimp}, and
+two visual-analytics tools support the human assessor~\cite{palma2024eurova,palma2025impavid}.
+The public log used in that line of work is the ServiceNow incident log (141,712 events
+over 24,918 incidents) released with~\cite{amaral2019completion} and published
+as~\cite{amaral2018uci498}---the same log we use for our external evaluation, and one
+on which SLA attainment has also been modelled directly~\cite{swain2022sla}. Automated,
+record-based assessment of incident handling for an assessor therefore already exists
+and has been demonstrated on our external data. Table~\ref{tab:related} contrasts it
+with SAT-SA.
+
+\input{tables/tab-related}
+
+\paragraph{Alert and incident prioritization.} A large literature ranks alerts or
+incidents for analysts~\cite{jalalvand2024prioritisation,tariq2025alertfatigue}:
+resource-aware selection of alerts to investigate~\cite{shah2019alertselection},
+provenance-based triage~\cite{hassan2019nodoze}, guided response learned from
+customer triage labels~\cite{freitas2024guide}, learning to defer to
+analysts~\cite{jalalvand2025l2d}, and, recently, LLM agents embedded in SOC
+triage~\cite{banstola2026agentic}. DomainPrio analyses the population of a SOC's
+investigations rather than single alerts~\cite{chiba2022domainprio}. SAT-SA differs in
+unit and user---it ranks monitored organizations for a supervisor from findings about
+how work was handled---and is not compared with these systems.
+
+\paragraph{Process conformance and peer comparison.} Conformance checking relates
+recorded behaviour to a model and exposes skipped or out-of-order
+activities~\cite{rozinat2008conformance,carmona2018conformance,vanderaalst2016pm},
+and has been applied to security audit trails~\cite{vanderaalst2005security} and to
+IT incident management against ITIL~\cite{ferreira2008itil}. SAT-SA's execution-gap
+and negative-space rules are rule-encoded conformance checks, not a new technique.
+Peer group analysis flags entities that diverge from similar
+entities~\cite{weston2008pga,bolton2002fraud}; SAT-SA uses median and median absolute
+deviation (MAD)~\cite{leys2013mad} over a declared cohort.
+
+\paragraph{Supervision and human oversight.} Financial supervisors use technology to
+analyse submitted data (``suptech'') while keeping human judgement
+central~\cite{broeders2018suptech}. Automation bias is a documented risk of decision
+support~\cite{parasuraman2010automation} and has been reviewed for SOCs
+specifically~\cite{tilbury2024automationbias}; we did not study it.
+
+\paragraph{Integrity of records.} Tamper-evident logs detect alteration of recorded
+history~\cite{schneier1999logs,crosby2009logging}; practical systems protect audit logs
+with trusted execution~\cite{paccagnella2020custos} or ratcheting~\cite{guardiola2022sealfs},
+and post-quantum primitives have been applied to forensic logging~\cite{fugkeaw2026pqabl}.
+SAT-SA proposes no logging scheme or cryptography; it composes
+SHA3-256~\cite{nist2015fips202} and ML-DSA-65~\cite{nist2024fips204} to bind one
+canonical supervisory record to the authorized decision.
+
+\paragraph{Gap.} Record-based incident assessment, supervisory analysis of submitted
+data, peer comparison and tamper-evident records each exist. We did not find a work
+that combines them for supervision of many SOCs from their evidence submissions---with
+record-cited findings, cross-organization ranking and a cryptographically bound human
+decision---and evaluates the combination against simple baselines and on independent
+data. Given the search limits stated above, this is a low-confidence gap about a
+combination of established parts.

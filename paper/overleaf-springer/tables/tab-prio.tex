@@ -1,0 +1,18 @@
+\begin{table}[t]
+\caption{Prioritization on 20 generated populations of
+20 entities (5 pathological): medians over
+populations (PR01). Volume = reviews needed to find all pathological entities.}
+\label{tab:prio}
+\centering
+\scriptsize
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Ranking & P@10\% & R@20\% & NDCG@20\% & NDCG@30\% & Volume \\
+\midrule
+SAT-SA ($P_e$) & 1.000 & 0.800 & 1.000 & 0.869 & 7.0 \\
+Fastest median closure & 1.000 & 0.600 & 0.832 & 0.837 & 11.5 \\
+Critical/high alert volume & 0.500 & 0.200 & 0.246 & 0.318 & 18.0 \\
+Random (mean of permutations) & 0.245 & 0.201 & 0.248 & 0.276 & 17.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
