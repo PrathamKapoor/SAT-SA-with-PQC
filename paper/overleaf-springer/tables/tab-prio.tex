@@ -1,13 +1,16 @@
 \begin{table}[t]
 \caption{Prioritization on 20 generated populations of
 20 entities (5 pathological): medians over
-populations (PR01). Volume = reviews needed to find all pathological entities.}
+populations (PR01). P@10 = precision in the top 10\%; R@20 = recall in the top 20\%;
+N@20, N@30 = NDCG in the top 20\% and 30\%; Vol.\ = reviews needed to find all
+pathological entities.}
 \label{tab:prio}
 \centering
-\scriptsize
-\begin{tabular}{@{}lrrrrr@{}}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{3.9cm}rrrrr@{}}
 \toprule
-Ranking & P@10\% & R@20\% & NDCG@20\% & NDCG@30\% & Volume \\
+Ranking & P@10 & R@20 & N@20 & N@30 & Vol. \\
 \midrule
 SAT-SA ($P_e$) & 1.000 & 0.800 & 1.000 & 0.869 & 7.0 \\
 Fastest median closure & 1.000 & 0.600 & 0.832 & 0.837 & 11.5 \\

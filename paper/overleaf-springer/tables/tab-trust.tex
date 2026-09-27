@@ -4,19 +4,20 @@ of 13 mutations of signed state detected; the unsigned control still
 verified. Full targets are in the supplementary material.}
 \label{tab:trust}
 \centering
-\scriptsize
-\begin{tabular}{@{}lll@{}}
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}L{7.4cm}ll@{}}
 \toprule
 Mutated element & Expected & Observed \\
 \midrule
 Decision action; decision reason & tampered & tampered \\
 Finding rationale; observation scope & tampered & tampered \\
 Risk profile; recommendation & tampered & tampered \\
-Source provenance (record locator); submission record payload & tampered & tampered \\
+Source provenance; submission record payload & tampered & tampered \\
 Artifact digest; canonical payload & tampered & tampered \\
 Receipt signature; receipt public key & tampered & tampered \\
-Ledger chain (predecessor hash of last entry) & tampered & tampered \\
-Unsigned operational queue field (control) & verified & verified \\
+Ledger chain (predecessor hash) & tampered & tampered \\
+Unsigned queue field (control) & verified & verified \\
 \bottomrule
 \end{tabular}
 \end{table}
