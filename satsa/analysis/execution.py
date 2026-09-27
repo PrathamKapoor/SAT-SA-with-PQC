@@ -339,6 +339,60 @@ class AnalysisExecutionService:
             return None
         return {**row, "profile": json.loads(row["profile_json"])}
 
+    def list_entity_priorities(self) -> list[dict]:
+        """Rank this organization's entities for review attention.
+
+        Uses each entity's most recent run that has a persisted risk
+        profile (awaiting review, completed or partial) and the same
+        priority function as the offline ranking. Nothing is recomputed
+        from source data; only persisted, tenant-scoped results are read."""
+        from types import SimpleNamespace
+
+        from satsa.analysis.prioritize import _severity_of, entity_priority
+
+        self.tenant._require(FINDING_VIEW)
+        rows = self.db.query_all(
+            "SELECT r.id AS run_id,r.entity_id,r.created_at,r.status,k.profile_json"
+            " FROM satsa_runs r JOIN satsa_run_risk k ON k.run_id=r.id"
+            " WHERE r.organization_id=? AND k.organization_id=?"
+            " AND r.status IN ('awaiting_review','completed','partial')"
+            " ORDER BY r.entity_id,r.created_at DESC,r.id DESC",
+            (self.org, self.org),
+        )
+        latest: dict[str, dict] = {}
+        for row in rows:
+            latest.setdefault(row["entity_id"], row)
+        items = []
+        for row in latest.values():
+            profile = json.loads(row["profile_json"])
+            signals = self.db.query_all(
+                "SELECT f.rule_or_category FROM satsa_findings f"
+                " JOIN satsa_observations o ON o.id=f.observation_id"
+                " JOIN satsa_runs r ON r.id=o.run_id"
+                " WHERE r.organization_id=? AND r.id=? AND f.state='signal'",
+                (self.org, row["run_id"]),
+            )
+            priority = entity_priority(
+                SimpleNamespace(
+                    entity_id=row["entity_id"],
+                    run_id=row["run_id"],
+                    total_score=float(profile.get("total_score", 0.0)),
+                    confidence_bucket=profile.get("confidence_bucket", "very_low"),
+                    dimensions=[
+                        SimpleNamespace(name=d["name"], score=float(d["score"]))
+                        for d in profile.get("dimensions", [])
+                    ],
+                    run_created_at=row["created_at"],
+                    signal_findings=[
+                        {"severity": _severity_of(s["rule_or_category"] or "")}
+                        for s in signals
+                    ],
+                )
+            )
+            items.append({**priority.to_dict(), "run_status": row["status"]})
+        items.sort(key=lambda p: (-p["priority_score"], p["entity_id"]))
+        return items
+
     def list_recommendations(self, run_id: str) -> list[dict]:
         self.tenant._require(FINDING_VIEW)
         self.get_run(run_id)

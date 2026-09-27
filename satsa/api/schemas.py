@@ -288,3 +288,15 @@ class Risk(Schema):
     content_digest: str
     algorithm_version: str
     created_at: float
+
+
+class EntityPriority(Schema):
+    entity_id: str
+    run_id: str
+    run_status: str
+    priority_score: float
+    risk_score: float
+    confidence_bucket: str
+    rationale: str
+    top_dimensions: list[str]
+    high_signal_count: int
