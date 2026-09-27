@@ -29,6 +29,7 @@ import json
 import random
 import statistics
 import time
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
@@ -70,7 +71,7 @@ def spearman(x: list[float], y: list[float]) -> float | None:
 def _spearman_interval(x: list[float], y: list[float], seed: int) -> dict | None:
     indices = list(range(len(x)))
 
-    def statistic(sample: list[float]) -> float:
+    def statistic(sample: Sequence[float]) -> float:
         picked = [int(i) for i in sample]
         value = spearman([x[i] for i in picked], [y[i] for i in picked])
         return value if value is not None else 0.0
