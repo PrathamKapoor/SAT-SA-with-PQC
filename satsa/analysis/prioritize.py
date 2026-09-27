@@ -112,6 +112,40 @@ class EntityPriority:
         }
 
 
+def entity_priority(profile) -> EntityPriority:
+    """Build one entity's priority from a profile-like object.
+
+    ``profile`` needs ``entity_id``, ``run_id``, ``total_score``,
+    ``confidence_bucket``, ``dimensions`` (objects with ``name`` and
+    ``score``), ``run_created_at`` and ``signal_findings`` (dicts with a
+    ``severity``). The offline ranking and the tenant-scoped API ranking
+    both call this, so the priority math exists once."""
+    top_dims = sorted(
+        [(d.name, d.score) for d in profile.dimensions if d.score > 0],
+        key=lambda t: t[1], reverse=True)[:3]
+    rationale_parts = [
+        f"risk {profile.total_score:.0f}/100",
+        f"confidence {profile.confidence_bucket}",
+    ]
+    if top_dims:
+        rationale_parts.append(
+            "top dimensions: " + ", ".join(f"{n}={s:.1f}" for n, s in top_dims))
+    high_sig = sum(1 for f in profile.signal_findings
+                   if f["severity"] == "high")
+    if high_sig:
+        rationale_parts.append(f"{high_sig} high-severity signal(s)")
+    return EntityPriority(
+        entity_id=profile.entity_id,
+        priority_score=_priority_score(profile),
+        risk_score=profile.total_score,
+        confidence_bucket=profile.confidence_bucket,
+        run_id=profile.run_id,
+        rationale="; ".join(rationale_parts),
+        top_dimensions=[n for n, _ in top_dims],
+        high_signal_count=high_sig,
+    )
+
+
 def prioritize_entities(engine) -> list[EntityPriority]:
     """Rank every entity that has a most-recent completed or partial
     run, by the priority score. Returns a list ordered highest-first."""
@@ -121,36 +155,10 @@ def prioritize_entities(engine) -> list[EntityPriority]:
         " ORDER BY entity_id")
     items: list[EntityPriority] = []
     for row in entity_rows:
-        eid = row["entity_id"]
-        profile = _profile_with_findings(engine, eid)
+        profile = _profile_with_findings(engine, row["entity_id"])
         if profile is None:
             continue
-        # top dimensions by score, dropping zeros
-        top_dims = sorted(
-            [(d.name, d.score) for d in profile.dimensions if d.score > 0],
-            key=lambda t: t[1], reverse=True)[:3]
-        rationale_parts = [
-            f"risk {profile.total_score:.0f}/100",
-            f"confidence {profile.confidence_bucket}",
-        ]
-        if top_dims:
-            rationale_parts.append(
-                "top dimensions: " + ", ".join(f"{n}={s:.1f}" for n, s in top_dims))
-        high_sig = sum(1 for f in profile.signal_findings
-                       if f["severity"] == "high")
-        if high_sig:
-            rationale_parts.append(f"{high_sig} high-severity signal(s)")
-        rationale = "; ".join(rationale_parts)
-        items.append(EntityPriority(
-            entity_id=eid,
-            priority_score=_priority_score(profile),
-            risk_score=profile.total_score,
-            confidence_bucket=profile.confidence_bucket,
-            run_id=profile.run_id,
-            rationale=rationale,
-            top_dimensions=[n for n, _ in top_dims],
-            high_signal_count=high_sig,
-        ))
+        items.append(entity_priority(profile))
     items.sort(key=lambda p: p.priority_score, reverse=True)
     return items
 

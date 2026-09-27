@@ -69,6 +69,7 @@ Unexpected failures do not return stack traces, SQL, paths, or secret material.
 | `GET /runs`, `GET /runs/{id}` | pagination, optional `entity_id,status` | tenant scoped | `Page[Run]`, `Run` |
 | `POST /runs/{id}/cancel` | none | supervisor/admin only; cooperative cancellation | updated `Run` |
 | `GET /runs/{id}/steps`, `/findings`, `/evidence`, `/risk`, `/recommendations` | pagination | corresponding view permissions | page or persisted risk profile |
+| `GET /priorities` | pagination | finding view; organization scoped; one row per entity from its latest run with a persisted risk profile (`awaiting_review`, `completed` or `partial`), ranked by the same priority function as the offline pipeline; read-only, nothing recomputed from source data | `Page[EntityPriority]` `{entity_id,run_id,run_status,priority_score,risk_score,confidence_bucket,rationale,top_dimensions,high_signal_count}` |
 | `GET /findings/{id}` | none | tenant scoped | `Finding` including available confidence and exact evidence refs |
 | `GET,POST /runs/{id}/decision` | action `confirm|dismiss|escalate`, reason ≤4000 | supervisor/admin; one immutable decision, identical retry returns same decision | `Decision`, or `201 Decision` |
 | `GET /runs/{id}/receipt`; `POST /runs/{id}/verify` | none | evidence/trust permission; verification rebuilds canonical state | signed receipt, or structured `Verification` |

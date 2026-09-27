@@ -866,6 +866,22 @@ def create_app(
         return ApiRepository.require(execution(t).get_risk(run_id))
 
     @app.get(
+        "/api/v1/priorities",
+        response_model=s.Page[s.EntityPriority],
+        tags=["risk"],
+        operation_id="entity_priorities",
+    )
+    def priorities(t: Tenant, limit: Limit = 50, offset: Offset = 0):
+        # One row per entity of this organization; bounded by entity count.
+        rows = execution(t).list_entity_priorities()
+        return {
+            "items": rows[offset : offset + limit],
+            "limit": limit,
+            "offset": offset,
+            "has_more": len(rows) > offset + limit,
+        }
+
+    @app.get(
         "/api/v1/runs/{run_id}/recommendations",
         response_model=s.Page[s.Recommendation],
         tags=["recommendations"],
