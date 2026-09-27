@@ -24,9 +24,17 @@ class BundleIntegrityError(RuntimeError):
     pass
 
 
-def load_bundle(path: Path) -> tuple[dict[str, Any], dict[str, Any]]:
+def load_bundle(
+    path: Path, *, expected_manifest_sha256: str | None = None
+) -> tuple[dict[str, Any], dict[str, Any]]:
     """Return (manifest, raw results) after verifying recorded hashes."""
-    manifest = json.loads((path / "manifest.json").read_text(encoding="utf-8"))
+    manifest_bytes = (path / "manifest.json").read_bytes()
+    if (
+        expected_manifest_sha256
+        and hashlib.sha256(manifest_bytes).hexdigest() != expected_manifest_sha256
+    ):
+        raise BundleIntegrityError(f"{path.name}: manifest differs from the freeze")
+    manifest = json.loads(manifest_bytes.decode("utf-8"))
     if manifest.get("status") != "completed":
         raise BundleIntegrityError(f"{path.name}: bundle is not completed")
     for relative, expected in manifest.get("artifacts_sha256", {}).items():
@@ -274,14 +282,24 @@ def write_table(out: Path, name: str, rows: list[Row], source: str) -> list[Path
     return paths
 
 
-def export_tables(bundles: list[Path], out: Path) -> dict[str, Any]:
+def export_tables(
+    bundles: list[Path],
+    out: Path,
+    *,
+    expected_manifests: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """Export tables; ``expected_manifests`` (bundle name -> manifest
+    SHA-256, e.g. from a freeze) also rejects edited manifests."""
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     record: dict[str, Any] = {"sources": [], "tables": {}, "skipped": []}
     used: set[str] = set()
     for bundle in sorted(bundles):
         try:
-            manifest, results = load_bundle(bundle)
+            manifest, results = load_bundle(
+                bundle,
+                expected_manifest_sha256=(expected_manifests or {}).get(bundle.name),
+            )
         except (BundleIntegrityError, FileNotFoundError, KeyError) as exc:
             record["skipped"].append({"bundle": bundle.name, "reason": str(exc)})
             continue
