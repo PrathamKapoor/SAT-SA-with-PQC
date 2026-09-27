@@ -1,0 +1,1 @@
+{"cohort_sizes":[2,3,4,5,6,8],"deviation_threshold_mad_units":2.0,"experiment":"peer-cohort-sweep-v1","minimum_peers":3,"peer_spreads":{"tight":[540,660],"wide":[150,1050]},"subject_closure_seconds":[30,150,300,450,600,900,1500,3000]}

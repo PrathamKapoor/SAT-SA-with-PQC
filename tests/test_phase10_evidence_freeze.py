@@ -105,3 +105,18 @@ def test_freeze_refuses_a_bundle_that_already_fails_verification(tmp_path):
             canonical_commit="x",
         )
     assert not (tmp_path / "freeze").exists()
+
+
+def test_committed_freeze_v1_is_intact():
+    """The paper's canonical evidence must verify byte-for-byte."""
+    freeze = Path(__file__).resolve().parents[1] / "research" / "evidence" / "freeze-v1"
+    result = verify_freeze(freeze)
+    assert result["intact"] is True, result["problems"]
+    record = json.loads((freeze / "freeze.json").read_text(encoding="utf-8"))
+    canonical = {b["bundle"] for b in record["bundles"] if b["role"] == "canonical"}
+    assert "EXP-X02-external-itsm" in canonical
+    assert all(
+        not b["code"]["source_tree_dirty"]
+        for b in record["bundles"]
+        if b["role"] == "canonical"
+    )

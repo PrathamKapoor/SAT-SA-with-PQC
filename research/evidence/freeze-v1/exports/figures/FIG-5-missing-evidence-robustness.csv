@@ -1,0 +1,7 @@
+omission,rate,replicates,rejected_fraction,family_set_changed_fraction
+omit_records,0.1,25,0.12,0.0
+omit_records,0.25,25,0.44,0.16
+omit_records,0.5,25,0.56,0.16
+omit_records_cascade,0.1,25,0.0,0.04
+omit_records_cascade,0.25,25,0.0,0.44
+omit_records_cascade,0.5,25,0.0,0.6
