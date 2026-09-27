@@ -1,24 +1,24 @@
 \begin{abstract}
 Supervisors of security operations centres must judge periodically whether monitored
-organizations detect, investigate, escalate and close security work properly, yet
-the usual instruments are self-assessed maturity models and manual record review.
-We study whether the operational records an organization submits can instead be
-analysed into findings that cite those records, ranked across organizations, decided
-by a human supervisor, and bound to that decision cryptographically. We implement
-this workflow as SAT-SA, with 16 deterministic rule-based workers, a
-saturating risk fusion and a post-quantum signed, hash-chained receipt, and evaluate
-it on frozen, hash-verified experiment bundles. On controlled data the mechanisms
-behave as designed: every declared finding family was emitted, validation matched
-its declared contract in all 245 perturbed conditions, all
-13 tested mutations of the decided record were detected, and all
-36 injected workflow interruptions recovered. Simple rules are, however,
+organizations handle security work properly, yet their usual instruments are
+self-assessed maturity models and manual record review. We study whether the records
+an organization submits can instead be analysed into findings that cite those
+records, ranked across organizations, decided by a human supervisor, and bound to that
+decision cryptographically. We evaluate this workflow as implemented in SAT-SA, whose
+16 deterministic, rule-based analytical workers form the evaluated subset
+of 32 registered components, using frozen, hash-verified experiment
+bundles. On controlled data the mechanisms behave as designed: every declared finding
+family was emitted, validation matched its declared contract in all 245
+perturbed conditions, all 13 tested mutations of the decided record were
+detected, and all 36 injected interruptions recovered. Simple rules are
 competitive: fixed-threshold and median-deviation rules tied the fast-closure
-detector, and a closure-speed heuristic nearly matched the ranking; stale and
-contradictory records were accepted silently. On a public IT incident log, which is
-not security-operations data, the risk score was not associated with service-level
-misses (Spearman $\rho=\ensuremath{-}0.11$), while slowest median resolution was
-($\rho=0.94$); a failure analysis attributes this to construct
-mismatch and detector saturation. The evidence supports mechanism-level claims, not
+detector, and on generated populations that favour SAT-SA by construction a
+closure-speed heuristic nearly matched its ranking; stale and contradictory records
+were accepted silently. On a public IT incident log, which is not security-operations
+data, the risk score was not associated with service-level misses (Spearman
+$\rho=\ensuremath{-}0.11$), whereas slowest median resolution was
+($\rho=0.94$); a failure analysis attributes this to construct mismatch
+and detector saturation. The evidence supports mechanism-level claims, not
 effectiveness in real security operations, for which no human study or expert labels
 exist.
 

@@ -31,18 +31,26 @@ Fig.~\ref{fig:prio}). Its recall@20\% exceeded random order in all
 \V{PR01-vs-closure-higher}, equal in \V{PR01-vs-closure-equal} and lower in
 \V{PR01-vs-closure-lower} populations (median difference \V{PR01-vs-closure-diff},
 interval \V{PR01-vs-closure-lo} to \V{PR01-vs-closure-hi}); SAT-SA needed fewer reviews
-in \V{PR01-vol-fewer-closure} populations and more in \V{PR01-vol-more-closure}. The
-populations come from SAT-SA's own generator, whose pathological profile injects the
-behaviours its detectors target, so this comparison favours SAT-SA by construction; a
-single closure-speed rule nevertheless captures most of the separation.
+in \V{PR01-vol-fewer-closure} populations and more in \V{PR01-vol-more-closure}.
+
+These results must be read against how the data were made. The populations come from
+SAT-SA's own generator, whose pathological profile deliberately injects the behaviours
+that SAT-SA's detector families target, so the construction favours SAT-SA. Because
+the generated populations inject behaviours targeted by SAT-SA's detector families,
+PR01 is a controlled sensitivity and ranking-mechanism evaluation rather than an
+unbiased benchmark of general supervisory effectiveness. It shows that the ranking
+responds as designed under these generated conditions; it does not establish ranking
+superiority in general or effectiveness in real SOCs. Even under this favourable
+construction, a single closure-speed rule captures most of the separation.
 
 \input{tables/tab-prio}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.5\linewidth]{figures/fig-prioritization.pdf}
 \caption{Recall@20\% of generator-labelled pathological entities across
-\V{PR01-replicates} generated populations (PR01).}
+\V{PR01-replicates} generated populations (PR01). The generator injects behaviours that
+SAT-SA targets, so this is a controlled mechanism test, not an unbiased benchmark.}
 \label{fig:prio}
 \end{figure}
 
@@ -54,8 +62,18 @@ Removing recurrence-without-remediation or coverage-gap \emph{raised} precision 
 those workers emitted only undeclared families here. On five generated populations
 (exploratory), mean recall@20\% was \V{A01-pop-full} with all workers and rose to
 \V{A01-pop-anomaly} without the anomaly, recurrence, coverage-gap or
-workflow-reconstruction worker: these add ranking noise on these populations. A single
-ablation on these fixtures does not establish that any worker is necessary in general.
+workflow-reconstruction worker, whereas removing the peer-benchmark or case-similarity
+worker lowered it to \V{A01-pop-peer-benchmark}. On these populations, therefore, some
+workers add ranking noise to the measured metric.
+
+We read this nuanced result narrowly. The full worker set spans a broader analytical
+signal space than the generated populations exercise, and the ranking objective is
+specific to the generator's pathological profile. The ablation therefore shows that
+some workers can reduce this particular metric; it does not show that those workers
+are unnecessary, that they would be harmful in real SOC environments, or that all
+\V{A01-workers} workers are necessary. Worker utility is task- and
+population-dependent, which is one more reason why external and human evaluation are
+needed.
 
 \input{tables/tab-ablation}
 
@@ -79,7 +97,7 @@ implements no period, recency or cross-record consistency validation.
 
 \input{tables/tab-robust}
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.55\linewidth]{figures/fig-robustness.pdf}
 \caption{Record omission (R01b): independent omission is often rejected by
@@ -98,7 +116,7 @@ subjects only from five peers upward as the MAD narrowed (\V{P01-wide-n5} at fiv
 peers). The peer rule is therefore sensitive to cohort size and dispersion: small or
 heterogeneous cohorts miss deviations, and tight cohorts flag small ones.
 
-\begin{figure}[t]
+\begin{figure}[!htbp]
 \centering
 \includegraphics[width=0.68\linewidth]{figures/fig-peer.pdf}
 \caption{Peer findings by cohort size, spread and subject closure value; dark cells

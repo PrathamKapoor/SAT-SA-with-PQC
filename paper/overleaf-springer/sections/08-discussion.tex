@@ -5,10 +5,11 @@
 show the mechanisms working as specified, but they do not show that the multi-worker
 design adds value over transparent rules: fixed-threshold and MAD rules tie the
 fast-closure detector, a fastest-median-closure ranking equals or nearly equals SAT-SA
-in most generated populations, and four workers \emph{lowered} population recall in
-the ablation. This is consistent with a generator whose pathological profile includes
-fast closures; more elaborate workers can only earn their place on data where
-pathologies are not separable by one rate. For a supervisor, a small set of transparent
+in most generated populations---populations that favour SAT-SA by construction---and
+four workers \emph{lowered} population recall in the ablation. This is consistent with
+a generator whose pathological profile includes fast closures; more elaborate workers
+can only earn their place on data where pathologies are not separable by one rate, and
+the evidence here neither establishes nor rules out that they do. For a supervisor, a small set of transparent
 rates may be a reasonable first instrument, with record-cited findings serving as the
 explanation layer rather than the ranking signal.
 

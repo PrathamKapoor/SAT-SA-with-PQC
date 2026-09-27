@@ -1,33 +1,50 @@
-\begin{table}[t]
-\caption{The 16 default analytical workers: risk dimension fed and confidence
-components ($c_f=\min(a_f,e_f[,p_f])$, Eq.~\eqref{eq:confidence}). $q$ = qualifying
-records, $N$ = records of the relevant category, $\delta$ = effect size clipped to
-$[0,1]$, $z$ = deviation in MADs; all constants are fixed in code. EG = execution gap,
-NS = negative space, AN = anomaly, PD = peer deviation, DG = detection gap,
-IQ = investigation quality, ED = escalation discipline.}
+\begin{table}[!htbp]
+\caption{Default analytical workers evaluated in the reported experiments (part 1 of
+2; the analytical subset of the registered agents, Table~\ref{tab:architecture}): risk
+dimension fed and confidence components, $c_f=\min(a_f,e_f[,p_f])$
+(Eq.~\eqref{eq:confidence}). $q$ = qualifying records; $N$ = records of the relevant
+category; $\delta$ = effect size clipped to $[0,1]$; $z$ = deviation in MADs. All
+constants are fixed in code. Dimensions: EG execution gap, NS negative space, AN
+anomaly, PD peer deviation, DG detection gap, IQ investigation quality, ED escalation
+discipline; kw = assigned by rule-name keyword (default AN).}
 \label{tab:workers}
 \centering
-\scriptsize
+\small
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}L{2.9cm}L{1.1cm}L{4.2cm}L{3.3cm}@{}}
+\begin{tabular}{@{}L{2.7cm}L{0.9cm}L{4.4cm}L{3.5cm}@{}}
 \toprule
 Worker & Dim. & Analytical support $a_f$ & Evidence completeness $e_f$ (peer $p_f$) \\
 \midrule
 Fast closure & EG & $0.4+0.6\,\delta$, $\delta=1-\text{median}/\text{limit}$ & $q/N$ (alerts of that severity) \\
 Ack.\ without investigation & EG & $0.5+0.4\,q/N$ & $q/N$ (alerts) \\
 Critical without escalation & EG & $0.8$ & $q/N$ (alerts) \\
-Repeated investigation pattern & EG & $0.4+0.5\,\delta$ (threshold exceedance) & $\min(1,N_{\text{steps}}/20)$ \\
+Repeated investigation & EG & $0.4+0.5\,\delta$ & $\min(1,N_{\text{steps}}/20)$ \\
 Recurrence without remediation & EG & $0.7$ & $q/N$ (cases) \\
-Potential metric gaming & EG & $0.4+0.4\,\delta$ (closure rate, step depth) & $\min(1,N/20)$ \\
-Negative space & NS & $0.7$ missing steps; $0.6$ missing escalation or monitoring; $0.5$ missing disposition; $0.4$ low activity & $1$ if the category was submitted, else $0$ \\
+Potential metric gaming & EG & $0.4+0.4\,\delta$ & $\min(1,N/20)$ \\
+Negative space & NS & $0.7$ steps; $0.6$ escalation, monitoring; $0.5$ disposition; $0.4$ low activity & $1$ if category submitted, else $0$ \\
 Anomaly & AN & $0.4+0.5\min(1,z/3)$ & $1$ \\
-Peer benchmark & PD & $0.4+0.1\min(1,|z|/3)$ & $1$ ($p_f=\min(1,n_{\text{peers}}/10)$) \\
-Coverage gap & DG & $0.4+0.6\,g$, $g$ = unmonitored share of critical assets & $0.9$ if alerts link assets, else $0.4$ \\
-Drift (vs.\ previous period) & by keyword, default AN & $0.4+0.6\min(1,|\Delta_{\text{rel}}|)$ & $0.9/0.6/0.3$ for ${\ge}3$ / ${\ge}1$ / $0$ references \\
-Cross-entity insights & by keyword, default AN & $0.4+0.6\min(1,\pi)$, $\pi$ = prevalence & $0.9$ if ${\ge}3$ entities, else $0.6$ ($p_f=\min(1,\pi)$) \\
-Case similarity & AN & $0.5+0.5\times$ share of cases in cluster & $0.7$ \\
-Evidence completeness & AN & $0.4+0.6\,m$, $m$ = missing-category share & $1-m$ \\
-Workflow reconstruction & ED / IQ / AN & $0.85$ escalation after closure; $0.8$ disposition before investigation; $0.6$ chronology mismatch & $1$ \\
+Peer benchmark & PD & $0.4+0.1\min(1,|z|/3)$ & $1$; $p_f=\min(1,n_{\text{peers}}/10)$ \\
+Drift & kw & $0.4+0.6\min(1,|\Delta_{\text{rel}}|)$ & $0.9/0.6/0.3$ (${\ge}3$/${\ge}1$/$0$ refs) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!htbp]
+\caption{Default analytical workers evaluated in the reported experiments (part 2 of
+2); abbreviations as in Table~\ref{tab:workers}.}
+\label{tab:workers-b}
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{2.7cm}L{0.9cm}L{4.4cm}L{3.5cm}@{}}
+\toprule
+Worker & Dim. & Analytical support $a_f$ & Evidence completeness $e_f$ (peer $p_f$) \\
+\midrule
+Coverage gap & DG & $0.4+0.6\,g$ ($g$ unmonitored critical-asset share) & $0.9$ if alerts link assets, else $0.4$ \\
+Cross-entity insights & kw & $0.4+0.6\min(1,\pi)$ ($\pi$ prevalence) & $0.9$ if ${\ge}3$ entities, else $0.6$; $p_f=\min(1,\pi)$ \\
+Case similarity & AN & $0.5+0.5\,s$ ($s$ cluster share) & $0.7$ \\
+Evidence completeness & AN & $0.4+0.6\,m$ ($m$ missing share) & $1-m$ \\
+Workflow reconstruction & ED, IQ, AN & $0.85$ / $0.8$ / $0.6$ by rule & $1$ \\
 Entity--asset resolution & AN & $0.6$ & $1$ \\
 \bottomrule
 \end{tabular}
