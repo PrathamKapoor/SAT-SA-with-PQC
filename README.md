@@ -267,11 +267,17 @@ This repository contains two UIs. Both live on `main`:
 |---|---|---|
 | What | Public site + secure supervisory application | Operator dashboard over the real pipeline |
 | Stack | Next.js 16 / React 19 / Tailwind 4 | FastAPI + Jinja2 + vanilla JS |
-| Data | Typed data layer: a development fixture generated from a real backend run, or the backend API (`web/docs/API_CONTRACT.md`) | Live SQLite database: real ingest, findings, verification, reviews |
+| Data | Typed data layer: a labelled development fixture generated from a real backend run, or the backend API (wiring pending: `docs/FRONTEND_API_HANDOFF.md`) | Live SQLite database: real ingest, findings, verification, reviews |
 | Run | `cd web && npm ci && npm run dev` | `python scripts/serve_ui.py` |
 | Hosted | No hosting provider configured (see below) | Local / air-gapped only |
 
 `web/` holds the current, redesigned UI. See [`web/README.md`](web/README.md).
+
+The hosted runtime is the tenant-scoped API (`python -m satsa.api.server`,
+`docs/API_CONTRACT.md`) with a separate analysis worker (`sat-sa-worker`),
+PostgreSQL or SQLite, and local or S3-compatible artifact storage. The status
+of connecting the web workbench to it is in
+[`docs/FRONTEND_BACKEND_CONVERGENCE.md`](docs/FRONTEND_BACKEND_CONVERGENCE.md).
 
 **Hosting.** The repository contains provider-neutral deployment
 infrastructure (backend image, Compose topology with PostgreSQL and
