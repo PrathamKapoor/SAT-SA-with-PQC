@@ -75,6 +75,17 @@ retains its finite seeded randomization distribution (raw samples, mean,
 quartiles and range); these summaries are not confidence intervals. No
 inferential tests or significance claims are emitted by the current harness.
 
+## External-data questions (UCI-498, not SOC)
+
+- **EXT-1 feasibility:** the unchanged pipeline on a real IT incident log
+  (EXP-X02b: 134,888 rows, 0 rejected, 50/50 analyses completed).
+- **EXT-2 detector behaviour:** firing rates on real distributions
+  (EXP-X03: four families fire for all 50 groups).
+- **EXT-3 external association:** entity risk vs an organisation-recorded SLA
+  outcome against data-only baselines (EXP-X02b: ρ −0.11, interval includes 0).
+- **EXT-4 failure analysis:** why EXT-3 differed (EXP-X03; construct mismatch
+  primary). The evaluation data was not used to tune anything.
+
 ## Ground truth, labels, and baseline discipline
 
 - Scenario labels come from `satsa.analysis.validate.synthetic_ground_truth`
