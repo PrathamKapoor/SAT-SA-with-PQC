@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
 
     assemble(args.submission, Path("paper/VENUE_COMPLIANCE.md"), args.out)
     validation = validate(args.out)
-    git = git_state(repo)
+    git = git_state(repo, exclude=args.out)
     record = manifest(args.out, git)
     (args.out / "MANIFEST.json").write_text(
         json.dumps(record, indent=2, sort_keys=True) + "\n",
