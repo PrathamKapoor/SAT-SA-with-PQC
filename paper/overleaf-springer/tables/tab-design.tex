@@ -5,7 +5,7 @@ measurement on the same unit and are not independent.}
 \centering
 \scriptsize
 \setlength{\tabcolsep}{3pt}
-\begin{tabular}{@{}L{1.7cm}L{1.2cm}L{3.1cm}L{2.7cm}L{2.6cm}@{}}
+\begin{tabular}{@{}L{1.9cm}L{1.2cm}L{2.9cm}L{2.7cm}L{2.6cm}@{}}
 \toprule
 RQ & Exp. & Data (ground truth) & Baselines & Independent unit (n) \\
 \midrule
@@ -13,11 +13,11 @@ RQ1 detection & C01 & catalog (construction labels) & -- & scenario (5) \\
 RQ2 baselines & C01 & closure corpus (construction) & threshold, MAD, z, IQR, random & record (12) \\
 RQ2 ranking & PR01 & generated populations (generator) & random, volume, fastest closure & population (20) \\
 RQ2 ablation & A01 & catalog; populations & full worker set & scenario (5); population (5) \\
-RQ4 robustness & R01b & perturbed catalog (declared contract) & -- & fixture (5); 245 conditions \\
-RQ5 integrity & T01 & one workflow (declared outcome) & unsigned-field control & workflow (1); 14 mutations \\
-RQ6 peer & P01 & engineered cohorts (design) & -- & designed cell (96) \\
-RQ7 cost & O01 & catalog scenario & direct vs.\ graph vs.\ unreviewed & 1 machine; 30 paired trials \\
-RQ7 recovery & O02 & catalog scenario (reference run) & uninterrupted run & 12 cells; 36 runs \\
+RQ3 robustness & R01b & perturbed catalog (declared contract) & -- & fixture (5); 245 conditions \\
+RQ4 peer & P01 & engineered cohorts (design) & -- & designed cell (96) \\
+RQ5 cost & O01 & catalog scenario & direct vs.\ graph vs.\ unreviewed & 1 machine; 30 paired trials \\
+RQ5 recovery & O02 & catalog scenario (reference run) & uninterrupted run & 12 cells; 36 runs \\
+RQ6 integrity & T01 & one workflow (declared outcome) & unsigned-field control & workflow (1); 14 mutations \\
 EXT & X02b, X03 & UCI-498 (SLA flag) & random, volume, reassign., slowest & group of 1 organization (50) \\
 \bottomrule
 \end{tabular}

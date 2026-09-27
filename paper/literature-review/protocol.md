@@ -65,7 +65,8 @@ measure relevance; only their top 25 were used.
 Records are deduplicated by DOI, case-insensitive. Records without a DOI are
 deduplicated by normalised title (lower case, alphanumerics only), and a title
 match to a record that has a DOI also merges. The result: 859 retrieved records
-reduced to 656 unique candidates (`candidates.csv`).
+reduced to 656 unique candidates (`candidates.csv` in the repository, with
+abstracts; `screening.csv` lists the same 656 candidates with their decisions).
 
 ## Screening
 

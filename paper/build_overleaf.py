@@ -258,13 +258,19 @@ def main() -> int:
         "included.csv",
         "extraction.csv",
         "gap-matrix.csv",
+        "excluded.csv",
+        "additional-sources.csv",
+        "abstract-stage-decisions.json",
+        "run_searches.py",
+        "screen.py",
     ):
         shutil.copy2(PAPER / "literature-review" / name, lit / name)
     shutil.copytree(
         PAPER / "literature-review" / "update-2026-09-27",
         lit / "update-2026-09-27",
-        ignore=shutil.ignore_patterns("raw", "__pycache__", "*.py"),
+        ignore=shutil.ignore_patterns("raw", "__pycache__"),
     )
+    shutil.copy2(PAPER / "literature-matrix.csv", sup / "literature-matrix.csv")
 
     tex_files = sorted(OUT.rglob("*.tex"))
     keys = cited_keys(tex_files)

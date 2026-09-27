@@ -7,7 +7,7 @@ records, ranked across organizations, decided by a human supervisor, and bound t
 decision cryptographically. We evaluate this workflow as implemented in SAT-SA, whose
 \V{CODE-workers} deterministic, rule-based analytical workers form the evaluated subset
 of \V{CODE-registry} registered components, using frozen, hash-verified experiment
-bundles. On controlled data the mechanisms behave as designed: every declared finding
+bundles. On controlled data the mechanisms matched their declared implementation contracts: every declared finding
 family was emitted, validation matched its declared contract in all \V{R01b-expect}
 perturbed conditions, all \V{T01-detected} tested mutations of the decided record were
 detected, and all \V{O02-runs} injected interruptions recovered. Simple rules are
@@ -17,8 +17,8 @@ closure-speed heuristic nearly matched its ranking; stale and contradictory reco
 were accepted silently. On a public IT incident log, which is not security-operations
 data, the risk score was not associated with service-level misses (Spearman
 $\rho=\V{X02b-rho-risk}$), whereas slowest median resolution was
-($\rho=\V{X02b-rho-slowest}$); a failure analysis attributes this to construct mismatch
-and detector saturation. The evidence supports mechanism-level claims, not
+($\rho=\V{X02b-rho-slowest}$); a diagnostic analysis identifies construct mismatch
+and detector saturation as contributing explanations. The evidence supports mechanism-level claims, not
 effectiveness in real security operations, for which no human study or expert labels
 exist.
 

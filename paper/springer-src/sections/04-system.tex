@@ -5,7 +5,11 @@ Figure~\ref{fig:architecture} shows the workflow as implemented. An analyst of t
 monitored organization uploads one file per evidence category through an HTTP API;
 validation stores per-record provenance; a separate worker process claims queued
 runs under a lease and executes the analysis; a supervisor reviews and decides; and
-the decision is finalized and bound.
+the decision is finalized and bound. This section describes the implemented
+system; the evaluated configuration is narrower. All reported measurements ran on
+one machine with SQLite and local file storage, and the containerized PostgreSQL
+deployment that the implementation also supports was not part of the evaluation
+(Section~\ref{sec:threats}).
 
 \begin{figure}[!htbp]
 \centering

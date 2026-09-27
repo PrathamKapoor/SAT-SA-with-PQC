@@ -26,7 +26,7 @@ SOC submits (alerts, cases, investigation steps, escalations, dispositions, asse
 that yields findings citing those records, ranks organizations against each other,
 keeps a human supervisor as the decision authority, and makes the decided state
 verifiable afterwards---together with an evaluation of how such an analysis
-behaves under controlled and independent conditions.
+behaves under controlled conditions and on an external public dataset.
 
 This paper studies that question with an implemented system, SAT-SA, and a frozen evaluation. Its emphasis is
 the evidence rather than the architecture: every number is taken from a hash-verified
@@ -48,7 +48,7 @@ a durable queue and a checkpointed human-review interrupt.
 \item \emph{Security capability (integration).} Binding of the supervisory decision to
 the analysed state with standard primitives (SHA3-256, ML-DSA-65, a hash-chained
 ledger), evaluated with a mutation matrix.
-\item \emph{Reproducibility practice.} Write-once experiment bundles, an evidence
+\item \emph{Reproducibility practice.} Hash-verified experiment bundles, an evidence
 freeze and a data layer that generates every reported number.
 \end{itemize}
 The analytical methods are established ones, and effectiveness in operational SOCs
