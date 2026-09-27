@@ -1,0 +1,36 @@
+\section{Threats to Validity and Limitations}
+\label{sec:threats}
+
+\paragraph{Construct validity.} Controlled labels are construction labels written by
+the system's authors. The external outcome (SLA miss) measures timeliness, not
+supervisory execution quality, and investigation and escalation are proxies there.
+Risk scores have no validated meaning as probabilities or severities.
+
+\paragraph{Internal validity.} Populations for prioritization and ablation come from
+SAT-SA's own generator, which injects the behaviours its detectors target and favours
+SAT-SA. Precision depends on database layout. Thresholds were set by design, never
+fitted, and never tuned on independent development data.
+
+\paragraph{External validity.} The evaluation is predominantly synthetic and
+controlled. There is no SOC data from a real organization; the external dataset is one
+IT service desk; generated populations have \V{PR01-entities} entities, which makes
+top-$k$ estimates coarse; the ablation population analysis uses five seeds.
+
+\paragraph{Statistical conclusion validity.} Intervals are descriptive, seeded and
+uncorrected across many comparisons; no hypothesis is tested. Timing results are
+repeated runs on one machine and do not generalize across hardware, databases or load.
+Recovery was tested with injected exceptions at worker boundaries, not real process
+kills, partitions or database failover.
+
+\paragraph{Human factors.} A human-evaluation protocol exists but \emph{no study was
+executed}: there are no participants and no usability or decision-quality results. An
+expert-label pipeline exists but \emph{no expert-labelled data exist}.
+
+\paragraph{Systems and deployment validity.} All measurements used SQLite and local
+storage on one machine. The local API and worker processes passed \V{D01-pass} HTTP
+smoke checks (\V{D01-fail} failed). Docker was not available, so the container image
+and compose topology were not executed; SeaweedFS object storage, the CI topology job
+and any hosted deployment were not executed. PostgreSQL played no part in any reported
+measurement. (After the evidence freeze, the schema migrations and the database test
+suite were run against a local PostgreSQL instance during maintenance; this is not
+part of the evaluation.) No claim of production readiness or scale is made.

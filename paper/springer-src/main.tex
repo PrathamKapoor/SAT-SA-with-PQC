@@ -1,0 +1,46 @@
+% Springer proceedings manuscript (official LaTeX2e Proceedings Template,
+% llncs.cls v2.25, 2026-09-03; bibliography style splncs04).
+% Main file: compile with pdfLaTeX + BibTeX (Overleaf default).
+% Author metadata lives in metadata.tex; each section in sections/; tables in
+% tables/; figures in figures/; references in references.bib.
+\documentclass[runningheads]{llncs}
+
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext}
+\usepackage[varvw]{newtxmath}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+% Springer eBook style for URLs (from the template):
+\renewcommand\UrlFont{\color{blue}\rmfamily}
+\urlstyle{rm}
+
+\begin{document}
+
+\input{metadata}
+\maketitle
+
+\input{sections/00-abstract}
+
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-problem-formulation}
+\input{sections/04-system}
+\input{sections/05-experimental-methodology}
+\input{sections/06-results}
+\input{sections/07-external-evaluation}
+\input{sections/08-discussion}
+\input{sections/09-threats}
+\input{sections/10-reproducibility}
+\input{sections/11-conclusion}
+\input{sections/12-declarations}
+
+\bibliographystyle{splncs04}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,142 @@
+\section{Results on Controlled Data}
+\label{sec:results}
+
+\subsection{Detection and closure-time baselines (RQ1, RQ2)}
+Over the \V{C01-action-total} catalog scenarios analysed in one shared database,
+SAT-SA emitted every declared finding family (true positives \V{C01-tp}, false
+negatives \V{C01-fn}) and \V{C01-fp} undeclared families: micro precision
+\V{C01-precision}, recall \V{C01-recall}, F1 \V{C01-f1}. The recommended supervisory
+action matched the declared action in \V{C01-action-ok} of \V{C01-action-total}
+scenarios. Precision depends on database layout: analysed one scenario per database
+(A01), the full worker set reached \V{A01-full-precision}, because cross-entity
+workers in a shared database see other scenarios' records.
+
+On \V{C01-closure-n} construction-labelled critical closures (\V{C01-closure-pos} fast),
+SAT-SA's fast-closure detector, a fixed threshold and a MAD rule each reached F1
+\V{C01-closure-f1-satsa}; z-score and IQR rules found none (recall
+\V{C01-closure-recall-zscore}); seeded random reached \V{C01-closure-f1-random}.
+\emph{The detector ties simple baselines and offers no detection advantage on this
+corpus.}
+
+\subsection{Prioritization against simple baselines (RQ2)}
+Across \V{PR01-replicates} generated populations, SAT-SA placed a median
+\V{PR01-satsa-recall20} of the pathological entities in its top 20\% and needed a
+median of \V{PR01-satsa-volume} reviews to find all of them (Table~\ref{tab:prio},
+Fig.~\ref{fig:prio}). Its recall@20\% exceeded random order in all
+\V{PR01-vs-random-higher} populations (median paired difference
+\V{PR01-vs-random-diff}, 95\% bootstrap \V{PR01-vs-random-lo} to
+\V{PR01-vs-random-hi}) and alert-volume ranking in all \V{PR01-vs-volume-higher}
+(\V{PR01-vs-volume-diff}; \V{PR01-vs-volume-lo} to \V{PR01-vs-volume-hi}).
+\emph{Against the fastest-median-closure heuristic the comparison is mixed}: higher in
+\V{PR01-vs-closure-higher}, equal in \V{PR01-vs-closure-equal} and lower in
+\V{PR01-vs-closure-lower} populations (median difference \V{PR01-vs-closure-diff},
+interval \V{PR01-vs-closure-lo} to \V{PR01-vs-closure-hi}); SAT-SA needed fewer reviews
+in \V{PR01-vol-fewer-closure} populations and more in \V{PR01-vol-more-closure}. The
+populations come from SAT-SA's own generator, whose pathological profile injects the
+behaviours its detectors target, so this comparison favours SAT-SA by construction; a
+single closure-speed rule nevertheless captures most of the separation.
+
+\input{tables/tab-prio}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.5\linewidth]{figures/fig-prioritization.pdf}
+\caption{Recall@20\% of generator-labelled pathological entities across
+\V{PR01-replicates} generated populations (PR01).}
+\label{fig:prio}
+\end{figure}
+
+\subsection{One-worker ablation (RQ2)}
+Removing one of the \V{A01-workers} workers at a time (Table~\ref{tab:ablation}),
+fast-closure and negative-space carried recall on the catalog (\V{A01-fast-closure-recall}
+and \V{A01-negative-space-recall} without them; \V{A01-full-recall} with all workers).
+Removing recurrence-without-remediation or coverage-gap \emph{raised} precision because
+those workers emitted only undeclared families here. On five generated populations
+(exploratory), mean recall@20\% was \V{A01-pop-full} with all workers and rose to
+\V{A01-pop-anomaly} without the anomaly, recurrence, coverage-gap or
+workflow-reconstruction worker: these add ranking noise on these populations. A single
+ablation on these fixtures does not establish that any worker is necessary in general.
+
+\input{tables/tab-ablation}
+
+\subsection{Imperfect evidence (RQ4)}
+Each perturbed condition declared its family, affected records and expected validation
+outcome before it ran, on a fresh tenant database. Validation matched the declared
+contract in \V{R01b-match} of \V{R01b-expect} conditions with an expectation
+(Table~\ref{tab:robust}): malformed timestamps, chronology violations, missing columns
+and duplicates with native identifiers were rejected. Two behaviours limit
+interpretation (Fig.~\ref{fig:robust}). First, validation is all-or-nothing:
+independent omission of records left dangling references and rejected the whole
+submission in \V{R01b-ind10-rejected}, \V{R01b-ind25-rejected} and
+\V{R01b-ind50-rejected} of 25 replicates at 10, 25 and 50\% omission, whereas
+referentially consistent omission was never rejected and changed the emitted finding
+families in \V{R01b-cas10-changed}, \V{R01b-cas25-changed} and \V{R01b-cas50-changed}
+replicates. Second, \emph{stale and contradictory evidence is accepted silently}: all
+\V{R01b-staleness-n} conditions with records outside the assessment period were
+accepted without warning and without any change to findings or risk, and contradictory
+dispositions or a closed case with an open alert produced no finding. SAT-SA
+implements no period, recency or cross-record consistency validation.
+
+\input{tables/tab-robust}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.55\linewidth]{figures/fig-robustness.pdf}
+\caption{Record omission (R01b): independent omission is often rejected by
+all-or-nothing validation; referentially consistent omission is accepted and changes
+findings more often as the rate grows.}
+\label{fig:robust}
+\end{figure}
+
+\subsection{Peer-cohort sensitivity (RQ6)}
+Over \V{P01-cells} engineered cells (Fig.~\ref{fig:peer}), cohorts of two peers never
+produced a finding, as Eq.~\eqref{eq:peer} requires three. With a tight cohort spread,
+\V{P01-tight-n3} of eight subject values were flagged from three peers upward---every
+value except the one at the cohort median. With a wide spread only extreme slow
+subjects were flagged at small cohorts (\V{P01-wide-n3} at three peers), and fast
+subjects only from five peers upward as the MAD narrowed (\V{P01-wide-n5} at five
+peers). The peer rule is therefore sensitive to cohort size and dispersion: small or
+heterogeneous cohorts miss deviations, and tight cohorts flag small ones.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.68\linewidth]{figures/fig-peer.pdf}
+\caption{Peer findings by cohort size, spread and subject closure value; dark cells
+emitted a finding (P01, \V{P01-cells} cells).}
+\label{fig:peer}
+\end{figure}
+
+\subsection{Orchestration cost and recovery (RQ7)}
+On one machine with SQLite, \V{O01-pairs} paired trials per mode gave median processing
+times, excluding the human decision, of \V{O01-direct-median}\,s (direct),
+\V{O01-graph-median}\,s (LangGraph) and \V{O01-unrev-median}\,s (unreviewed benchmark
+mode) (Table~\ref{tab:orch}). LangGraph minus direct was a median \V{O01-diff-proc}\,s
+per workflow (95\% bootstrap \V{O01-diff-proc-lo} to \V{O01-diff-proc-hi}\,s; the
+interval includes zero), with \V{O01-diff-db} more database statements and
+\V{O01-checkpoints} checkpoints per run; findings and risk were identical across modes
+in every trial. Review with finalization added a median \V{O01-diff-review}\,s over
+unreviewed processing; finalization took \V{O01-final-median}\,s and receipt
+verification \V{O01-verify-median}\,s. Interruptions were injected at \V{O02-points}
+points in both modes with \V{O02-trials} trials per cell: transient failures and
+simulated crashes during analysis, before recommendations, at a worker restart during
+review, and during finalization. \emph{In the evaluated interruption scenarios},
+\V{O02-recovered} of \V{O02-runs} runs recovered, \V{O02-identical} with outputs
+identical to the uninterrupted reference; completed stages were repeated
+\V{O02-repeated} times, and every run had exactly one decision, one finalization and a
+verifying receipt. Real process kills, network partitions and database failover were
+not exercised.
+
+\input{tables/tab-orch}
+
+\subsection{Integrity of the decided record (RQ5)}
+On one finalized controlled workflow, each of \V{T01-tested} mutations was applied,
+verified, restored and re-verified (Table~\ref{tab:trust}). Verification detected
+\V{T01-detected} of \V{T01-expected} mutations of signed state---decision action and
+reason, finding, risk, recommendation, observation scope, source provenance,
+submission record payload, artifact digest, canonical payload, receipt signature,
+receipt public key and ledger chain---while the negative control (\V{T01-controls}
+mutation of an unsigned operational queue field) still verified, as designed. These
+are detections of the tested mutation classes on one workflow, not a detection rate,
+and detection is not prevention (Section~\ref{sec:system}).
+
+\input{tables/tab-trust}

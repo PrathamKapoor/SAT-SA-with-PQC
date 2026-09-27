@@ -1,0 +1,64 @@
+\section{Introduction}
+\label{sec:intro}
+
+Security operations centres (SOCs) triage large alert volumes with limited analyst
+capacity~\cite{vielberth2020soc,tariq2025alertfatigue}, and field studies document
+recurring process problems: false-positive-dominated alarms, mismatched expectations
+between analysts and management, and burnout~\cite{alahmadi2022falsepositives,kokulu2019soc,sundaramurthy2015burnout}.
+When an external body supervises many SOCs---for example a national authority for
+critical infrastructure---it must judge periodically whether each monitored
+organization actually investigated, escalated and closed its work properly. The
+instruments available are mostly maturity self-assessments such as
+SOC-CMM~\cite{vanos2016soccmm} and CTI-SOC2M2~\cite{schlette2021ctisoc2m2}, metric
+catalogues~\cite{forsberg2023metrics,agyepong2023analyst}, and manual examination of
+records. Self-assessment reports capability, not conduct; manual examination does not
+scale across many organizations and periods.
+
+Record-based assessment of incident handling is not new. Palma et al.\ assess the
+compliance of an incident-management process with a reference model derived from
+ITIL and ISO/IEC~27035 by aligning its event log with that model and prioritizing
+the deviations for an auditor~\cite{palma2024compliance,palma2024benchimp}, and
+support the assessor with visual analytics~\cite{palma2024eurova,palma2025impavid}.
+SOC performance has also been measured empirically by injecting synthetic attacks
+into an operational SOC~\cite{rosso2020saibersoc}. What remains open for the
+supervisory setting is narrower: an analysis of the heterogeneous records a monitored
+SOC submits (alerts, cases, investigation steps, escalations, dispositions, assets)
+that yields findings citing those records, ranks organizations against each other,
+keeps a human supervisor as the decision authority, and makes the decided state
+verifiable afterwards---together with an honest account of how such an analysis
+behaves on controlled and on independent data.
+
+This paper studies that question with an implemented system, SAT-SA (developed for
+the Smart India Hackathon problem SIH26157), and a frozen evaluation. Its emphasis is
+the evidence rather than the architecture: every number is taken from a hash-verified
+experiment bundle, and negative findings are reported with the same prominence as
+positive ones.
+
+\paragraph{Contributions.} We separate contribution types and state their strength.
+\begin{itemize}
+\item \emph{Application framing (low-confidence candidate).} Supervisor-side,
+record-level analytics over SOC evidence submissions, with findings that cite
+records, cross-organization peer comparison, entity ranking and a bound human
+decision. Each ingredient has prior art (Section~\ref{sec:related}); the combination
+is offered without a novelty claim.
+\item \emph{Empirical findings.} Controlled evaluations of detection against declared
+labels and simple baselines, one-worker ablation, imperfect-evidence robustness,
+peer-cohort sensitivity, orchestration cost and recovery, and an external negative
+result on a public IT incident log with a construct-level failure analysis.
+\item \emph{Engineering.} A tenant-aware submission, analysis and review workflow with
+a durable queue and a checkpointed human-review interrupt.
+\item \emph{Security capability (integration).} Binding of the supervisory decision to
+the analysed state with standard primitives (SHA3-256, ML-DSA-65, a hash-chained
+ledger), evaluated with a mutation matrix.
+\item \emph{Reproducibility practice.} Write-once experiment bundles, an evidence
+freeze and a data layer that generates every reported number.
+\end{itemize}
+We make no claim of algorithmic novelty, superiority over existing systems, or
+effectiveness in real SOCs.
+
+The remainder of the paper reviews related work (Section~\ref{sec:related}), formalizes
+the problem and the implemented analysis (Sections~\ref{sec:formulation}
+and~\ref{sec:system}), describes the experimental methodology
+(Section~\ref{sec:method}), reports controlled results (Section~\ref{sec:results}) and
+the external evaluation (Section~\ref{sec:external}), and discusses implications,
+threats to validity and reproducibility (Sections~\ref{sec:discussion}--\ref{sec:repro}).
