@@ -9,6 +9,11 @@ freeze v1 is kept unchanged as history. Machine-readable catalog:
 [EVIDENCE_FREEZE.md](EVIDENCE_FREEZE.md). Limitations:
 [RESEARCH_LIMITATIONS.md](RESEARCH_LIMITATIONS.md).
 
+Manuscript values: `paper/data/paper-data.json` maps each `\V{claim-id}` used in
+`paper/manuscript.tex` to its experiment, bundle, manifest hash, metric, sample size
+and dataset; `python scripts/audit_paper.py` verifies paper number = paper data =
+canonical bundle = frozen result.
+
 Evidence categories are never merged: **S** controlled synthetic, **X**
 external dataset (partial), **O** real SOC operational data (none exists).
 

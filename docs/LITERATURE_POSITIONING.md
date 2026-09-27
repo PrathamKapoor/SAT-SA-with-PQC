@@ -8,6 +8,13 @@ result in this search. A systematic review (defined databases, query strings,
 inclusion criteria, dates) is still required before any paper states a
 contribution as new.
 
+**Phase 12 update:** the focused review behind the manuscript is recorded in
+`paper/literature-matrix.csv` (33 primary sources, each with problem, method, data,
+evaluation, relevance, overlap, difference, limitation, citation location, source URL
+and verification route) and `paper/references.bib`. It is still not a systematic
+review; the manuscript therefore offers its application framing only as a
+low-confidence candidate contribution.
+
 ## Sources consulted
 
 | Key | Source | Verified identifier |
