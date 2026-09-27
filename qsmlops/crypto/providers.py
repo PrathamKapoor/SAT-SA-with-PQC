@@ -7,11 +7,18 @@ referenced by string id and resolved at runtime.
 """
 from __future__ import annotations
 
+import threading
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from dilithium_py.ml_dsa import ML_DSA_44, ML_DSA_65, ML_DSA_87
 from kyber_py.ml_kem import ML_KEM_512, ML_KEM_768, ML_KEM_1024
+
+# The pure-Python ML-DSA / ML-KEM implementations are module-level
+# singletons with shared internal state and are not thread-safe:
+# concurrent sign() calls on one instance can yield signatures that do not
+# verify. Every primitive call is therefore serialized.
+_PQC_LOCK = threading.RLock()
 
 
 class ProviderError(Exception):
@@ -61,18 +68,21 @@ def _sig_provider(ml_dsa, alg_id: str, level: int) -> type[SignatureProvider]:
             self.security_level = level
 
         def generate_keypair(self) -> KeyPair:
-            pk, sk = ml_dsa.keygen()
+            with _PQC_LOCK:
+                pk, sk = ml_dsa.keygen()
             return KeyPair(alg_id, bytes(pk), bytes(sk))
 
         def sign(self, secret_key: bytes, message: bytes) -> bytes:
             try:
-                return bytes(ml_dsa.sign(secret_key, message))
+                with _PQC_LOCK:
+                    return bytes(ml_dsa.sign(secret_key, message))
             except Exception as exc:
                 raise ProviderError(f"{alg_id} signing failed") from exc
 
         def verify(self, public_key: bytes, message: bytes, signature: bytes) -> bool:
             try:
-                return bool(ml_dsa.verify(public_key, message, signature))
+                with _PQC_LOCK:
+                    return bool(ml_dsa.verify(public_key, message, signature))
             except Exception:
                 return False
 
@@ -87,16 +97,19 @@ def _kem_provider(ml_kem, alg_id: str, level: int) -> type[KEMProvider]:
             self.security_level = level
 
         def generate_keypair(self) -> KeyPair:
-            ek, dk = ml_kem.keygen()
+            with _PQC_LOCK:
+                ek, dk = ml_kem.keygen()
             return KeyPair(alg_id, bytes(ek), bytes(dk))
 
         def encapsulate(self, public_key: bytes) -> tuple[bytes, bytes]:
-            ss, ct = ml_kem.encaps(public_key)
+            with _PQC_LOCK:
+                ss, ct = ml_kem.encaps(public_key)
             return bytes(ss), bytes(ct)
 
         def decapsulate(self, secret_key: bytes, ciphertext: bytes) -> bytes:
             try:
-                return bytes(ml_kem.decaps(secret_key, ciphertext))
+                with _PQC_LOCK:
+                    return bytes(ml_kem.decaps(secret_key, ciphertext))
             except Exception as exc:
                 raise ProviderError(f"{alg_id} decapsulation failed") from exc
 

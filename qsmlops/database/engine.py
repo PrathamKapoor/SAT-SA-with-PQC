@@ -171,5 +171,13 @@ def create_engine(url: str, **options) -> DatabaseEngine:
     if dialect == "postgresql":
         from qsmlops.database.postgres import PostgresDatabaseEngine
 
+        # Runtime settings name the pool bounds pool_min_size/pool_max_size;
+        # the PostgreSQL engine takes min_size/max_size.
+        for runtime_name, engine_name in (
+            ("pool_min_size", "min_size"),
+            ("pool_max_size", "max_size"),
+        ):
+            if runtime_name in options:
+                options[engine_name] = options.pop(runtime_name)
         return PostgresDatabaseEngine(str(path), **options)
     raise StorageError(f"no engine implementation for dialect {dialect!r}")

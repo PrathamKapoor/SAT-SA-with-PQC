@@ -9,6 +9,7 @@ from typing import Any
 
 from psycopg import Error as PsycopgError
 from psycopg import errors, rows
+from psycopg.conninfo import conninfo_to_dict
 from psycopg_pool import ConnectionPool
 
 from qsmlops.core.errors import DuplicateEntryError, StorageError
@@ -104,6 +105,10 @@ class PostgresDatabaseEngine(DatabaseEngine):
         if connect_timeout < 1 or pool_timeout < 1 or statement_timeout_ms < 1:
             raise ValueError("PostgreSQL timeouts must be positive")
         self.dsn = dsn
+        # Keep any server options already in the DSN (e.g. search_path):
+        # a connection keyword argument replaces, not extends, the DSN value.
+        dsn_options = conninfo_to_dict(dsn).get("options") or ""
+        options = f"{dsn_options} -c statement_timeout={statement_timeout_ms}".strip()
         self._pool = ConnectionPool(
             conninfo=dsn,
             min_size=min_size,
@@ -112,7 +117,7 @@ class PostgresDatabaseEngine(DatabaseEngine):
             kwargs={
                 "row_factory": rows.dict_row,
                 "connect_timeout": connect_timeout,
-                "options": f"-c statement_timeout={statement_timeout_ms}",
+                "options": options,
             },
             open=False,
         )
