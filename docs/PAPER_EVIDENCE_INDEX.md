@@ -1,9 +1,11 @@
-# Paper Evidence Index (freeze v1)
+# Paper Evidence Index (freeze v2)
 
-Canonical evidence: `research/evidence/freeze-v1/` (verify with
-`python scripts/verify_evidence_freeze.py research/evidence/freeze-v1`).
-Tables: `freeze-v1/exports/*.{csv,md,tex}`; figure data:
-`freeze-v1/exports/figures/` with `figures-index.json`. Report:
+Canonical evidence: `research/evidence/freeze-v2/` (verify with
+`python scripts/verify_evidence_freeze.py research/evidence/freeze-v2`);
+freeze v1 is kept unchanged as history. Machine-readable catalog:
+`research/evidence/catalog.json`. Tables and statistical audit:
+`freeze-v2/exports/*.{csv,md,tex}`; figure data:
+`freeze-v2/exports/figures/` with `figures-index.json`. Report:
 [EVIDENCE_FREEZE.md](EVIDENCE_FREEZE.md). Limitations:
 [RESEARCH_LIMITATIONS.md](RESEARCH_LIMITATIONS.md).
 
@@ -25,13 +27,14 @@ external dataset (partial), **O** real SOC operational data (none exists).
 | RQ6 | A peer finding needs ≥3 peers and depends on cohort spread and size | P01 | S: 96 engineered cells | fixed policy | finding emitted, MAD deviation | tight: 7/8 subjects flagged from n=3; wide: extremes only, fast subjects from n≥5 | `EXP-P01…`, FIG-4 | B | closure metric only |
 | RQ7 | On one machine with SQLite, LangGraph orchestration added a median +0.096 s (95% interval −0.020 to +0.211) and 38 DB calls per workflow with identical outputs; supervisory finalization took a median 0.288 s | O01 | S: mixed scenario | direct execution; unreviewed config | paired median difference | as stated | `EXP-O01…`, `orchestration_*`, FIG-6a | C/E | one machine, SQLite |
 | RQ7 | 36/36 injected interruptions recovered with outputs identical to uninterrupted runs and no completed stage repeated | O02 | S | uninterrupted reference | recovery, duplication | 36/36 | `EXP-O02…`, `recovery.*`, FIG-6b | C/E | in-process injection |
-| EXT-1 | The unchanged pipeline ingested and analysed a real IT incident-workflow log (50 groups, 22,604 incidents) without rejections | X02 | X: UCI-498 | — | ingest/run status | 50/50 accepted, 50/50 completed; median 14 s per group | `EXP-X02…` | B | ITSM, not SOC |
-| EXT-2 | On this real distribution several detectors fired for every group | X02 | X | — | groups emitting family | 4 families 50/50; peer families 11–17/50 | `external_detector_saturation.*` | B (negative) | thresholds from synthetic data |
-| EXT-3 | SAT-SA's entity risk was not associated with the groups' SLA-miss rate; a resolution-time rule was | X02 | X | random, volume, slowest resolution, reassignment rate | Spearman ρ; top-quartile P/R/NDCG | SAT-SA ρ −0.11 (−0.42, 0.21); slowest resolution ρ 0.94; SAT-SA P@10% 0.40 vs random 0.25 | `external_association.*`, `external_ranking.*`, FIG-7 | B (negative) | SLA ≠ supervisory quality |
-| — | Real SOC operational effectiveness | — | O | — | — | **not yet demonstrated** | none | — | no data |
-| — | Expert agreement with SAT-SA findings | — | — | — | — | **not yet demonstrated** (ingestion ready) | none | — | no labels |
-| — | Human reviewers work faster or better with SAT-SA | H01 | — | evidence-only | — | **not yet demonstrated** (protocol ready) | none | — | no study |
-| — | Production-topology performance (PostgreSQL, S3, containers) | — | — | — | — | **not yet demonstrated** (blocked) | none | — | Docker/DSN unavailable |
+| EXT-1 | The unchanged pipeline ingested and analysed a real IT incident-workflow log (50 groups, 22,604 incidents) without rejections | X02b | X: UCI-498 | — | ingestion counts; run status | 134,888 rows received, 134,888 accepted, 0 rejected; 50/50 analyses completed | `EXP-X02b…` | B | ITSM, not SOC |
+| EXT-2 | On this real distribution four existence-rule or distribution detectors fired for every group although their input prevalence varied widely | X03 | X | — | flagging rate; input prevalence | 4 families 50/50; cases without steps 1.7%–78.4% | `external_failure_saturation.*` | B (negative) | design regime of existence rules |
+| EXT-3 | SAT-SA's entity risk was not associated with the groups' SLA-miss rate; a resolution-time rule was | X02b | X | random, volume, slowest resolution, reassignment rate | Spearman ρ; top-quartile P/R/NDCG | SAT-SA ρ −0.11 (−0.42, 0.21); slowest resolution ρ 0.94; SAT-SA P@10% 0.40 vs random 0.25 | `external_association.*`, `external_ranking.*`, FIG-7 | B (negative) | SLA ≠ supervisory quality |
+| EXT-4 | On the external data, fast-closure prevalence was negatively associated with SLA misses, so SAT-SA's execution-gap dimension ran opposite to the outcome; the failure is attributed mainly to construct mismatch | X03 | X | — | Spearman ρ with bootstrap | fast-closure ρ −0.70 (−0.82, −0.52); execution-gap dimension ρ −0.41 (−0.66, −0.11); 3 dimensions unavailable | `external_failure_*`, FIG-8, `docs/EXTERNAL_FAILURE_ANALYSIS.md` | B (negative, diagnostic) | diagnostic; one dataset |
+| — | Real SOC operational effectiveness | — | O | — | — | **NOT DEMONSTRATED** | none | — | no data |
+| — | Expert agreement with SAT-SA findings | — | — | — | — | **NOT EXECUTED** (pipeline ready, no expert-labelled data) | none | — | no labels |
+| — | Human reviewers work faster or better with SAT-SA | H01 | — | evidence-only | — | **NOT EXECUTED** (protocol ready) | none | — | no study |
+| — | Production-topology performance (PostgreSQL, S3, containers) | — | — | — | — | **BLOCKED** | none | — | Docker/DSN unavailable |
 
 ## Contribution classification
 
@@ -39,7 +42,7 @@ external dataset (partial), **O** real SOC operational data (none exists).
 | --- | --- | --- |
 | Supervisor-side, record-level SOC assessment with evidence-cited findings | A — candidate research contribution (application framing), low confidence | [LITERATURE_POSITIONING.md](LITERATURE_POSITIONING.md) |
 | Absence-based (negative-space) supervisory checks | A candidate, low confidence; technique known (conformance checking) | same |
-| Controlled findings: robustness, ablation, prioritization, peer sensitivity, external association | B — empirical findings (including negative results) | freeze v1 |
+| Controlled findings: robustness, ablation, prioritization, peer sensitivity, external association and failure analysis | B — empirical findings (including negative results) | freeze v2 |
 | Tenant-aware PostgreSQL/SQLite persistence, versioned submissions, queue and workers | C — engineering contribution | code; PostgreSQL unverified live |
 | LangGraph orchestration with review interrupt and recovery | C — engineering/orchestration capability | EXP-O01/O02 |
 | TRUST-SAT ML-DSA-65 signed supervisory receipts and hash-chained ledger | D — security/integrity capability | EXP-T01 |
@@ -53,3 +56,14 @@ external dataset (partial), **O** real SOC operational data (none exists).
 - "detected all tested mutations" — never "tamper-proof".
 - "on one machine with SQLite" for every timing.
 - No "first", "novel", "outperforms", "state of the art", "scalable".
+
+## Deployment status model
+
+| Capability | CONFIGURED | BUILD VERIFIED | LOCAL DEPLOYMENT VERIFIED | INTEGRATION VERIFIED | HOSTED DEPLOYMENT VERIFIED |
+| --- | --- | --- | --- | --- | --- |
+| API + worker processes (SQLite, local storage) | yes | n/a | **yes** (EXP-D01, 18/18) | no | no |
+| Container images | yes (Dockerfile, CI job) | NOT EXECUTED | NOT EXECUTED | NOT EXECUTED | NOT EXECUTED |
+| Compose topology (PostgreSQL, SeaweedFS, migrate, key-init, API, worker) | yes | NOT EXECUTED | NOT EXECUTED (BLOCKED: no Docker) | NOT EXECUTED | NOT EXECUTED |
+| Live PostgreSQL | yes | n/a | NOT EXECUTED (BLOCKED: no DSN) | NOT EXECUTED | NOT EXECUTED |
+| Live S3 / SeaweedFS | yes | n/a | NOT EXECUTED | NOT EXECUTED | NOT EXECUTED |
+| Hosted API/worker | no | NOT EXECUTED | n/a | n/a | NOT EXECUTED |

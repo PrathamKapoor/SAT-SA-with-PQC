@@ -9,7 +9,7 @@ live outside the repository (Phase 9 runs: `C:\tmp\satsa-phase9\`; Phase 8
 runs: `C:\tmp\satsa-phase8-final\`) and must be archived with the commit they
 name before being cited.
 
-**Canonical results are frozen in `research/evidence/freeze-v1/`** (see
+**Canonical results are frozen in `research/evidence/freeze-v2/`** (freeze v1 kept as history) (see
 [EVIDENCE_FREEZE.md](EVIDENCE_FREEZE.md)); the `C:\tmp` copies are working
 copies only.
 
@@ -30,12 +30,14 @@ stated otherwise; they are not production-topology measurements.
 | EXP-O02 | Interruption and recovery | `mixed` catalog scenario | 6 interruption points × 2 modes × 3 trials = 36 runs | Uninterrupted reference run per mode | `run_orchestration_experiment.py recovery` | MEASURED (commit `698b507`) |
 | EXP-T01 | TRUST-SAT mutation matrix | one controlled synthetic workflow | 14 mutations (13 expected tampered, 1 negative control) | Valid control, restored after each mutation | `run_trust_integrity_experiment.py` | MEASURED (commit `9325fdd`) |
 | EXP-P01 | Peer sensitivity sweep | engineered cohorts | 96 cells: 6 cohort sizes × 2 spreads × 8 subject values | Same peer policy (≥3 peers, 2 MAD) | `run_peer_sensitivity_experiment.py --sweep` | MEASURED (commit `9325fdd`) |
-| EXP-A01 | Component ablation | 5 catalog scenarios; 5 generated populations of 20 | 17 workers × (5 scenarios + 5 population seeds) | Full default worker set | `run_ablation_experiment.py` | MEASURED (commit `9325fdd`) |
+| EXP-A01 | Component ablation | 5 catalog scenarios; 5 generated populations of 20 | 16 workers × (5 scenarios + 5 population seeds) | Full default worker set | `run_ablation_experiment.py` | MEASURED (commit `9325fdd`) |
 | EXP-PR01 | Replicated prioritization with matched baselines | 20 generated populations of 20 entities (5 pathological) | 20 independent seeds | Random order; critical-alert volume; fastest median closure | `run_prioritization_experiment.py` | MEASURED (commit `9325fdd`) |
 | EXP-D01 | HTTP smoke across local API and worker processes (SQLite, local storage) | one smoke tenant | 18 checks, 1 run | — | `scripts/deployment_smoke.py --provision --report …` | MEASURED: 18/18 PASS (commit `aa79109`; report `EXP-D01-local-process-smoke.json`) |
 | EXP-H01 | Evidence-only vs SAT-SA-assisted human review | frozen case set (to be drawn) | not recruited | Evidence-only condition | — | PROTOCOL READY — NOT EXECUTED (`docs/HUMAN_REVIEW_PROTOCOL.md`) |
 | EXP-X01 | External public security data (CIC-IDS2017, BOTS, GUIDE) | real public data | — | — | adapters in `public_benchmarks/` | NOT EXECUTED: unsuitable for workflow detectors and download blocked ([EXTERNAL_DATASETS.md](EXTERNAL_DATASETS.md)) |
-| EXP-X02 | External real IT incident-workflow log | UCI-498 (CC BY 4.0), 50 groups, 22,604 incidents | 50 assignment groups | random, incident volume, slowest median resolution, reassignment rate | `run_external_itsm_experiment.py` | MEASURED (commit `8f63aeb`) |
+| EXP-X02 | External real IT incident-workflow log | UCI-498 (CC BY 4.0), 50 groups, 22,604 incidents | 50 assignment groups | random, incident volume, slowest median resolution, reassignment rate | `run_external_itsm_experiment.py` | MEASURED (commit `8f63aeb`); SUPERSEDED by X02b (bookkeeping only) |
+| EXP-X02b | Same as X02 with corrected ingestion bookkeeping | UCI-498 | 50 groups | as X02 | `run_external_itsm_experiment.py` | MEASURED (commit `c1206dd`) — analytical outputs identical to X02 |
+| EXP-X03 | Diagnostic failure analysis of the external result | UCI-498 | 50 groups | none (diagnostic) | `run_external_failure_analysis.py` | MEASURED (commit `c1206dd`) |
 
 ## Measured results
 
@@ -241,6 +243,32 @@ SAT-SA's ranking existed.
   this IT service desk, and several detectors need recalibration before they
   can discriminate on real workflow distributions. This is partial external
   evidence; it says nothing about SOC supervisory quality.
+
+### EXP-X02b and EXP-X03 — corrected external run and failure analysis
+
+X02b fixes only the ingestion bookkeeping (X02 recorded `ingest_totals` as
+null): 134,888 rows received and accepted, 0 rejected; every analytical output
+is identical to X02. X03 diagnoses the negative result without changing any
+detector, threshold or weight: fast-closure prevalence was negatively
+associated with SLA misses (ρ −0.70, −0.82 to −0.52), so SAT-SA's
+execution-gap dimension ran opposite to the outcome (ρ −0.41); four detectors
+fired for all 50 groups although their input prevalence varied widely; three
+risk dimensions had no input data. Full analysis and the risk-model decision
+(no change justified): [EXTERNAL_FAILURE_ANALYSIS.md](EXTERNAL_FAILURE_ANALYSIS.md).
+
+## Experiment-driven fixes and discrepancies
+
+Every case where an experiment's expectation differed from observed
+behaviour, and what was done.
+
+| Discrepancy | Expected | Observed | Impact | Action | Evidence |
+| --- | --- | --- | --- | --- | --- |
+| Withheld sequence-chronology finding | a re-sequenced step yields a visible finding | worker emitted a signal with no evidence refs; hosted worker withheld it as invalid | real product defect: signal never reached review | fixed `da80046` + regression test; reran as R01b | R01 vs R01b |
+| External ingestion totals null | per-group ingestion totals recorded | wrong key read; `null` | reporting only | fixed `52c5d44` + regression test; reran as X02b (outputs identical) | X02 vs X02b |
+| Missing notes treated as empty | an unavailable field does not trigger a detector | empty notes satisfy the note-length rule (39/50 groups) | adapter artifact on external data | documented; not changed (SAT-SA has no "unavailable" note state; changing the adapter would alter the evaluated mapping) | X03 |
+| Existence-rule saturation | detectors discriminate between entities | 4 families fire for 50/50 real groups | design limitation for large submissions | documented; no tuning on evaluation data | X03 |
+| Stale and contradictory records | undeclared (no rule exists) | accepted silently | design gap | documented as limitation | R01b |
+| Shared vs isolated databases change FP counts | — | C01 (shared DB) FP 7 vs A01 (one DB per scenario) FP 4 | cross-entity workers see other scenarios in a shared DB; by design on the legacy path | documented | C01, A01 |
 
 ## External data (EXP-X01)
 
