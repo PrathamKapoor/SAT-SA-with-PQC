@@ -11,8 +11,6 @@ from contextlib import contextmanager
 from typing import TypedDict
 
 from langchain_core.runnables import RunnableConfig
-from langgraph.checkpoint.postgres import PostgresSaver
-from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
@@ -34,11 +32,18 @@ class AnalysisGraphState(TypedDict, total=False):
 def durable_checkpointer(engine):
     """Keep checkpoints in PostgreSQL or a durable offline SQLite sidecar."""
     os.environ["LANGGRAPH_STRICT_MSGPACK"] = "true"
+    # Each saver is imported only for its own dialect: the PostgreSQL saver
+    # needs psycopg (the `postgres` extra), which an offline SQLite install
+    # does not have.
     if engine.dialect == "postgresql":
+        from langgraph.checkpoint.postgres import PostgresSaver
+
         with PostgresSaver.from_conn_string(engine.dsn) as saver:
             saver.setup()
             yield saver
     else:
+        from langgraph.checkpoint.sqlite import SqliteSaver
+
         path = engine.db_path.with_name(engine.db_path.name + ".langgraph.sqlite")
         with SqliteSaver.from_conn_string(str(path)) as saver:
             yield saver

@@ -128,3 +128,23 @@ def test_finding_evidence_resolves_to_record_content(api):
         record = by_source[ref["source_record_id"]]
         assert record["record_id"] == ref["record_id"]
         assert record["content_digest"] == ref["canonical_record_digest"]
+
+
+def test_sqlite_graph_checkpointer_needs_no_postgres_driver(tmp_path, monkeypatch):
+    """An offline install without the `postgres` extra can still run graph mode."""
+    import importlib
+    import sys
+
+    from qsmlops.database.engine import create_engine
+
+    monkeypatch.setitem(sys.modules, "langgraph.checkpoint.postgres", None)
+    monkeypatch.setitem(sys.modules, "psycopg", None)
+    # Import the module fresh so a copy cached by earlier tests cannot hide
+    # a module-level PostgreSQL import.
+    monkeypatch.delitem(sys.modules, "satsa.analysis.graph", raising=False)
+    durable_checkpointer = importlib.import_module(
+        "satsa.analysis.graph"
+    ).durable_checkpointer
+    engine = create_engine(f"sqlite:///{(tmp_path / 'offline.db').as_posix()}")
+    with durable_checkpointer(engine) as saver:
+        assert type(saver).__name__ == "SqliteSaver"
