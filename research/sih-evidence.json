@@ -1,50 +1,53 @@
 {
-  "schema": "satsa-sih-evidence/1",
-  "evidence_freeze": "research/evidence/freeze-v1",
+  "schema": "satsa-sih-evidence/2",
+  "evidence_freeze": "research/evidence/freeze-v2",
+  "catalog": "research/evidence/catalog.json",
   "problem": {
     "statement": "SIH26157: supervisors must assess many security operations centres periodically without re-examining every record by hand.",
     "status": "problem framing, not a result"
   },
-  "workflow_demonstrated": {
-    "steps": [
+  "product_capability": {
+    "workflow": [
       "CSE submits periodic evidence (alerts, cases, investigation steps, escalations, dispositions, assets)",
       "SAT-SA validates and normalizes it with per-record provenance",
-      "deterministic detectors run (execution gap, negative space, anomaly, peer, coverage, workflow reconstruction)",
+      "16 deterministic workers produce evidence-cited findings",
       "findings are fused into entity risk and supervisory priority",
       "each finding shows the source records it cites",
       "a human supervisor records the decision",
       "TRUST-SAT signs and verifies the recorded state"
     ],
-    "evidence": "EXP-D01: 18/18 HTTP checks passed across a separate API process and worker process (SQLite, local storage)",
-    "status": "demonstrated locally; not in containers, not on PostgreSQL or S3, not hosted"
+    "status": "implemented and demonstrable locally"
   },
-  "architecture": {
-    "facts": [
-      "FastAPI API and separate analysis worker with a durable queue",
-      "optional LangGraph orchestration with a human-review interrupt",
-      "tenant-aware persistence (PostgreSQL path implemented; SQLite measured)",
-      "ML-DSA-65 (FIPS 204) signed supervisory receipts with a hash-chained ledger"
-    ],
-    "status": "implemented; PostgreSQL and S3 paths not live-verified"
-  },
-  "measured_evidence": [
-    {"claim": "Validation matched its declared contract in 245/245 perturbed conditions", "experiment": "EXP-R01b", "category": "controlled synthetic"},
-    {"claim": "Robustness testing found and fixed a real product defect (a withheld workflow finding)", "experiment": "EXP-R01 -> EXP-R01b", "category": "controlled synthetic"},
-    {"claim": "TRUST-SAT detected all 13 tested mutations of the recorded state", "experiment": "EXP-T01", "category": "controlled synthetic"},
-    {"claim": "36/36 injected interruptions recovered with identical outputs", "experiment": "EXP-O02", "category": "controlled synthetic"},
-    {"claim": "LangGraph added a median 0.096 s per workflow on one machine (interval includes zero)", "experiment": "EXP-O01", "category": "controlled synthetic"},
-    {"claim": "Ranking beat random order in 20/20 generated populations", "experiment": "EXP-PR01", "category": "controlled synthetic"},
-    {"claim": "The unchanged pipeline ingested and analysed a real public IT incident log (50 groups, 22,604 incidents)", "experiment": "EXP-X02", "category": "external dataset (not SOC)"}
+  "controlled_experimental_evidence": [
+    {"claim": "Validation matched its declared contract in 245/245 perturbed conditions", "experiment": "EXP-R01b"},
+    {"claim": "Evaluation found and fixed a real product defect (a withheld workflow finding)", "experiment": "EXP-R01 -> EXP-R01b"},
+    {"claim": "TRUST-SAT detected all 13 tested mutations of the recorded state", "experiment": "EXP-T01"},
+    {"claim": "36/36 injected interruptions recovered with identical outputs", "experiment": "EXP-O02"},
+    {"claim": "LangGraph added a median 0.096 s per workflow on one machine (interval includes zero)", "experiment": "EXP-O01"},
+    {"claim": "Ranking captured more pathological entities than random order in 20/20 generated populations; comparable to a closure-speed rule", "experiment": "EXP-PR01"}
   ],
+  "external_data_evidence": [
+    {"claim": "The unchanged pipeline processed a real public IT incident log: 134,888 rows accepted, 0 rejected, 50/50 groups analysed", "experiment": "EXP-X02b", "category": "independent feasibility validation (IT service management, not SOC)"},
+    {"claim": "SAT-SA risk did not track SLA misses on that data; the diagnosed main cause is that SLA timeliness is a different construct (fast closure helps SLA but is a warning sign in SOC supervision)", "experiment": "EXP-X02b, EXP-X03", "category": "negative independent evidence under domain mismatch"}
+  ],
+  "deployment_status": {
+    "api_and_worker_local_processes_sqlite": "LOCAL DEPLOYMENT VERIFIED (EXP-D01, 18/18 HTTP checks)",
+    "container_build": "CONFIGURED - NOT EXECUTED (Docker not installed)",
+    "compose_topology": "CONFIGURED - NOT EXECUTED",
+    "postgresql_live": "CONFIGURED - NOT EXECUTED (no test DSN)",
+    "seaweedfs_s3_live": "CONFIGURED - NOT EXECUTED",
+    "containerized_http_smoke": "CONFIGURED (CI job) - NOT EXECUTED",
+    "hosted_api_worker": "NOT EXECUTED"
+  },
   "honest_limits_to_state": [
-    "All SOC-shaped results are synthetic or controlled; no real SOC data was evaluated.",
-    "A simple closure-speed rule performed comparably to SAT-SA on generated populations.",
-    "On the real IT incident log, several detectors fired for every group and SAT-SA risk did not track SLA misses.",
+    "All SOC-shaped results are controlled synthetic; no real SOC data was evaluated.",
+    "A simple closure-speed rule performed comparably on generated populations; simple baselines tie the fast-closure detector on the closure corpus.",
+    "On a real IT incident log several detectors fired for every group and SAT-SA risk did not track SLA misses.",
     "Stale and contradictory records are accepted without warning.",
-    "No human study or expert labels yet; protocol and label ingestion are ready.",
+    "Human study: protocol ready, not executed. Expert labels: pipeline ready, no labelled data.",
     "Containers, live PostgreSQL, S3 and hosted deployment are not verified."
   ],
   "do_not_say": [
-    "first", "novel", "outperforms", "tamper-proof", "production-scale", "validated on real SOCs", "AI-powered"
+    "first", "novel", "state-of-the-art", "outperforms", "tamper-proof", "production-scale", "SOC-validated", "validated on real SOCs", "AI-powered", "enterprise-scale"
   ]
 }

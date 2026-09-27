@@ -169,6 +169,18 @@ upstream Dockerfile and documentation, not by execution. To unblock:
 2. Containers: install Docker, or push the branch so the `saas-topology-smoke`
    CI job runs the compose topology and uploads `smoke-report.json`.
 
+Phase 11 status (2026-09-27, re-checked: Docker absent, DSN unset):
+
+| Capability | CONFIGURED | BUILD VERIFIED | LOCAL DEPLOYMENT VERIFIED | INTEGRATION VERIFIED | HOSTED DEPLOYMENT VERIFIED |
+| --- | --- | --- | --- | --- | --- |
+| API + worker processes (SQLite, local storage) | yes | n/a | **yes** (18/18 HTTP checks) | no | no |
+| Container images | yes | NOT EXECUTED | NOT EXECUTED | NOT EXECUTED | NOT EXECUTED |
+| Compose topology | yes | NOT EXECUTED | NOT EXECUTED (Docker absent) | NOT EXECUTED | NOT EXECUTED |
+| Live PostgreSQL | yes | n/a | NOT EXECUTED (DSN absent) | NOT EXECUTED | NOT EXECUTED |
+| Live S3 / SeaweedFS | yes | n/a | NOT EXECUTED | NOT EXECUTED | NOT EXECUTED |
+| CI `saas-topology-smoke` | yes (build, start, migrate, key init, readiness, bootstrap, provision, 18-check smoke, logs, teardown) | NOT EXECUTED (no push authorized) | — | — | — |
+| Hosted API/worker | no | NOT EXECUTED | n/a | n/a | NOT EXECUTED |
+
 ## Legacy offline deployment
 
 The following CLI/Jinja deployment is the offline-compatible single-machine
