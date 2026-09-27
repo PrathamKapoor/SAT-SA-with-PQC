@@ -8,3 +8,9 @@ paper/data/** -text
 paper/tables/** -text
 paper/figures/** -text
 paper/supplementary/generated/** -text
+
+# IEEE Access package: generated copies audited byte for byte (paper/make_submission.py).
+paper/submission/data/** -text
+paper/submission/tables/** -text
+paper/submission/figures/** -text
+paper/submission/supplementary/generated/** -text
