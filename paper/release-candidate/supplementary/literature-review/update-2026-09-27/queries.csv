@@ -1,0 +1,11 @@
+query_id,query,purpose,source,filters,date,result_count,retrieved
+U01,incident management compliance assessment process mining,closest prior art: IM compliance,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,14,14
+U02,ISO 27035 incident management process,closest prior art: ISO 27035 process,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,9,9
+U03,security operations center key performance indicators measurement,counterevidence: SOC KPI measurement,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,20,15
+U04,security operations center audit evidence assessment,counterevidence: evidence-based SOC audit,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,19,15
+U05,conformance checking incident response process,counterevidence: security conformance analytics,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,8,8
+U06,cybersecurity regulator supervision incident reporting data analytics,counterevidence: supervisory analytics,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,0,0
+U07,alert prioritization security operations center evaluation dataset,current alert prioritisation,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,22,15
+U08,tamper-evident audit log digital signature verification decision,decision/record integrity,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,5,5
+U09,peer benchmarking organizations cybersecurity performance comparison,peer benchmarking,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,4,4
+U10,security operations center large language model agent evaluation,current SOC automation landscape,OpenAlex title_and_abstract.search,from 2015-01-01; relevance order; top 15,2026-09-27,55,15
