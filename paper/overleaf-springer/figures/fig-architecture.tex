@@ -1,17 +1,17 @@
 % Figure 1 -- SAT-SA workflow (native TikZ; edit labels directly).
 \begin{tikzpicture}[node distance=3.5mm and 6mm, every node/.style={font=\scriptsize},
-  box/.style={draw, rounded corners=1pt, align=center, minimum width=40mm, minimum height=6mm},
+  box/.style={draw, rounded corners=1pt, align=center, text width=50mm, minimum height=6mm},
   arr/.style={-{Stealth[length=1.8mm]}}]
 \node[box] (sub) {Periodic evidence submission\\(alerts, cases, steps, escalations,\\dispositions, assets)};
 \node[box, below=of sub] (val) {Validation and normalization\\(per-record provenance, all-or-nothing)};
 \node[box, below=of val, minimum height=13mm] (ana) {Analytical workers (16, rule-based)\\execution $\cdot$ negative space\\deviation $\cdot$ peer $\cdot$ coverage $\cdot$ context};
 \node[box, below=of ana] (risk) {Fusion into 7 risk dimensions\\and prioritization};
-\node[box, right=14mm of sub] (find) {Evidence-cited findings\\and recommendations};
+\node[box, right=7mm of sub] (find) {Evidence-cited findings\\and recommendations};
 \node[box, below=of find] (rev) {Human supervisory review\\(review interrupt)};
 \node[box, below=of rev] (dec) {Authorized decision};
 \node[box, below=of dec] (trust) {TRUST-SAT finalization: SHA3-256\\record, ML-DSA-65 receipt, ledger};
 \node[box, below=of trust] (ver) {Verification and audit};
 \draw[arr] (sub) -- (val); \draw[arr] (val) -- (ana); \draw[arr] (ana) -- (risk);
-\draw[arr] (risk.east) -| ++(5mm,0) |- (find.west);
+\draw[arr] (risk.east) -| ++(3mm,0) |- (find.west);
 \draw[arr] (find) -- (rev); \draw[arr] (rev) -- (dec); \draw[arr] (dec) -- (trust); \draw[arr] (trust) -- (ver);
 \end{tikzpicture}

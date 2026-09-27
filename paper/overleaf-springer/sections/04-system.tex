@@ -28,9 +28,16 @@ checks. \emph{Deviation analysis} comprises within-entity anomalies, drift and t
 rule of Eq.~\eqref{eq:peer}. \emph{Coverage and completeness} (coverage gap, evidence
 completeness) flag unmonitored assets and missing evidence categories, and
 entity--asset resolution links records to the assets they concern. \emph{Context workers} (workflow reconstruction, case similarity,
-cross-entity insights) describe structure and corroborate findings. The capability
+cross-entity insights) reconstruct sequences and clusters; their signals also feed risk
+dimensions. Table~\ref{tab:workers} lists all 16 workers with the
+dimension each feeds and its confidence rule. Because a rule's dimension is assigned by
+name prefix, the escalation-discipline and investigation-quality dimensions are fed only
+by workflow reconstruction (and by keyword-matching drift or cross-entity rules), while
+critical alerts without escalation count towards the execution gap. The capability
 registry lists 32 components, of which the experiments exercise these
 default workers only. No worker uses a language model or a learned model.
+
+\input{tables/tab-workers}
 
 \subsection{Fusion, prioritization and recommendations}
 Signal findings are fused by Eq.~\eqref{eq:risk} into an entity risk decomposed by
