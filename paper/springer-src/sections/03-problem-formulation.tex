@@ -22,6 +22,22 @@ threshold $\theta_f$ and confidence $c_f\in[0,1]$. A finding is a \emph{signal} 
 $E_f\neq\emptyset$; findings without evidence references are withheld. Let $F_e$ be the
 signal findings of the entity's run.
 
+\paragraph{Confidence.} Every signal carries a confidence vector with an analytical
+support $a_f$, an evidence completeness $e_f$ and, for peer-based findings only, a peer
+confidence $p_f$; the scalar used downstream is the weakest component,
+\begin{equation}
+c_f=\min\bigl(a_f,\ e_f\ [,\ p_f]\bigr).
+\label{eq:confidence}
+\end{equation}
+Each worker sets these components by a fixed, hand-written rule
+(Table~\ref{tab:workers}): a constant, or a clipped linear function of the finding's
+effect size (e.g.\ how far a median closure time falls below its limit) and of record
+counts (e.g.\ the share of qualifying alerts, or the number of peers). The rules are
+heuristic: they were not fitted to data and are not calibrated probabilities, and
+sample size enters only through the count-based terms. When the evidence category a
+rule depends on was not submitted, its $e_f$ is $0$, so the finding contributes nothing
+to risk.
+
 \paragraph{Rule families.} Most execution-gap rules are \emph{existence rules}: they
 fire when at least one qualifying record exists, e.g.\ a critical alert closed faster
 than a severity-specific limit. Peer deviation compares an entity metric $x_e$ with the

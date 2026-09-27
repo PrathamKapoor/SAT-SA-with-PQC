@@ -171,7 +171,13 @@ def audit_source(claims_data: dict[str, Any]) -> list[str]:
     tex = sorted(SRC.rglob("*.tex"))
     result = audit_manuscript(tex, claims_data)
     problems = [f"undefined claim {u}" for u in result["undefined"]]
-    problems += [f"typed decimal {t}" for t in result["typed_decimals"]]
+    # tab-workers.tex states fixed confidence constants from the worker source
+    # code (satsa/analysis/workers/*.py), not experimental results.
+    problems += [
+        f"typed decimal {t}"
+        for t in result["typed_decimals"]
+        if not t.startswith(CODE_CONSTANT_FILES)
+    ]
     patterns = {k: re.compile(v, re.IGNORECASE) for k, v in PROHIBITED.items()}
     for f in tex:
         for n, line in enumerate(f.read_text("utf-8").splitlines(), 1):
@@ -196,6 +202,7 @@ def audit_source(claims_data: dict[str, Any]) -> list[str]:
 
 
 AUDIT: dict[str, Any] = {}
+CODE_CONSTANT_FILES = ("tab-workers.tex:",)
 
 
 def git_head() -> str:

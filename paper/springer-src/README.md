@@ -23,7 +23,7 @@ particular conference or series.
 | Title, running title, authors, affiliations, e-mails, ORCIDs | `metadata.tex` (the only place to edit them) |
 | Abstract and keywords | `sections/00-abstract.tex` |
 | Sections 1–11 | `sections/01-introduction.tex` … `sections/11-conclusion.tex` |
-| Acknowledgments, AI declaration, disclosure of interests | `sections/12-declarations.tex` |
+| Acknowledgments (funding), ethics, disclosure of interests | `sections/12-declarations.tex` |
 | Tables (native LaTeX) | `tables/*.tex` |
 | Figure 1 (native TikZ source) | `figures/fig-architecture.tex` |
 | Figures 2–5 (vector PDF) | `figures/*.pdf` |
@@ -34,35 +34,33 @@ particular conference or series.
 Numbers in the text and tables are ordinary LaTeX, so edit them directly. Nothing in
 the project is generated at compile time.
 
-## Items the authors must complete (placeholders)
+## Author block and remaining author items
+
+The author block (name, department, school, university, city, country; no e-mail or
+ORCID line) follows the author's paper *Noise-Robust Quantum Machine Learning for
+Building Energy Performance*, and is edited only in `metadata.tex`.
 
 | Item | Location | Status |
 | --- | --- | --- |
-| Author names, affiliations, e-mails, ORCIDs | `metadata.tex` | AUTHOR INPUT: placeholders in `[...]`; nothing inferred |
-| Acknowledgments and funding | `sections/12-declarations.tex` | AUTHOR INPUT |
-| AI declaration | `sections/12-declarations.tex` | AUTHOR CONFIRMATION REQUIRED (see below) |
-| Disclosure of interests (required by Springer) | `sections/12-declarations.tex` | AUTHOR INPUT |
-| Target venue and series | not set | AUTHOR DECISION: the manuscript is Springer-proceedings-compatible and names no conference |
-| Ethics | — | No human participants or personal data were used; no ethics approval is claimed |
+| Funding statement | `sections/12-declarations.tex` | AUTHOR INPUT (bracketed placeholder) |
+| Disclosure of interests (required by Springer) | `sections/12-declarations.tex` | AUTHOR INPUT (bracketed placeholder) |
+| Target venue and series | not set | AUTHOR DECISION: the manuscript names no conference |
 
-**AI declaration.** Springer Nature's policy on AI in manuscript preparation (checked
-2026-09-27) has the following rules:
+## Typography
 
-- AI use beyond copy editing must be described in the manuscript, and the authors
-  must confirm their accountability.
-- AI may not be listed as an author.
-- Grammar and readability editing alone need not be declared.
-
-The draft declaration states the recorded preparation history. The authors must
-confirm or correct it and add their review statement. Do not delete it without an
-accurate replacement.
+The author's house style is set in a clearly marked block at the top of `main.tex`:
+Times at 12 pt throughout, the title at 14 pt, and bold only for headings. It
+overrides the `llncs` defaults, which are 10 pt text and bold caption labels. Springer
+proceedings normally expect the unmodified class, so delete that block to return to
+the standard format before submitting to a venue that requires it.
 
 ## Evidence and reproducibility
 
 - **Source of the numbers.** Every number was generated from a frozen,
   hash-verified evidence set (`satsa-evidence-freeze-v2`) in the public repository
-  https://github.com/PrathamKapoor/SAT-SA-with-PQC (branch `main`, commit
-  `43f8d65`).
+  https://github.com/PrathamKapoor/SAT-SA-with-PQC. The evidence freeze was
+  committed as `85b7763`; each experiment's source commit is recorded in its bundle
+  manifest (supplementary S1).
 - **How they entered the source.** They were written into the LaTeX source when
   the project was generated. Their mapping to claim identifiers and experiments is
   kept in the repository (`paper/overleaf-springer/CLAIM_TRACE.csv`).

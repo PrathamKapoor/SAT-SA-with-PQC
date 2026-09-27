@@ -1,13 +1,13 @@
 \begin{table}[t]
 \caption{One-worker ablation (A01): catalog micro precision/recall (\V{C01-action-total}
-scenarios, one database per scenario) and mean population recall@20\% (five seeds,
+scenarios, one database per scenario) and mean population recall@20\% (Pop.\ R@20; five seeds,
 exploratory). Only workers whose removal changed a value are listed; ``--'' = unchanged from the full set.}
 \label{tab:ablation}
 \centering
 \scriptsize
-\begin{tabular}{@{}lrrr@{}}
+\begin{tabular}{@{}L{5.4cm}rrr@{}}
 \toprule
-Workers & Precision & Recall & Population R@20\% \\
+Workers & Precision & Recall & Pop.\ R@20 \\
 \midrule
 All \V{A01-workers} & \V{A01-full-precision} & \V{A01-full-recall} & \V{A01-pop-full} \\
 $-$ fast closure & \V{A01-fast-closure-precision} & \V{A01-fast-closure-recall} & \V{A01-pop-fast-closure} \\
