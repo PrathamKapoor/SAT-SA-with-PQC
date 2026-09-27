@@ -118,6 +118,12 @@ def test_external_experiment_runs_unchanged_pipeline(tmp_path):
     metrics = result["metrics"]
     assert metrics["design"]["entities"] == 4
     assert set(metrics["feasibility"]["run_status_counts"]) <= {"completed", "partial"}
+    # Regression: X02 recorded ingestion totals as null (wrong key).
+    totals = metrics["feasibility"]["ingest_row_totals"]
+    assert totals["received"] > 0
+    assert totals["accepted"] + totals["rejected"] == totals["received"]
+    for entity in metrics["entities"].values():
+        assert entity["ingest_counts"]["alerts"]["received"] >= 2
     assert set(metrics["ranking_vs_sla_miss_quartile"]) == {
         "satsa_priority",
         "incident_volume",
@@ -130,3 +136,29 @@ def test_external_experiment_runs_unchanged_pipeline(tmp_path):
         run_external_itsm_experiment(
             tmp_path / "scratch2", source_csv=source, expected_source_sha256="0" * 64
         )
+
+
+def test_failure_analysis_diagnoses_without_changing_detectors(tmp_path):
+    from evaluation.research.external_failure import run_external_failure_analysis
+
+    source = _write_log(tmp_path / "incident_event_log.csv")
+    result = run_external_failure_analysis(
+        tmp_path / "scratch", source_csv=source, min_incidents=2
+    )
+    metrics = result["metrics"]
+    assert metrics["design"]["detectors_thresholds_weights_changed"] is False
+    assert metrics["detector_saturation"]
+    for family, value in metrics["detector_saturation"].items():
+        assert value["groups_evaluated"] == 4, family
+        assert 0 <= value["flagging_rate"] <= 1
+    assert {c["classification"] for c in metrics["construct_validity"]} >= {
+        "directly observed",
+        "proxy",
+        "unavailable",
+    }
+    checks = metrics["label_and_temporal_checks"]
+    assert checks["counts"]["incidents"] == 16
+    assert checks["counts"]["sla_missed"] == 6
+    prevalence = next(iter(metrics["groups"].values()))["prevalence"]
+    assert 0 <= prevalence["cases_without_steps_rate"] <= 1
+    assert set(metrics["prevalence_vs_sla_miss"]) == set(prevalence)
