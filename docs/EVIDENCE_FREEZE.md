@@ -135,3 +135,16 @@ silently (R01b); closure-speed heuristic comparable to SAT-SA on synthetic
 populations (PR01) and baselines tied on the closure corpus (C01); detector
 saturation and no association with SLA-miss rate on real external data (X02);
 peer behaviour strongly dependent on cohort composition (P01).
+
+## Publication snapshot v1 (Phase 12)
+
+`research/evidence/publication-v1/` is a write-once copy of the paper package
+(51 files: manuscript, sections, generated data, tables, figures,
+supplementary material, literature matrix, bibliography, compiled PDF and
+reproducibility notes) generated from **freeze v2** (`freeze.json` SHA-256
+`2ac93ef3f2967f908c35b05c1fed97dc60282aa503d1a97594275deae3a1ff0a`). Its
+`publication.json` records the paper commit (`2c80453`), manuscript version
+`manuscript-v1`, dataset versions, literature snapshot date (2026-09-27),
+environment and the SHA-256 of every file. Freeze v2 is referenced, not
+copied or modified. Verify with
+`python scripts/build_publication_snapshot.py --verify research/evidence/publication-v1`.
