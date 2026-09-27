@@ -22,10 +22,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--paper", type=Path, default=Path("paper"))
     args = parser.parse_args(argv)
     data = build_paper_data(args.freeze, args.paper / "data" / "claims-spec.json")
+    # LF on every platform: the audit compares these bytes with a rebuild
     (args.paper / "data" / "paper-data.json").write_text(
-        json.dumps(data, indent=1, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(data, indent=1, sort_keys=True) + "\n",
+        encoding="utf-8",
+        newline="\n",
     )
-    (args.paper / "data" / "values.tex").write_text(values_tex(data), encoding="utf-8")
+    (args.paper / "data" / "values.tex").write_text(
+        values_tex(data), encoding="utf-8", newline="\n"
+    )
     provenance = build_all(args.freeze, args.paper)
     print(
         json.dumps(

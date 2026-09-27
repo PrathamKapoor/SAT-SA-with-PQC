@@ -2,3 +2,9 @@ tests/_a13_artifacts/mldsa_provider_sentinel.txt text eol=lf
 
 # Frozen research evidence: bytes must never be rewritten (hashes).
 research/evidence/** -text
+
+# Generated paper files are compared byte for byte with a rebuild.
+paper/data/** -text
+paper/tables/** -text
+paper/figures/** -text
+paper/supplementary/generated/** -text

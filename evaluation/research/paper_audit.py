@@ -78,9 +78,14 @@ def audit_numbers(freeze_dir: Path, paper_dir: Path) -> dict[str, Any]:
         (scratch / "tables").mkdir()
         (scratch / "figures").mkdir()
         build_all(freeze_dir, scratch)
-        for name in ("tables", "figures"):
+        for name in ("tables", "figures", "supplementary/generated"):
             fresh = {p.name: _sha(p) for p in (scratch / name).iterdir() if p.is_file()}
-            kept = {p.name: _sha(p) for p in (paper_dir / name).iterdir() if p.is_file()}
+            kept_dir = paper_dir / name
+            kept = (
+                {p.name: _sha(p) for p in kept_dir.iterdir() if p.is_file()}
+                if kept_dir.is_dir()
+                else {}
+            )
             for file_name in sorted(set(fresh) | set(kept)):
                 if fresh.get(file_name) != kept.get(file_name):
                     problems.append(f"{name}/{file_name} differs from rebuild")

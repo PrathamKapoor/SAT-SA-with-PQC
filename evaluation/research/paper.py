@@ -197,6 +197,10 @@ def _code_fact(name: str) -> Any:
             "registry_satsa_count": len(agents.SATSA_AGENTS),
             "registry_mlops_count": len(agents.RETAINED_MLOPS_AGENTS),
         }[name]
+    if name.startswith("risk_weight:"):
+        from satsa.analysis.risk import DIMENSION_WEIGHTS
+
+        return DIMENSION_WEIGHTS[name.split(":", 1)[1]]
     if name == "trust_signature_algorithm":
         from satsa.analysis.trust import DEFAULT_ALGORITHM
 
