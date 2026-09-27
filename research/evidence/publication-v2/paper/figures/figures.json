@@ -1,0 +1,118 @@
+{
+  "figures": [
+    {
+      "aggregation": "one point per generated population; box = median/quartiles",
+      "caption": "Recall@20\\% of generator-labelled pathological entities across 20 generated populations (PR01).",
+      "data_sha256": "d1f0ab991d4f7a95a9a049cd6997bda1332afdebdad19a7bf48884d1f44154bd",
+      "experiments": [
+        "PR01"
+      ],
+      "figure_id": "fig-prioritization",
+      "file": "figures/fig-prioritization.pdf",
+      "sample_size": 20,
+      "source": "PR01=EXP-PR01-prioritization-replicated (manifest 2d83cefce4326afc)",
+      "units": "fraction",
+      "x": "method",
+      "y": "recall at top 20% (4 of 20 entities)"
+    },
+    {
+      "aggregation": "micro over 5 catalog scenarios",
+      "caption": "Catalog micro precision and recall with one worker removed; unchanged removals omitted (A01).",
+      "data_sha256": "361661749b9090c18f1efac02519cb1e304629d2fde05e763819a73aa1b8a821",
+      "experiments": [
+        "A01"
+      ],
+      "figure_id": "fig-ablation",
+      "file": "figures/fig-ablation.pdf",
+      "sample_size": 5,
+      "source": "A01=EXP-A01-component-ablation (manifest 03632678da62b279)",
+      "units": "fraction",
+      "x": "micro precision / recall",
+      "y": "worker removed (only rows that changed)"
+    },
+    {
+      "aggregation": "5 scenarios x 5 omission seeds per rate",
+      "caption": "Record omission: independent omission is often rejected by all-or-nothing validation; referentially consistent (cascade) omission is accepted and changes findings more often as the rate grows (R01b).",
+      "data_sha256": "34206bdf043230485fd4243739ad6ecfe83e9ac8be3ef52cccd77c032c067520",
+      "experiments": [
+        "R01b"
+      ],
+      "figure_id": "fig-robustness",
+      "file": "figures/fig-robustness.pdf",
+      "sample_size": 25,
+      "source": "R01b=EXP-R01b-evidence-robustness (manifest 8a43c01d982b91a5)",
+      "units": "fraction",
+      "x": "record omission rate",
+      "y": "fraction of replicates rejected / with changed finding families"
+    },
+    {
+      "aggregation": "30 runs per mode on one machine",
+      "caption": "Workflow processing time by execution mode on one machine with SQLite (O01).",
+      "data_sha256": "41b1fd23d9e5102bcc59e8296b67b202b1c1215f479abe204720f68d27027273",
+      "experiments": [
+        "O01"
+      ],
+      "figure_id": "fig-orchestration",
+      "file": "figures/fig-orchestration.pdf",
+      "sample_size": 30,
+      "source": "O01=EXP-O01-orchestration-overhead (manifest d758a2801f158cc2)",
+      "units": "seconds",
+      "x": "execution mode",
+      "y": "processing time excluding the human decision"
+    },
+    {
+      "aggregation": "one deterministic cell each (dark = finding emitted)",
+      "caption": "Peer findings by cohort size, spread and subject closure value; dark cells emitted a finding (P01).",
+      "data_sha256": "4bca614c8b93e149730cd5be97816778dffd34d67ac440e424f235a834888780",
+      "experiments": [
+        "P01"
+      ],
+      "figure_id": "fig-peer",
+      "file": "figures/fig-peer.pdf",
+      "sample_size": 96,
+      "source": "P01=EXP-P01-peer-sweep (manifest 7aa85508062b2b28)",
+      "units": "seconds; peers",
+      "x": "subject closure value",
+      "y": "cohort size"
+    },
+    {
+      "aggregation": "one point per assignment group",
+      "caption": "External IT incident log: SAT-SA risk versus SLA-miss rate (left) and fast-closure prevalence versus SLA-miss rate (right), one point per group (X02b/X03).",
+      "data_sha256": "e30ec53705f567bad14a5855e9b962da623c6e782e01bd0b6ad406c8b987cee8",
+      "experiments": [
+        "X03"
+      ],
+      "figure_id": "fig-external",
+      "file": "figures/fig-external.pdf",
+      "sample_size": 50,
+      "source": "X03=EXP-X03-external-failure-analysis (manifest 10229533540e0ec1)",
+      "units": "score; fraction",
+      "x": "SAT-SA risk score; fast-closure prevalence",
+      "y": "SLA-miss rate recorded by the source organisation"
+    }
+  ],
+  "freeze_id": "satsa-evidence-freeze-v2",
+  "supplementary": {
+    "S1-configurations.md": "907b63c75806c38ed8e1a1d10b5fb5cdaa7457404568d6709d850db36ac94050",
+    "S10-additional-results.md": "499b360feaf12ef14e28e69df921cfac380c594ca8b9f92f7a1c3c9b6fff9cdd",
+    "S3-robustness.md": "7b710c5136f37ef374e97fac7d70ed6cf67ead531862161d5a27a8f8a2a3de6f",
+    "S4-mutation-matrix.md": "d575421479214b33fe372490c911a49330789f4604bbfc54595e5106856df9aa",
+    "S5-peer-sweep.md": "9cfca309b7863d8da2fd3b7b9251c4c8ee302086d6e0294ef6d039de0059df80",
+    "S6-statistical-audit.md": "1f97a2ee378f067c48384ff03cfff51db643e68b92795365264c7b4e2560d965",
+    "experiments.json": "28230285b4f74e88957b6d2fdd346fcc20f16de8570d19f64780dd4acbf908ca"
+  },
+  "tables": {
+    "tab-ablation.tex": "9484b5f92b77a34712ecf0031955a15a73580726b5f69744e22416c49b8d17cf",
+    "tab-baselines-closure.tex": "7d55c97244b69dc687a28010ced2c7a8a1722c33e967fa4894ca1a77add78d56",
+    "tab-baselines-prioritization.tex": "a79e085575896687eab65cec160374af41e6b23428cd8b878dd9bb4a411ad281",
+    "tab-deployment.tex": "ac1f8aef21f74b20658a1bf3a952f2e20fe2c23a9d32c170ea4be4afbc314c0a",
+    "tab-experiments.tex": "5312c00f34a925454f969220ba703e7e32ad62fc6482f6ee6c625db0c4ff8637",
+    "tab-external.tex": "d7db5eb50014da8e172380d571747a17135417f46ec1c1cceee73d106c79585d",
+    "tab-orchestration.tex": "10a68243fc1df0abef645e2339646852f5641c9d37e8d0bedf4d835d5ed8aa18",
+    "tab-peer.tex": "d2704664f2e2d52caa77f63593f21b2af58a4d13d1a7b6c38ee38b3e3bbebe13",
+    "tab-recovery.tex": "a8c7604ae0e58d77bc91d14c020ebfc5091db57300cb062775b49a99f680125b",
+    "tab-robustness.tex": "d5ac39093083d32b7996bfbef58fec85a20624f88c8babbc46b3702a9f41d963",
+    "tab-system.tex": "9270fb74ed703dc7b91b836291e4cca56332ad99fbba8a87057407a0119c78a8",
+    "tab-trust.tex": "79aad6dc04a995f023656de541b88fcbb420a6d98024da00932aabb72eb4b801"
+  }
+}
