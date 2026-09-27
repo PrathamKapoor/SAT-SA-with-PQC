@@ -1,0 +1,65 @@
+\section{Research Gap and Related Work}
+\label{sec:related}
+
+\paragraph{SOC assessment and performance measurement.}
+SOC-CMM scores capability maturity across business, people, process, technology
+and services domains through a self-assessment tool~\citep{vanos2016soccmm}.
+Agyepong et al.\ weight analyst-performance indicators using a Delphi panel and
+the analytic hierarchy process~\citep{agyepong2023analyst}; Forsberg and Frantti
+derive technical SOC metrics through design science~\citep{forsberg2023metrics}.
+Surveys and qualitative studies characterise SOC building blocks, challenges and
+human factors~\citep{vielberth2020soc,kokulu2019soc,sundaramurthy2015burnout,sundaramurthy2016contradictions}.
+These instruments measure maturity, define metrics or explain practice; they do
+not compute findings from the operational records a monitored SOC submits. SAT-SA
+addresses that narrower gap: given submitted records, which supervisory concerns
+are supported by which records?
+
+\paragraph{Alert prioritisation and alert fatigue.}
+A large literature ranks alerts or incidents for SOC analysts. Jalalvand et
+al.\ review 89 prioritisation papers through a human--AI teaming lens~\citep{jalalvand2024prioritisation};
+Tariq et al.\ survey alert-fatigue mitigations~\citep{tariq2025alertfatigue}.
+Systems include provenance-based triage (NoDoze~\citep{hassan2019nodoze}), guided
+response trained on customer triage labels~\citep{freitas2024guide}, large-scale
+incident ranking~\citep{freitas2026aip} and learning to defer to analysts~\citep{jalalvand2025l2d}.
+SAT-SA differs in unit and user: it ranks \emph{monitored organisations} for a
+\emph{supervisor} from rule-based findings about how work was handled, not
+individual alerts for an analyst. It is not a competitor to these systems and is
+not compared with them.
+
+\paragraph{Process analytics and absence detection.}
+Process mining discovers and checks processes from event logs~\citep{vanderaalst2016pm};
+conformance checking relates recorded behaviour to a model and exposes skipped or
+out-of-order activities~\citep{carmona2018conformance}. It has been applied to
+security audit trails~\citep{vanderaalst2005security} and to assessing IT incident
+management against ITIL~\citep{ferreira2008itil}. SAT-SA's execution-gap and
+``negative-space'' workers are rule-encoded conformance checks (for example, an
+acknowledged alert whose case has no investigation step); we treat them as an
+adaptation of this prior art, not a new technique.
+
+\paragraph{Peer comparison and robust deviation.}
+Peer group analysis flags entities that diverge from similar entities over
+time~\citep{weston2008pga}, in the broader statistical fraud-detection
+tradition~\citep{bolton2002fraud}. SAT-SA's peer worker compares an entity with a
+declared cohort using median and median absolute deviation (MAD)~\citep{leys2013mad},
+with a minimum cohort size and tenant isolation.
+
+\paragraph{Supervisory technology.}
+Financial supervisors increasingly use technology to analyse regulated
+entities' data (``suptech'')~\citep{broeders2018suptech}; human supervisory
+judgement remains indispensable there, as in SAT-SA's design.
+
+\paragraph{Integrity and provenance of records.}
+Forward-secure and tamper-evident logs~\citep{schneier1999logs,crosby2009logging}
+detect alteration of recorded history; W3C PROV provides a provenance
+vocabulary~\citep{w3c2013provdm}. SAT-SA composes standard primitives---SHA3-256~\citep{nist2015fips202}
+and ML-DSA-65~\citep{nist2024fips204}---to bind a canonical supervisory record and the
+authorised decision; it does not propose cryptography. Automation bias in human
+use of decision support~\citep{parasuraman2010automation} motivates keeping the
+decision with the supervisor.
+
+\paragraph{Gap, stated conservatively.}
+We did not find, in this focused review, a system that computes evidence-cited
+supervisory findings from SOC submission records for an external supervisor and
+binds the supervisor's decision to that analysed state. This is an absence in a
+non-systematic search, not evidence of novelty; the framing is therefore offered
+as a low-confidence candidate contribution.
