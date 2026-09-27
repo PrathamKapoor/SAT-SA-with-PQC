@@ -54,6 +54,26 @@ contribution as new.
 | Measured evaluation methodology (declared perturbations, frozen bundles, negative controls) | — | Reproducibility practice | No | — | Methodological rigour, not a research contribution |
 | Post-quantum signed supervisory receipt | SK99, CW09, FIPS204 | Composition of standard primitives | No | Yes | High that it is integration |
 
+## Final candidate contribution map (Phase 11 audit)
+
+Categories: research contribution (candidate) / empirical finding /
+engineering contribution / security capability / deployment capability /
+supporting infrastructure. Prior art, integration and adaptation are kept
+distinct.
+
+| Candidate contribution | Category | Closest prior work | Difference | Experimental evidence | Confidence | Paper-safe wording |
+| --- | --- | --- | --- | --- | --- | --- |
+| Supervisor-side, record-level SOC assessment producing evidence-cited findings from submitted operational records | research contribution (candidate; application framing) | SOC-CMM, analyst-performance model, SupTech | assessment from records rather than maturity questionnaires; adaptation of known checks to a supervisory setting | controlled scenarios (C01); external feasibility on ITSM data (X02/X02b) | low | "we frame SOC supervision as record-level analytics and describe a system that implements it" |
+| Absence-based ("negative-space") checks | adaptation of prior art | conformance checking, DeTT&CT | applied to SOC submission records | C01, R01b, A01 | low | "adapts absence-based conformance ideas to supervisory SOC records" |
+| Controlled evaluation with declared perturbations, baselines, ablation and negative controls | empirical findings | — | — | R01b, PR01, A01, C01, P01, T01 | high (as findings) | "in controlled synthetic evaluations …" with the measured values |
+| External-domain transfer result (negative) | empirical finding | — | shows mechanism-level results do not transfer to data lacking the workflow constructs | X02, X02b, X03 | medium | "on one external IT incident log, SAT-SA risk was not associated with SLA misses; the failure analysis attributes this mainly to construct mismatch and detector saturation" |
+| Fused entity prioritization | integration | alert-prioritization surveys, AIP | entity-level for supervisors; rule-based | PR01 (comparable to a closure-speed heuristic) | low | "higher top-k capture than random and alert-volume ranking in generated populations; comparable to a closure-speed rule" |
+| Peer benchmarking with cohort guardrails | integration | peer group analysis | minimum-peer and tenant-isolation guardrails | P01 | high that it is integration | "measured sensitivity of a median/MAD peer rule to cohort size and spread" |
+| Human-gated decision with durable orchestration and recovery | engineering contribution | LangGraph, job queues | — | O01, O02 | — | "in the evaluated workflows, orchestration added the measured overhead and recovered from all injected interruptions" |
+| Signed, ledger-bound supervisory receipts (ML-DSA-65) | security capability (integration of standard primitives) | secure/tamper-evident logs, FIPS 204 | composition for supervisory decisions | T01 | high that it is integration | "detected all 13 tested mutations in the controlled mutation matrix" |
+| API/worker topology, smoke test, CI topology job | deployment capability | — | — | D01 (local processes only) | — | "configured; verified only as local processes with SQLite" |
+| Evidence bundles, freeze, statistics, exports, label pipeline | supporting infrastructure | reproducibility practice | — | freeze v1/v2 | — | not claimed as a contribution |
+
 **Wording to use:** "a possible application-framing contribution",
 "an integration of established techniques", "empirical findings under
 controlled conditions". **Do not use:** "first", "novel", "state of the art",

@@ -1,113 +1,27 @@
-# Research Limitations
+# Research Limitations (freeze v2)
 
-Each limitation cites the evidence that establishes it. Bundles are in
-`research/evidence/freeze-v1/bundles/`; experiment IDs are defined in
-[EXPERIMENTS.md](EXPERIMENTS.md).
+Every row names the experiment that demonstrates the limitation; bundles are in
+`research/evidence/freeze-v2/bundles/`. Nothing listed here is hypothetical.
 
-## Data limitations
-
-- **No real SOC data.** Every SOC-shaped result comes from authored catalog
-  fixtures (5 executable scenarios, EXP-C01) or SAT-SA's own generator
-  (EXP-PR01, EXP-A01). No NCIIPC/CSE/SOC submission has been analysed.
-- **External data is from IT service management, not security operations.**
-  EXP-X02 uses a real ServiceNow incident log (UCI-498, one organisation,
-  2016–2017). Domain transfer to SOC workflows is untested.
-- **Mapping losses on the external data.** Assets could not be mapped
-  (`cmdb_ci` known for 54 of 24,918 incidents), so coverage/monitoring
-  detectors were not evaluable; escalations are reassignment proxies; closure
-  codes are anonymized; 1,556 incidents have no resolution time; 2,157
-  incidents with an unknown group were excluded (EXP-X02 transformation
-  report).
-- **Timestamps without time zone** in UCI-498 are interpreted as UTC.
-
-## Label limitations
-
-- Catalog labels (EXP-C01, EXP-A01) were written by the project, alongside the
-  detectors they score.
-- Generator labels (EXP-PR01, EXP-A01 population) come from two profiles
-  whose pathological settings inject exactly the behaviours SAT-SA's
-  detectors target, so separation is likely optimistic.
-- The external label (SLA miss) measures timeliness, not supervisory
-  execution quality (EXP-X02).
-- **No expert labels exist.** The only label file is a template
-  (`docs/demo/expert-labels.sample.json`), which the Phase 10 ingestion
-  refuses.
-
-## Synthetic-data limitations
-
-- A simple closure-speed heuristic matched SAT-SA's ranking on most generated
-  populations (recall@20%: 8 higher, 11 equal, 1 lower; EXP-PR01), and on the
-  12-record closure-time corpus fixed-threshold and MAD baselines tie SAT-SA
-  exactly (F1 1.0; EXP-C01). Synthetic separability does not establish added
-  value over simple rules.
-- On real data several detectors saturate: acknowledgement-without-
-  investigation, missing-investigation, case-similarity and investigation-
-  depth anomaly fire for all 50 groups (EXP-X02). Thresholds tuned on synthetic
-  fixtures do not discriminate on this real distribution.
-
-## Deployment limitations
-
-- Container build/startup and the compose topology (PostgreSQL, SeaweedFS,
-  migration, API, worker) have **not been executed** locally: Docker is not
-  installed. The CI job `saas-topology-smoke` exists but has not run (nothing
-  pushed).
-- **Live PostgreSQL is untested**: `SATSA_TEST_POSTGRES_DSN` unavailable; 72
-  PostgreSQL tests skip.
-- **Live S3/SeaweedFS is untested.**
-- The only HTTP end-to-end run used separate local API and worker processes
-  with SQLite and local storage (EXP-D01, 18/18).
-- Hosted deployment of the API/worker is not verified.
-
-## Statistical limitations
-
-- No hypothesis tests or p-values; all intervals are percentile bootstrap
-  intervals, uncorrected across many comparisons (EXP-O01, EXP-PR01, EXP-X02).
-- Population ablation used 5 seeds and is exploratory (EXP-A01).
-- Timing results are repeated measurements on one Windows machine with SQLite;
-  some runs overlapped with unrelated processes (EXP-PR01, EXP-A01).
-- Five scenarios, one trust workflow and 96 engineered peer cells are
-  mechanism observations, not samples of a population.
-
-## External-validity limitations
-
-- SAT-SA's risk score showed no association with the external SLA-miss rate
-  (Spearman ρ −0.11, 95% interval −0.42 to +0.21, n = 50 groups), while a
-  slowest-median-resolution rule was strongly associated (ρ 0.94) — expected,
-  because SLA miss is itself a timeliness outcome (EXP-X02). SAT-SA's
-  priority placed the last high-SLA-miss group at the bottom of the ranking
-  (review volume 50 of 50).
-- One external organisation; no second external dataset was available with
-  workflow fields (GUIDE, CIC-IDS2017 and BOTS lack them; see
-  [EXTERNAL_DATASETS.md](EXTERNAL_DATASETS.md)).
-
-## Human-evaluation limitations
-
-- No human study has been executed; the protocol is ready
-  ([HUMAN_REVIEW_PROTOCOL.md](HUMAN_REVIEW_PROTOCOL.md)). No claim about
-  review time, accuracy, agreement or trust can be made.
-- No session runner exists; running the study needs interface work outside
-  the backend scope.
-
-## Architectural limitations
-
-- **No recency/assessment-period validation:** records shifted 1 or 40 days
-  outside the period were accepted with no warning and no output change
-  (15/15, EXP-R01b).
-- **No cross-record contradiction detection:** contradictory dispositions and a
-  closed case with an open alert were accepted silently (EXP-R01b).
-- Hosted validation is all-or-nothing: one orphaned investigation step rejects
-  the whole submission (3/25–14/25 omission replicates rejected, EXP-R01b).
-- Peer findings depend strongly on cohort size and spread; below 3 peers the
-  worker abstains, wide cohorts flag only extremes (EXP-P01).
-- Hosted peer baselines abstain by design until a governed cross-tenant
-  aggregate exists; peer evidence comes from the legacy path.
-
-## Security limitations
-
-- The mutation matrix covers one workflow and 13 single-field mutations; it is
-  not a detection rate and does not cover coordinated replacement of database,
-  key and ledger (EXP-T01).
-- Signing keys and ledger are local files; there is no external trust anchor
-  or HSM in the evaluated configuration.
-- Verification proves integrity of recorded state, not truth of submitted
-  evidence.
+| # | What is limited | Why | Demonstrated by | What cannot be concluded | What would resolve it |
+| --- | --- | --- | --- | --- | --- |
+| 1 | **Synthetic data** — all SOC-shaped results use 5 authored scenarios or SAT-SA's own generator | no real SOC/CSE submissions are available | C01, R01b, A01, PR01, P01 | any real-world SOC effectiveness | real, independently labelled SOC submissions |
+| 2 | **Generator/label alignment** — generator profiles inject the behaviours the detectors target; catalog labels were written with the detectors | same team wrote both | PR01 (closure-speed rule matches SAT-SA in 11/20 populations and exceeds it in 1 at recall@20%), C01 (fixed-threshold and MAD tie at F1 1.0) | that SAT-SA adds value over simple rules | independent labels on data SAT-SA was not designed against |
+| 3 | **External-domain mismatch** — the only external dataset is IT service management, and its outcome measures timeliness | no suitable public SOC workflow dataset exists (GUIDE, CIC-IDS2017, BOTS lack workflow fields) | X02b, X03 (fast-closure prevalence ρ −0.70 with SLA miss; risk ρ −0.11) | external effectiveness; that SAT-SA fails on SOC data (the construct differs) | a SOC workflow dataset with supervisory-quality labels |
+| 4 | **Detector saturation at scale** — existence rules fire whenever one qualifying record exists; risk sums finding confidences and ignores prevalence | design assumes small curated submissions | X03 (4 families at 50/50; input prevalence 1.7%–78% and 5%–86%) | discrimination between large submissions | prevalence-aware rules and fusion, developed on SOC development data and evaluated on held-out data |
+| 5 | **Unavailable constructs on external data** — monitoring coverage, investigation actions, escalation semantics, dispositions | fields absent or anonymized | X03 (3 risk dimensions zero for all groups) | anything about those constructs externally | data containing them |
+| 6 | **No expert labels** | none collected; only a template exists (refused by the pipeline) | — | expert agreement with findings | a labelling study using `evaluation/research/expert_labels.py` |
+| 7 | **No human evaluation** | no participants recruited | — (protocol only) | review time, accuracy, agreement or trust effects | executing `docs/HUMAN_REVIEW_PROTOCOL.md` |
+| 8 | **SQLite, single machine** — every timing | PostgreSQL, S3 and containers unavailable | O01, O02, X02b | production latency, throughput or scalability | measurements on the deployed topology |
+| 9 | **Containers unverified** | Docker not installed; CI job not run (no push authorized) | deployment record | that the compose topology builds or starts | a CI run or local Docker |
+| 10 | **PostgreSQL unverified live** | `SATSA_TEST_POSTGRES_DSN` unavailable; 72 tests skip | test log | PostgreSQL parity with SQLite | the DSN and the listed tests |
+| 11 | **S3/SeaweedFS unverified live** | only mocked/emulated tests; SeaweedFS runs only in compose | deployment record | live object-storage behaviour | compose or CI run |
+| 12 | **Sample sizes and independence** — 5 scenarios; 30 repeated runs on one machine (not 30 deployments); 36 recoveries from 12 deterministic cells; 50 groups of one organisation; 5 ablation seeds | resources and data | statistical audit (`freeze-v2/exports/statistical_audit.*`) | population-level effect sizes; significance | more independent units (datasets, organisations, seeds) |
+| 13 | **No statistical power or inference** — descriptive medians and percentile bootstrap intervals, uncorrected across comparisons (PR01 reports 27, X03 12) | not pre-registered; small independent n | statistical audit | statistical significance | pre-registered confirmatory design with adequate n |
+| 14 | **Silent stale evidence** — records 1 or 40 days outside the assessment period accepted with no warning or change | no recency/period validation implemented | R01b (15/15) | that SAT-SA detects stale evidence | period validation, then re-evaluation |
+| 15 | **Silent contradictory records** — contradictory dispositions and a closed case with an open alert accepted | no cross-record consistency checks | R01b | that SAT-SA detects inconsistency | consistency rules, then re-evaluation |
+| 16 | **All-or-nothing hosted validation** — one orphaned step rejects the whole submission | design choice | R01b (3/25–14/25 omission replicates rejected) | graceful handling of partial exports | partial-acceptance policy (product decision) |
+| 17 | **Peer analysis depends on cohort composition** | median/MAD rule with ≥ 3 peers | P01 (wide cohorts flag only extremes; < 3 peers never flag) | robustness of peer findings across real cohorts | real cohort data |
+| 18 | **Integrity evaluation scope** — one workflow, 13 single-field mutations, local keys and ledger | controlled design | T01 | a tamper-detection rate; resistance to coordinated replacement | external trust anchor/HSM and adversarial evaluation |
+| 19 | **Recovery evaluation scope** — in-process injection at method boundaries | no process-kill or failover harness | O02 | behaviour under real crashes, partitions, database failover | infrastructure-level fault injection |
+| 20 | **Literature positioning is preliminary** — not a systematic review | time | `docs/LITERATURE_POSITIONING.md` | novelty | systematic review with defined databases and criteria |

@@ -1,8 +1,62 @@
-# Research Evidence Freeze v1
+# Research Evidence Freeze
+
+## Freeze v2 — canonical for the paper
+
+**Freeze:** `satsa-evidence-freeze-v2`, directory `research/evidence/freeze-v2/`,
+created 2026-09-27T05:54:24Z with tool commit `837d1ef`,
+committed in `85b7763`. `freeze.json` SHA-256
+`2ac93ef3f2967f908c35b05c1fed97dc60282aa503d1a97594275deae3a1ff0a`.
+Catalog: `research/evidence/catalog.json` (generated from this freeze and
+`catalog-spec.json`; SHA-256 `16c60059668c36890dd656eda52eb75c2e2293ba352f39ffcfca5ecf64c27070`).
+Freeze v1 is unchanged and still verifies; v2 differs by making **EXP-X02b**
+canonical (X02 superseded, bookkeeping only), adding **EXP-X03** and the
+dataset suitability matrix, and exporting the statistical audit.
+
+| Bundle | Role | Code commit | Manifest SHA-256 |
+| --- | --- | --- | --- |
+| controlled-final-seed-17 | canonical | 82085d2 | `0ad518882d319dd9136b57462f216024f780d89af686c8248864ed58b2449637` |
+| EXP-R01b-evidence-robustness | canonical | 400f2d6 | `8a43c01d982b91a5e05ac5044e50c2164395aa8ca5360ed88c19543afb946709` |
+| EXP-O01-orchestration-overhead | canonical | 698b507 | `d758a2801f158cc26cc0c9342062bf6656dc05359b9944b5a9ed278a601f2b84` |
+| EXP-O02-orchestration-recovery | canonical | 698b507 | `ddd3bef48fb22f110d4c5f85534dd5bc2eea0cb975444f1ba9dee2aa309b064c` |
+| EXP-T01-trust-mutation-matrix | canonical | 9325fdd | `f20a5c59cb4604919174e28d46ad52e060b67820953e7baccf4d86c1f722e0fc` |
+| EXP-P01-peer-sweep | canonical | 9325fdd | `7aa85508062b2b28519f157a64dcf2692b43dcf50b9264bf308888bcbefe5e54` |
+| EXP-A01-component-ablation | canonical | 9325fdd | `03632678da62b27940702b8ec11cfbee726d62f199762f7093e0b5d93a445ff4` |
+| EXP-PR01-prioritization-replicated | canonical | 9325fdd | `2d83cefce4326afc7549b9386567fd803ebf6dcde97d03b189ae13d7d9222c75` |
+| EXP-X02b-external-itsm | canonical | c1206dd | `036652ed89089874a31689354c0ddac26e4140e0f4e7b774f4341408a4d9b9d0` |
+| EXP-X03-external-failure-analysis | canonical | c1206dd | `10229533540e0ec189daba065ef3dae96a404a9842076caacbb61e12de8c8182` |
+| EXP-X02-external-itsm | superseded | 8f63aeb | `576e50ea1c67eaf16149737df20df6e4676968a72d96746468f84ce188cb4b05` |
+| EXP-R01-evidence-robustness | superseded | e7aedd8 | `8f1fdd9e4815e92167c051c06531b31ef6ee88cac2e846af92124a59acc063e9` |
+| evidence-robustness-pilot | superseded | ee87026 | `aec1083548ff5d50d5d3baa567a88dc7d58e54eb4ce4d5fbd1aebceb05edcbe1` |
+| trust-integrity-final | superseded | 82085d2 | `2a480e8c31648e11dfc2180d5d7e533510cc016c11670dfbe4f0cb2ef8ebfff4` |
+| peer-sensitivity-final | historical | 82085d2 | `55b78749ba919c46fa430c3ed7b7117f477c03693696ba8daa2e328f52bb720c` |
+
+| Supporting file | SHA-256 |
+| --- | --- |
+| supporting/EXP-D01-local-process-smoke.json | `29bddd52a5c649b9de6002abd4372c1e9d2b518d3e61e0ecd6119b1257c4debb` |
+| supporting/dataset-suitability.json | `c250e488eb1834b2f96dbe99909fd235b71edebea0f2a3a877ea115f1e8e5c2d` |
+
+### Verification drill (2026-09-27, fresh clone of `85b7763`)
+
+| Step | Result |
+| --- | --- |
+| `verify_evidence_freeze.py research/evidence/freeze-v2` | intact, 17 items checked |
+| regenerate exports and compare with committed `freeze-v2/exports` | 81 files each, 0 differing (byte-identical) |
+| edit `manifest.json` of EXP-X02b | verify exit 1: "manifest.json differs from the frozen manifest hash"; export skipped the bundle |
+| edit `raw/results.json` | verify exit 1: "raw/results.json hash mismatch"; export skipped |
+| edit `processed/metrics.json` | verify exit 1: "processed/metrics.json hash mismatch"; export skipped |
+| edit `config.json` | verify exit 1: "config.json hash mismatch", "config.json does not match configuration_sha256"; export skipped |
+| restore file | intact again |
+
+Also enforced by `tests/test_phase10_evidence_freeze.py` and
+`tests/test_phase11_publication.py`.
+
+---
+
+## Freeze v1 (history)
 
 **Freeze:** `satsa-evidence-freeze-v1`, directory `research/evidence/freeze-v1/`,
 created 2026-09-27T03:28:30Z with tool commit `36fc576`, committed in `a3b8137`.
-**This is the canonical evidence set for the paper.** Later runs must use new
+**It was canonical until freeze v2 (above) superseded it; it is kept unchanged as history.** Later runs must use new
 experiment IDs and a new freeze version; freeze v1 is never edited.
 
 Verify: `python scripts/verify_evidence_freeze.py research/evidence/freeze-v1`
