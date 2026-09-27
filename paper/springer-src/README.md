@@ -23,7 +23,7 @@ particular conference or series.
 | Title, running title, authors, affiliations, e-mails, ORCIDs | `metadata.tex` (the only place to edit them) |
 | Abstract and keywords | `sections/00-abstract.tex` |
 | Sections 1–11 | `sections/01-introduction.tex` … `sections/11-conclusion.tex` |
-| Acknowledgments (funding), ethics, disclosure of interests | `sections/12-declarations.tex` |
+| Ethics approval statement | `sections/12-declarations.tex` |
 | Tables (native LaTeX) | `tables/*.tex` |
 | Figure 1 (native TikZ source) | `figures/fig-architecture.tex` |
 | Figures 2–5 (vector PDF) | `figures/*.pdf` |
@@ -39,13 +39,11 @@ the project is generated at compile time.
 - **Author block.** Name, department, school, university, city and country, with no
   e-mail or ORCID line. It follows the author's paper *Noise-Robust Quantum Machine
   Learning for Building Energy Performance* and is edited only in `metadata.tex`.
-- **Declarations** (`sections/12-declarations.tex`): an ethics statement.
+- **Declarations** (`sections/12-declarations.tex`): an ethics approval statement.
 - **Omitted at the author's decision:**
   - an acknowledgments or funding block (the work received no funding);
   - a disclosure-of-interests block. Springer proceedings normally require that
-    statement, so add it if the chosen venue asks for it;
-  - a declaration of AI use. Springer Nature's AI policy asks for one where AI
-    use goes beyond copy editing.
+    statement, so add it if the chosen venue asks for it.
 - **Target venue:** not set. The manuscript names no conference.
 
 ## Typography
