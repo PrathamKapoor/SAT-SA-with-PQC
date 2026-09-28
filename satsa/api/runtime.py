@@ -58,7 +58,17 @@ class RuntimeSettings:
     db_statement_timeout_ms: int
 
     @classmethod
-    def from_env(cls, environ: Mapping[str, str] | None = None) -> RuntimeSettings:
+    def from_env(
+        cls,
+        environ: Mapping[str, str] | None = None,
+        *,
+        require_trust_key: bool = True,
+    ) -> RuntimeSettings:
+        """Read and validate the deployment environment.
+
+        ``require_trust_key`` is False only for the migration job, which runs
+        before the signing key is provisioned and never signs anything.
+        """
         env = os.environ if environ is None else environ
         mode = env.get("SATSA_ENVIRONMENT", "development").strip().lower()
         if mode not in {"development", "test", "production"}:
@@ -142,7 +152,10 @@ class RuntimeSettings:
                 raise RuntimeConfigurationError(
                     "production requires S3 object storage; local artifact storage is offline-only"
                 )
-            if not key_dir.joinpath("satsa_trust_key.json").is_file():
+            if (
+                require_trust_key
+                and not key_dir.joinpath("satsa_trust_key.json").is_file()
+            ):
                 raise RuntimeConfigurationError(
                     "production TRUST-SAT signing key is missing from SATSA_TRUST_KEY_DIR"
                 )

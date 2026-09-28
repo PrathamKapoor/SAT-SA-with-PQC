@@ -13,7 +13,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(prog="python -m satsa.api.migrate")
     parser.add_argument("command", choices=("status", "check", "upgrade"))
     args = parser.parse_args()
-    settings = RuntimeSettings.from_env()
+    # The migration job runs before the TRUST-SAT key is provisioned.
+    settings = RuntimeSettings.from_env(require_trust_key=False)
     engine = create_engine(
         settings.database_url,
         pool_min_size=settings.db_pool_min_size,
