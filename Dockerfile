@@ -32,6 +32,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 RUN pip install --no-cache-dir -e ".[postgres,s3]" \
+    # The compiler is needed only to install dependencies; the runtime image
+    # keeps no toolchain and takes pending Debian security updates.
+    && apt-get purge -y --auto-remove build-essential \
+    && apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 10001 --create-home satsa \
     && mkdir -p /data \
     && chown -R satsa:satsa /app /data
