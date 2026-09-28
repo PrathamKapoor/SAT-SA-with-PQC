@@ -25,3 +25,8 @@ web/
 .satsa_identity/
 keys/
 secrets/
+paper/
+research/
+reports/
+.satsa-local/
+deploy/

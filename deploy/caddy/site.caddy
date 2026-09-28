@@ -1,0 +1,24 @@
+# Public site: the only published entry point. TLS is automatic: a public DNS
+# name gets a certificate from Let's Encrypt; "localhost" uses Caddy's local CA.
+{$SATSA_SITE_ADDRESS} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		-Server
+		-X-Powered-By
+	}
+
+	# Evidence uploads pass through the web tier to the API (17 MiB limit there).
+	request_body {
+		max_size 18MB
+	}
+
+	# Caddy replaces any client-supplied X-Forwarded-For with the real peer
+	# address; the web tier forwards only that value to the API.
+	reverse_proxy web:3000
+}

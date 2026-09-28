@@ -1,0 +1,16 @@
+{
+	admin off
+	skip_install_trust
+}
+
+import site.caddy
+
+# Bundled object storage only (compose.objectstore.yml): the SAT-SA production
+# configuration requires S3 over HTTPS, so the single-node SeaweedFS service is
+# reached through this TLS endpoint. It listens on the internal network only
+# (port 9443 is not published) and uses Caddy's local CA, whose root the API
+# and worker trust through AWS_CA_BUNDLE.
+https://s3.satsa.internal:9443 {
+	tls internal
+	reverse_proxy objectstore:8333
+}
