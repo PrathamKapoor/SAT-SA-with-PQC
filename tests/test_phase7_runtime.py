@@ -242,3 +242,18 @@ def test_provisioned_trust_key_self_test_rejects_mismatched_keypair(tmp_path):
             TrustService(engine, key_dir).validate_signing_key()
     finally:
         engine.close()
+
+
+def test_production_migration_runs_before_the_signing_key_exists(tmp_path):
+    """Deployment order is migrate, then key-init, then API and worker."""
+    env = _production_env(tmp_path)
+    (tmp_path / "keys" / "satsa_trust_key.json").unlink()
+    with pytest.raises(RuntimeConfigurationError, match="signing key"):
+        RuntimeSettings.from_env(env)
+    settings = RuntimeSettings.from_env(env, require_trust_key=False)
+    assert settings.environment == "production"
+    assert settings.auto_migrate is False
+    # Every other production check still applies to the migration job.
+    env["SATSA_DATABASE_URL"] = "sqlite:///local.db"
+    with pytest.raises(RuntimeConfigurationError, match="PostgreSQL"):
+        RuntimeSettings.from_env(env, require_trust_key=False)

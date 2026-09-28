@@ -1,0 +1,6 @@
+{
+	admin off
+	skip_install_trust
+}
+
+import site.caddy

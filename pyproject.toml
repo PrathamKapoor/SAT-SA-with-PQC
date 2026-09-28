@@ -28,7 +28,7 @@ dependencies = [
     "ijson>=3.5,<4",
     "langgraph==1.2.10",
     "langgraph-checkpoint-postgres==3.1.2",
-    "langgraph-checkpoint-sqlite==3.0.3",
+    "langgraph-checkpoint-sqlite==3.1.1",
 ]
 
 [project.optional-dependencies]
