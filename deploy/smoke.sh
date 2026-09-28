@@ -48,6 +48,12 @@ pass "HTTP redirects to HTTPS"
 code=$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$SATSA_PUBLIC_URL/workbench")
 [[ "$code" == "307" ]] || fail "unauthenticated /workbench returned $code, expected a redirect to sign-in"
 pass "workbench requires a session"
+# Redirects must stay on the public origin, never the web server's internal one.
+for path in /workbench "/logout?reason=expired"; do
+  target=$("${CURL[@]}" -o /dev/null -w '%{redirect_url}' -H 'Cookie: satsa_session=invalid' "$SATSA_PUBLIC_URL$path")
+  [[ "$target" == "$SATSA_PUBLIC_URL/"* ]] || fail "redirect from $path leaves the public origin: $target"
+done
+pass "redirects stay on the public origin"
 
 # 2. API and worker readiness (inside the stack; the API is not published).
 $COMPOSE exec -T api python -c "import urllib.request as u; u.urlopen('http://api:8000/health/live', timeout=5)" \
