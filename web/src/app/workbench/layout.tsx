@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Sidebar, type SidebarProps } from "@/components/shell/sidebar";
 import { TopBar } from "@/components/shell/topbar";
-import { api, apiBase } from "@/lib/api/client";
+import { api } from "@/lib/api/client";
 import { requireContext } from "@/lib/api/context";
 import { can, ROLE_LABEL } from "@/lib/auth/permissions";
 import { NAV } from "@/lib/nav";
@@ -39,7 +39,6 @@ export default async function WorkbenchLayout({ children }: { children: ReactNod
               canSwitch: ctx.organizations.length > 1,
               displayName: ctx.session.name,
               roleLabel,
-              apiBase: apiBase() ?? "",
             }}
           />
           <main id="main" tabIndex={-1} className="relative min-h-0 flex-1 overflow-y-auto focus:outline-none">
