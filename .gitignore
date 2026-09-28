@@ -76,3 +76,6 @@ Thumbs.db
 # unanchored, it also matched web/**/sat-sa-with-pqc/ (git on Windows
 # ignores case) and silently hid the web UI's components and assets.
 /SAT-SA-with-PQC/
+
+# Local SAT-SA backend for web development (scripts/local_stack.py)
+.satsa-local/
