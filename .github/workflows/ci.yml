@@ -255,9 +255,15 @@ jobs:
             sleep 3
           done
           exit 1
-      - name: Service logs
+      - name: Service logs and health diagnostics
         if: always()
-        run: $COMPOSE logs --no-color --tail 200 > production-stack.log || true
+        run: |
+          $COMPOSE ps -a > production-stack.log 2>&1 || true
+          for s in api worker web caddy; do
+            echo "== health: $s" >> production-stack.log
+            docker inspect --format '{{json .State.Health}}' "satsa-$s-1" >> production-stack.log 2>&1 || true
+          done
+          $COMPOSE logs --no-color --tail 200 >> production-stack.log 2>&1 || true
       - name: Upload logs and Playwright results
         if: failure()
         uses: actions/upload-artifact@v4
