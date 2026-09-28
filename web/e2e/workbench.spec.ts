@@ -32,7 +32,10 @@ async function pageAs(browser: Browser, role: Role): Promise<Page> {
   const saved = sessions.get(role);
   const context = await browser.newContext(saved ? { storageState: saved } : {});
   const page = await context.newPage();
-  if (saved) return page;
+  if (saved) {
+    await page.goto("/workbench");
+    return page;
+  }
   await page.goto("/login");
   await page.getByLabel("Issued credential").fill(state().credentials[role]);
   await page.getByRole("button", { name: "Sign in" }).click();
@@ -59,6 +62,27 @@ test("unauthenticated and invalid sessions are sent to sign-in", async ({ page, 
   await page.getByLabel("Issued credential").fill("wrong.credential");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("Credential not recognised.")).toBeVisible();
+});
+
+test("the session cookie is HttpOnly, SameSite=Lax and Secure under HTTPS", async ({ browser, baseURL }) => {
+  const page = await pageAs(browser, "analyst");
+  const cookies = await page.context().cookies();
+  const session = cookies.find((c) => c.name === "satsa_session");
+  expect(session, "session cookie").toBeTruthy();
+  expect(session!.httpOnly).toBe(true);
+  expect(session!.sameSite).toBe("Lax");
+  if (baseURL?.startsWith("https://")) expect(session!.secure).toBe(true);
+  // The browser never receives the raw credential.
+  expect(session!.value).not.toContain(state().credentials.analyst);
+});
+
+test("a forged organization selection is not honoured", async ({ browser, baseURL }) => {
+  const page = await pageAs(browser, "analyst");
+  await page.context().addCookies([{ name: "satsa_org", value: "org_not_a_membership", url: baseURL! }]);
+  await page.goto("/workbench");
+  // The only real membership is used; the forged id never reaches the API as a scope.
+  await expect(page.getByRole("heading", { name: "Workbench", level: 1 })).toBeVisible();
+  await expect(page.getByText("Signal findings")).toBeVisible();
 });
 
 test("an analyst ingests, validates and starts a run", async ({ browser }) => {
@@ -160,7 +184,6 @@ test("sign-out revokes the backend session", async ({ browser }) => {
   await expect(page).toHaveURL(/\/login/);
 
   // The saved session token was revoked on the backend, not only deleted locally.
-  const replay = await pageAs(browser, "admin");
-  await replay.goto("/workbench");
+  const replay = await pageAs(browser, "admin"); // opens /workbench with the saved, now revoked session
   await expect(replay).toHaveURL(/\/login\?reason=expired/);
 });
