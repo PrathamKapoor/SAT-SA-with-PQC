@@ -1,0 +1,155 @@
+\section{Results on Controlled Data}
+\label{sec:results}
+
+\subsection{Detection and closure-time baselines (RQ1, RQ2)}
+Over the 5 catalog scenarios analysed in one shared database,
+SAT-SA emitted every declared finding family (true positives 5, false
+negatives 0) and 7 undeclared families: micro precision
+0.417, recall 1.000, F1 0.588. The recommended supervisory
+action matched the declared action in 4 of 5
+scenarios. Precision depends on database layout: analysed one scenario per database
+(A01), the full worker set reached 0.556, because cross-entity
+workers in a shared database see other scenarios' records.
+
+On 12 construction-labelled critical closures (3 fast),
+SAT-SA's fast-closure detector, a fixed threshold and a MAD rule each reached F1
+1.00; z-score and IQR rules found none (recall
+0.0); seeded random reached 0.33.
+\emph{The detector ties simple baselines and offers no detection advantage on this
+corpus.}
+
+\subsection{Prioritization against simple baselines (RQ2)}
+Across 20 generated populations, SAT-SA placed a median
+0.800 of the pathological entities in its top 20\% and needed a
+median of 7.0 reviews to find all of them (Table~\ref{tab:prio},
+Fig.~\ref{fig:prio}). Its recall@20\% exceeded random order in all
+20 populations (median paired difference
+0.59, 95\% bootstrap 0.41 to
+0.60) and alert-volume ranking in all 20
+(0.40; 0.30 to 0.60).
+\emph{Against the fastest-median-closure heuristic the comparison is mixed}: higher in
+8, equal in 11 and lower in
+1 populations (median difference 0.00,
+interval 0.00 to 0.20); SAT-SA needed fewer reviews
+in 12 populations and more in 6.
+
+These results must be read against how the data were made. The populations come from
+SAT-SA's own generator, whose pathological profile deliberately injects the behaviours
+that SAT-SA's detector families target. Because the generated populations inject
+behaviours targeted by SAT-SA's detector families, PR01 is a controlled sensitivity
+and ranking-mechanism evaluation rather than an unbiased benchmark of general
+supervisory effectiveness: it characterizes how the ranking responds under these
+generated conditions. Even under this favourable construction, a single closure-speed rule captures most of the separation.
+
+\input{tables/tab-prio}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.5\linewidth]{figures/fig-prioritization.pdf}
+\caption{Recall@20\% of generator-labelled pathological entities across
+20 generated populations (PR01). The generator injects behaviours that
+SAT-SA targets, so this is a controlled mechanism test, not an unbiased benchmark.}
+\label{fig:prio}
+\end{figure}
+
+\subsection{One-worker ablation (RQ2)}
+Removing one of the 16 workers at a time (Table~\ref{tab:ablation}),
+fast-closure and negative-space carried recall on the catalog (0.600
+and 0.600 without them; 1.000 with all workers).
+Removing recurrence-without-remediation or coverage-gap \emph{raised} precision because
+those workers emitted only undeclared families here. On five generated populations
+(exploratory), mean recall@20\% was 0.760 with all workers and rose to
+0.800 without the anomaly, recurrence, coverage-gap or
+workflow-reconstruction worker, whereas removing the peer-benchmark or case-similarity
+worker lowered it to 0.720. On these populations, therefore, some
+workers add ranking noise to the measured metric.
+
+We read this nuanced result narrowly. The full worker set spans a broader analytical
+signal space than the generated populations exercise, and the ranking objective is
+specific to the generator's pathological profile. The ablation therefore shows that
+some workers can reduce this particular metric on these populations; worker utility
+is task- and population-dependent (Section~\ref{sec:threats}).
+
+\input{tables/tab-ablation}
+
+\subsection{Imperfect evidence (RQ3)}
+Each perturbed condition declared its family, affected records and expected validation
+outcome before it ran, on a fresh tenant database. Validation matched the declared
+contract in 245 of 245 conditions with an expectation
+(Table~\ref{tab:robust}): malformed timestamps, chronology violations, missing columns
+and duplicates with native identifiers were rejected. Two behaviours limit
+interpretation (Fig.~\ref{fig:robust}). First, validation is all-or-nothing:
+independent omission of records left dangling references and rejected the whole
+submission in 3, 11 and
+14 of 25 replicates at 10, 25 and 50\% omission, whereas
+referentially consistent omission was never rejected and changed the emitted finding
+families in 1, 11 and 15
+replicates. Second, \emph{stale and contradictory evidence is accepted silently}: all
+15 conditions with records outside the assessment period were
+accepted without warning and without any change to findings or risk, and contradictory
+dispositions or a closed case with an open alert produced no finding. SAT-SA
+implements no period, recency or cross-record consistency validation.
+
+\input{tables/tab-robust}
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.55\linewidth]{figures/fig-robustness.pdf}
+\caption{Record omission (R01b): independent omission is often rejected by
+all-or-nothing validation; referentially consistent omission is accepted and changes
+findings more often as the rate grows.}
+\label{fig:robust}
+\end{figure}
+
+\subsection{Peer-cohort sensitivity (RQ4)}
+Over 96 engineered cells (Fig.~\ref{fig:peer}), cohorts of two peers never
+produced a finding, as Eq.~\eqref{eq:peer} requires three. With a tight cohort spread,
+7 of eight subject values were flagged from three peers upward---every
+value except the one at the cohort median. With a wide spread only extreme slow
+subjects were flagged at small cohorts (2 at three peers), and fast
+subjects only from five peers upward as the MAD narrowed (4 at five
+peers). The peer rule is therefore sensitive to cohort size and dispersion: small or
+heterogeneous cohorts miss deviations, and tight cohorts flag small ones.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[width=0.68\linewidth]{figures/fig-peer.pdf}
+\caption{Peer findings by cohort size, spread and subject closure value; dark cells
+emitted a finding (P01, 96 cells).}
+\label{fig:peer}
+\end{figure}
+
+\subsection{Orchestration cost and recovery (RQ5)}
+On one machine with SQLite, 30 paired trials per mode gave median processing
+times, excluding the human decision, of 1.276\,s (direct),
+1.433\,s (LangGraph) and 0.976\,s (unreviewed benchmark
+mode) (Table~\ref{tab:orch}). LangGraph minus direct was a median 0.096\,s
+per workflow (95\% bootstrap \ensuremath{-}0.020 to 0.211\,s; the
+interval includes zero), with 38 more database statements and
+7 checkpoints per run; findings and risk were identical across modes
+in every trial. Review with finalization added a median 0.318\,s over
+unreviewed processing; finalization took 0.288\,s and receipt
+verification 0.062\,s. Interruptions were injected at 6
+points in both modes with 3 trials per cell: transient failures and
+simulated crashes during analysis, before recommendations, at a worker restart during
+review, and during finalization. \emph{In the evaluated interruption scenarios},
+36 of 36 runs recovered, 36 with outputs
+identical to the uninterrupted reference; completed stages were repeated
+0 times, and every run had exactly one decision, one finalization and a
+verifying receipt. Real process kills, network partitions and database failover were
+not exercised.
+
+\input{tables/tab-orch}
+
+\subsection{Integrity of the decided record (RQ6)}
+On one finalized controlled workflow, each of 14 mutations was applied,
+verified, restored and re-verified (Table~\ref{tab:trust}). Verification detected
+13 of 13 mutations of signed state---decision action and
+reason, finding, risk, recommendation, observation scope, source provenance,
+submission record payload, artifact digest, canonical payload, receipt signature,
+receipt public key and ledger chain---while the negative control (1
+mutation of an unsigned operational queue field) still verified, as designed. These
+results cover the tested mutation classes on one workflow; verification detects
+alteration after the fact rather than preventing it (Section~\ref{sec:system}).
+
+\input{tables/tab-trust}

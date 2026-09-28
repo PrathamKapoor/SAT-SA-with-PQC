@@ -1,0 +1,956 @@
+[
+ {
+  "key": "doi:10.1002/9781394201631.ch10",
+  "title": "SOC Metrics and Performance Measurement",
+  "year": "2024",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E4",
+  "note": "practitioner book chapter; no method or evaluation in abstract"
+ },
+ {
+  "key": "doi:10.1016/j.cose.2023.103529",
+  "title": "Technical performance metrics of a security operations center",
+  "year": "2023",
+  "decision": "INCLUDE",
+  "classification": "directly comparable",
+  "reason_code": "",
+  "note": "design-science SOC technical metrics (already cited: forsberg2023metrics)"
+ },
+ {
+  "key": "doi:10.1080/07366981.2023.2259046",
+  "title": "SOC Analyst Performance Metrics: Towards an optimal performance model",
+  "year": "2023",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "analyst performance model proposal; superseded for positioning by agyepong2023analyst"
+ },
+ {
+  "key": "doi:10.1109/cybersecurity49315.2020.9138872",
+  "title": "Towards a Framework for Measuring the Performance of a Security Operations Center Analyst",
+  "year": "2020",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "framework for measuring SOC analyst performance (precursor of agyepong2023analyst); not cited separately"
+ },
+ {
+  "key": "doi:10.1007/978-3-319-66505-4_8",
+  "title": "A Novel Metric for Measuring Operational Effectiveness of a Cybersecurity Operations Center",
+  "year": "2017",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "operational-effectiveness metric for a CSOC; abstract unavailable, recorded but not cited"
+ },
+ {
+  "key": "doi:10.1080/23742917.2019.1698178",
+  "title": "Challenges and performance metrics for security operations center analysts: a systematic review",
+  "year": "2019",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "systematic review of SOC analyst challenges and performance metrics"
+ },
+ {
+  "key": "t:framework for soc performance metrics and enhancement",
+  "title": "Framework for SOC performance metrics and enhancement",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E4",
+  "note": "master's thesis on SOC KPIs; no evaluation beyond survey"
+ },
+ {
+  "key": "doi:10.18372/2410-7840.21.13954",
+  "title": "Functional model of SOC maturity assessment based on a maturity model",
+  "year": "2019",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "functional maturity-assessment model; covered by SOC-CMM and CTI-SOC2M2"
+ },
+ {
+  "key": "doi:10.1080/19393555.2026.2639344",
+  "title": "Analysis of approaches to assessing the maturity level of network security centers",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "review of maturity approaches for network security centres; covered by included maturity models"
+ },
+ {
+  "key": "doi:10.1016/j.cose.2021.102482",
+  "title": "CTI-SOC2M2 – The quest for mature, intelligence-driven security operations and incident response capabilities",
+  "year": "2021",
+  "decision": "INCLUDE",
+  "classification": "directly comparable",
+  "reason_code": "",
+  "note": "capability maturity model for intelligence-driven SOC and incident response"
+ },
+ {
+  "key": "t:soc cmm designing and evaluating a tool for measurement of capability maturity in security operations centers",
+  "title": "SOC-CMM: Designing and Evaluating a Tool for Measurement of Capability Maturity in Security Operations Centers",
+  "year": "2016",
+  "decision": "INCLUDE",
+  "classification": "directly comparable",
+  "reason_code": "",
+  "note": "SOC-CMM self-assessment maturity tool (already cited: vanos2016soccmm)"
+ },
+ {
+  "key": "doi:10.1145/3491266",
+  "title": "SAIBERSOC : A Methodology and Tool for Experimenting with Security Operation Centers",
+  "year": "2021",
+  "decision": "INCLUDE",
+  "classification": "directly comparable",
+  "reason_code": "",
+  "note": "SAIBERSOC journal extension; the ACSAC version is cited"
+ },
+ {
+  "key": "doi:10.1145/3427228.3427233",
+  "title": "SAIBERSOC: Synthetic Attack Injection to Benchmark and Evaluate the Performance of Security Operation Centers",
+  "year": "2020",
+  "decision": "INCLUDE",
+  "classification": "directly comparable",
+  "reason_code": "",
+  "note": "synthetic attack injection to evaluate operational SOC performance"
+ },
+ {
+  "key": "doi:10.14722/wosoc.2025.23013",
+  "title": "Mismatched SOCs: A Case Study of Cybersecurity Goal Incongruency Within An Academic SOC",
+  "year": "2025",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "mixed-methods case study: SOC KPIs vs organisational goals"
+ },
+ {
+  "key": "t:measuring strategy coherence in security operations centers a goal metric mapping framework",
+  "title": "Measuring Strategy Coherence in Security Operations Centers: A Goal-Metric Mapping Framework",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "research-in-progress on strategy coherence from job descriptions"
+ },
+ {
+  "key": "doi:10.1016/j.cose.2022.103069",
+  "title": "Understanding situation awareness in SOCs, a systematic literature review",
+  "year": "2022",
+  "decision": "INCLUDE",
+  "classification": "background",
+  "reason_code": "",
+  "note": "systematic review of situation awareness in SOCs"
+ },
+ {
+  "key": "doi:10.14722/wosoc.2025.23002",
+  "title": "Human Performance in Security Operations: A Survey on Burnout, Well-Being and Flow State Among Practitioners",
+  "year": "2025",
+  "decision": "INCLUDE",
+  "classification": "background",
+  "reason_code": "",
+  "note": "survey of burnout and well-being among SOC practitioners"
+ },
+ {
+  "key": "doi:10.2139/ssrn.6172024",
+  "title": "A Design Science Approach to Developing Proportionate and Modular Security Operations Centers for Government Agencies",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "SSRN preprint; no peer review evident"
+ },
+ {
+  "key": "doi:10.3390/computers15010060",
+  "title": "The Integration of ISO 27005 and NIST SP 800-30 for Security Operation Center (SOC) Framework Effectiveness in the Non-Bank Financial Industry",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "single-organisation SOC framework design (ISO 27005/NIST 800-30)"
+ },
+ {
+  "key": "doi:10.14722/wosoc.2026.23012",
+  "title": "A Usability Evaluation Method for SOC Tools Using a Simulated Operational Environment",
+  "year": "2026",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "usability evaluation method for SOC tools in a simulated environment"
+ },
+ {
+  "key": "doi:10.30574/wjarr.2026.31.3.2442",
+  "title": "HUMAN COGNITIVE RESILIENCE IN SECURITY OPERATIONS CENTERS: A STRUCTURED REVIEW AND QUANTITATIVE FRAMEWORK FOR SLEEP, ALERT FATIGUE, WORKLOAD, AND HUMAN-AI CYBER DEFENSE",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "narrative review of cognitive resilience; outside positioning questions"
+ },
+ {
+  "key": "doi:10.20944/preprints202608.2187.v1",
+  "title": "Converged Security Maturity Index: A Unified Model for Cyber, Physical, and Operational Security Maturity Assessment",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "preprint conceptual maturity index"
+ },
+ {
+  "key": "doi:10.1109/cybersa52016.2021.9478245",
+  "title": "Rethinking Security Operations Centre Onboarding",
+  "year": "2021",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "SOC onboarding; outside positioning questions"
+ },
+ {
+  "key": "doi:10.1145/3695462",
+  "title": "Alert Prioritisation in Security Operations Centres: A Systematic Survey on Criteria and Methods",
+  "year": "2024",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "systematic survey of SOC alert prioritisation (already cited: jalalvand2024prioritisation)"
+ },
+ {
+  "key": "doi:10.1016/j.ins.2026.124128",
+  "title": "Adaptive alert prioritisation in security operations centres via learning to defer with human feedback",
+  "year": "2027",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "learning to defer with human feedback (already cited: jalalvand2025l2d)"
+ },
+ {
+  "key": "doi:10.1145/3670009",
+  "title": "Towards Human-AI Teaming to Mitigate Alert Fatigue in Security Operations Centres",
+  "year": "2024",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "human-AI teaming against alert fatigue"
+ },
+ {
+  "key": "doi:10.1145/3723158",
+  "title": "Alert Fatigue in Security Operations Centres: Research Challenges and Opportunities",
+  "year": "2025",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "alert-fatigue survey (already cited: tariq2025alertfatigue)"
+ },
+ {
+  "key": "doi:10.14722/ndss.2019.23349",
+  "title": "NoDoze: Combatting Threat Alert Fatigue with Automated Provenance Triage",
+  "year": "2019",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "NoDoze provenance triage (already cited: hassan2019nodoze)"
+ },
+ {
+  "key": "doi:10.1016/j.cose.2023.103583",
+  "title": "Combating alert fatigue with AlertPro: Context-aware alert prioritization using reinforcement learning for multi-step attack detection",
+  "year": "2023",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "RL-based context-aware alert prioritisation; alert-level, analyst-facing"
+ },
+ {
+  "key": "doi:10.1109/ths.2016.7568907",
+  "title": "Learning to rank for alert triage",
+  "year": "2016",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "learning to rank for alert triage"
+ },
+ {
+  "key": "doi:10.1109/tifs.2018.2886465",
+  "title": "A Two-Step Approach to Optimal Selection of Alerts for Investigation in a CSOC",
+  "year": "2018",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "optimisation-based alert selection accounting for CSOC resources and metrics"
+ },
+ {
+  "key": "doi:10.1109/icmla.2013.102",
+  "title": "Active Learning for Alert Triage",
+  "year": "2013",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "active learning for alert triage"
+ },
+ {
+  "key": "t:automated event prioritization for security operation center using graph based features and deep learning",
+  "title": "Automated event prioritization for security operation center using graph-based features and deep learning",
+  "year": "2020",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E4",
+  "note": "thesis version of event prioritisation work"
+ },
+ {
+  "key": "doi:10.1145/3564625.3567997",
+  "title": "RAPID: Real-Time Alert Investigation with Context-aware Prioritization for Efficient Threat Discovery",
+  "year": "2022",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "RAPID context-aware alert investigation prioritisation"
+ },
+ {
+  "key": "doi:10.1016/j.cose.2024.104270",
+  "title": "CyberShapley: Explanation, prioritization, and triage of cybersecurity alerts using informative graph representation",
+  "year": "2024",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "graph-based alert explanation and prioritisation"
+ },
+ {
+  "key": "doi:10.22214/ijraset.2025.73727",
+  "title": "Enhancing Alert Prioritization in Enterprise Security Operations via Factor Graph Modeling",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "factor-graph alert scoring; weakly evaluated extension of prior work"
+ },
+ {
+  "key": "doi:10.34248/bsengineering.1693042",
+  "title": "Analyst-Aware Incident Assignment in Security Operations Centers: A Multi-Factor Prioritization and Optimization Framework",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "analyst-aware incident assignment proposal; outside supervisor-side scope"
+ },
+ {
+  "key": "doi:10.1109/bigdatasecurity-hpsc-ids.2016.41",
+  "title": "Automate Cybersecurity Data Triage by Leveraging Human Analysts' Cognitive Process",
+  "year": "2016",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "triage automata learned from analyst operation traces"
+ },
+ {
+  "key": "doi:10.1109/jsyst.2018.2828832",
+  "title": "Learning From Experts’ Experience: Toward Automated Cyber Security Data Triage",
+  "year": "2018",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "learning triage from expert analysts' traces (journal)"
+ },
+ {
+  "key": "doi:10.3390/computers13070165",
+  "title": "Automation Bias and Complacency in Security Operation Centers",
+  "year": "2024",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "scoping review of automation bias and complacency in SOCs"
+ },
+ {
+  "key": "t:too much to trust measuring the security and cognitive impacts of explainability in ai driven socs",
+  "title": "Too Much to Trust? Measuring the Security and Cognitive Impacts of Explainability in AI-Driven SOCs",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "arXiv preprint (XAI in SOCs)"
+ },
+ {
+  "key": "doi:10.48550/arxiv.2608.17154",
+  "title": "Beyond the Hype: Evaluating LLM Integration and Practical Limitations in Security Operation Centers",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "arXiv preprint (LLMs in SOCs)"
+ },
+ {
+  "key": "doi:10.1142/s0219649226500395",
+  "title": "From Manual to Agentic Security Operations: A Multi-Dimensional Evaluation of AI-Driven SOC Architectures",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "evaluation of AI-driven SOC architectures; LLM/agentic, not supervisory"
+ },
+ {
+  "key": "doi:10.1155/jece/3383674",
+  "title": "Large Language Models for Security Operations Centers: A Comprehensive Survey",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "LLM-for-SOC survey; outside positioning questions (SAT-SA uses no LLM analytics)"
+ },
+ {
+  "key": "doi:10.3390/jcp5040095",
+  "title": "AI-Augmented SOC: A Survey of LLMs and Agents for Security Automation",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "LLM/agent SOC survey; as above"
+ },
+ {
+  "key": "doi:10.48550/arxiv.2605.08316",
+  "title": "AI-Driven Security Alert Screening and Alert Fatigue Mitigation in Security Operations Centers: A Survey",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "arXiv preprint survey of alert screening"
+ },
+ {
+  "key": "doi:10.2139/ssrn.4633965",
+  "title": "Combating Alert Fatigue in the Security Operations Centre",
+  "year": "2023",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "SSRN preprint"
+ },
+ {
+  "key": "doi:10.1109/pst47121.2019.8949029",
+  "title": "Automated Threat-Alert Screening for Battling Alert Fatigue with Temporal Isolation Forest",
+  "year": "2019",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "temporal isolation forest for threat-alert screening"
+ },
+ {
+  "key": "doi:10.1109/access.2022.3161636",
+  "title": "DomainPrio: Prioritizing Domain Name Investigations to Improve SOC Efficiency",
+  "year": "2022",
+  "decision": "INCLUDE",
+  "classification": "directly comparable",
+  "reason_code": "",
+  "note": "population-level analysis of SOC investigations (DomainPrio), 24-week observational study"
+ },
+ {
+  "key": "doi:10.1016/j.cose.2024.104070",
+  "title": "A compliance assessment system for Incident Management process",
+  "year": "2024",
+  "decision": "INCLUDE",
+  "classification": "directly comparable",
+  "reason_code": "",
+  "note": "automated compliance assessment of incident-management processes against a reference model (trace alignment + cost model) for auditors"
+ },
+ {
+  "key": "doi:10.5220/0014947000004018",
+  "title": "A Process Mining Case Study in IT Incident Management",
+  "year": "2026",
+  "decision": "INCLUDE",
+  "classification": "dataset/data source",
+  "reason_code": "",
+  "note": "process mining case study on IT incident management (ITSM data context)"
+ },
+ {
+  "key": "doi:10.1007/978-3-032-35579-9_22",
+  "title": "Graph Analysis of Incident Response Process Activities and Communications",
+  "year": "2026",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "knowledge-graph analysis of incident-response processes from tool logs"
+ },
+ {
+  "key": "t:applying process mining to improve microservices cyber security situational awareness",
+  "title": "Applying process mining to improve microservices cyber security situational awareness.",
+  "year": "2020",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E4",
+  "note": "report/abstract only"
+ },
+ {
+  "key": "doi:10.1007/s10207-025-01040-0",
+  "title": "Automated cybersecurity impact propagation across business processes using process mining techniques",
+  "year": "2025",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "process mining for cybersecurity business impact analysis"
+ },
+ {
+  "key": "doi:10.1109/cyberneticscom.2016.7892570",
+  "title": "Process model extension using heuristics miner: (Case study: Incident management of Volvo IT Belgium)",
+  "year": "2016",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "process discovery on the Volvo IT incident log; no assessment relevance"
+ },
+ {
+  "key": "doi:10.1109/ccst.2015.7389656",
+  "title": "Providing online operational support for distributed, security sensitive electronic business processes",
+  "year": "2015",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "online compliance checking for security-sensitive business processes; tangential"
+ },
+ {
+  "key": "doi:10.5220/0011135600003283",
+  "title": "Towards an Automated Business Process Model Risk Assessment: A Process Mining Approach",
+  "year": "2022",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "process-model risk assessment; tangential"
+ },
+ {
+  "key": "doi:10.1109/imf.2011.13",
+  "title": "Towards Forensic Data Flow Analysis of Business Process Logs",
+  "year": "2011",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "forensic data-flow analysis of business logs; tangential"
+ },
+ {
+  "key": "doi:10.1002/widm.1045",
+  "title": "Replaying history on process models for conformance checking and performance analysis",
+  "year": "2012",
+  "decision": "INCLUDE",
+  "classification": "methodological foundation",
+  "reason_code": "",
+  "note": "replay-based conformance checking and performance analysis"
+ },
+ {
+  "key": "doi:10.1007/11678564_15",
+  "title": "Conformance Testing: Measuring the Fit and Appropriateness of Event Logs and Process Models",
+  "year": "2006",
+  "decision": "INCLUDE",
+  "classification": "methodological foundation",
+  "reason_code": "",
+  "note": "conformance testing (fitness, appropriateness); journal version cited instead"
+ },
+ {
+  "key": "doi:10.1016/j.is.2007.07.001",
+  "title": "Conformance checking of processes based on monitoring real behavior",
+  "year": "2007",
+  "decision": "INCLUDE",
+  "classification": "methodological foundation",
+  "reason_code": "",
+  "note": "conformance checking of processes based on real behaviour (journal)"
+ },
+ {
+  "key": "doi:10.1587/transfun.e101.a.149",
+  "title": "Privacy-Enhancing Trust Infrastructure for Process Mining",
+  "year": "2017",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "privacy infrastructure for process mining"
+ },
+ {
+  "key": "doi:10.32628/gisrrj258369",
+  "title": "A Review of AI Assisted Continuous Auditing Systems in Technology Risk and Cybersecurity Oversight",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "narrative review of AI continuous auditing"
+ },
+ {
+  "key": "doi:10.1002/sec.673",
+  "title": "Incident prioritisation using analytic hierarchy process (AHP): Risk Index Model (RIM)",
+  "year": "2012",
+  "decision": "INCLUDE",
+  "classification": "related work",
+  "reason_code": "",
+  "note": "AHP incident prioritisation risk index"
+ },
+ {
+  "key": "doi:10.1007/s10796-022-10266-5",
+  "title": "Key Factors in Achieving Service Level Agreements (SLA) for Information Technology (IT) Incident Resolution",
+  "year": "2022",
+  "decision": "INCLUDE",
+  "classification": "dataset/data source",
+  "reason_code": "",
+  "note": "SLA-attainment modelling on the same UCI incident event log used in X02b"
+ },
+ {
+  "key": "doi:10.21817/ijet/2017/v9i3/170903s020",
+  "title": "Peer Group Analysis in Identity and Access Management to Identify Anomalies",
+  "year": "2017",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "peer group analysis for IAM; low-evidence venue, covered by weston2008pga"
+ },
+ {
+  "key": "t:implementing peer group analysis within a track and trace system to detect potential fraud s",
+  "title": "Implementing Peer Group Analysis within a Track and Trace System to Detect Potential Fraud(s)",
+  "year": "2014",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "peer group analysis in supply-chain fraud; outside security"
+ },
+ {
+  "key": "t:innovative technology in financial supervision suptech the experience of early users",
+  "title": "Innovative technology in financial supervision (suptech): The experience of early users",
+  "year": "2018",
+  "decision": "INCLUDE",
+  "classification": "background",
+  "reason_code": "",
+  "note": "suptech early users (already cited: broeders2018suptech)"
+ },
+ {
+  "key": "doi:10.3390/risks10040071",
+  "title": "Approaching European Supervisory Risk Assessment with SupTech: A Proposal of an Early Warning System",
+  "year": "2022",
+  "decision": "INCLUDE",
+  "classification": "background",
+  "reason_code": "",
+  "note": "suptech early-warning proposal for European supervisory risk assessment"
+ },
+ {
+  "key": "doi:10.53479/39320",
+  "title": "Empowering financial supervision: a SupTech experiment using machine learning in an early warning system",
+  "year": "2025",
+  "decision": "INCLUDE",
+  "classification": "background",
+  "reason_code": "",
+  "note": "central-bank suptech ML early-warning experiment (text data)"
+ },
+ {
+  "key": "doi:10.1109/icitsi56531.2022.9970863",
+  "title": "SupTech Governance in Regulatory/Supervisory Government Agencies: A Systematic Literature Review",
+  "year": "2022",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "suptech governance review; financial only"
+ },
+ {
+  "key": "doi:10.2139/ssrn.5903962",
+  "title": "State of SupTech Report 2025",
+  "year": "2025",
+  "decision": "INCLUDE",
+  "classification": "background",
+  "reason_code": "",
+  "note": "State of SupTech Report 2025 (grey literature; authorities survey)"
+ },
+ {
+  "key": "doi:10.2139/ssrn.4322943",
+  "title": "State of SupTech Report 2022",
+  "year": "2023",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E5",
+  "note": "earlier edition of the included 2025 report"
+ },
+ {
+  "key": "doi:10.1596/35322",
+  "title": "The Next Wave of Suptech Innovation",
+  "year": "2021",
+  "decision": "INCLUDE",
+  "classification": "background",
+  "reason_code": "",
+  "note": "World Bank report on data-driven market-conduct supervision"
+ },
+ {
+  "key": "t:from spreadsheets to suptech technology solutions for market conduct supervision",
+  "title": "From spreadsheets to suptech : technology solutions for market conduct supervision",
+  "year": "2018",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E5",
+  "note": "earlier World Bank note superseded by the 2021 report"
+ },
+ {
+  "key": "doi:10.2139/ssrn.3861890",
+  "title": "SupTech: A potential Supervisory Tool of European Banking Supervisors",
+  "year": "2020",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "SSRN working paper"
+ },
+ {
+  "key": "doi:10.21098/jcli.v4i1.257",
+  "title": "REGULATORY AND SUPERVISORY TECHNOLOGY RESEARCH: A BIBLIOMETRIC ANALYSIS",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "bibliometric study of suptech/regtech"
+ },
+ {
+  "key": "doi:10.32347/2411-4049.2024.4.122-134",
+  "title": "Cybersecurity maturity models for cybersecurity assessment in critical infrastructure",
+  "year": "2024",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "list of maturity models for critical infrastructure; no evaluation"
+ },
+ {
+  "key": "doi:10.21203/rs.3.rs-3097553/v1",
+  "title": "Cybersecurity Resilience Maturity Assessment Tool for Critical National Information Infrastructure",
+  "year": "2023",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "preprint (Research Square)"
+ },
+ {
+  "key": "doi:10.6028/nist.cswp.1",
+  "title": "Framework for Improving Critical Infrastructure Cybersecurity, Version 1.0 ",
+  "year": "2014",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "NIST CSF 1.0 (superseded standard; background only)"
+ },
+ {
+  "key": "t:efficient data structures for tamper evident logging",
+  "title": "Efficient data structures for tamper-evident logging",
+  "year": "2009",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "tamper-evident logging data structures (already cited: crosby2009logging)"
+ },
+ {
+  "key": "t:efficient tamper evident data structures for untrusted servers",
+  "title": "Efficient tamper-evident data structures for untrusted servers",
+  "year": "2010",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E5",
+  "note": "dissertation version of crosby2009logging"
+ },
+ {
+  "key": "doi:10.1109/pccc.2017.8280476",
+  "title": "Efficient tamper-evident logging of distributed systems via concurrent authenticated tree",
+  "year": "2017",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "authenticated-tree distributed logging; covered by included infrastructure works"
+ },
+ {
+  "key": "doi:10.1002/sec.1242",
+  "title": "BAFi: a practical cryptographic secure audit logging scheme for digital forensics",
+  "year": "2015",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "forward-secure aggregate audit logging (BAFi)"
+ },
+ {
+  "key": "t:efficient compromise resilient and compact cryptographic constructions for digital forensics",
+  "title": "Efficient, compromise resilient and compact cryptographic constructions for digital forensics",
+  "year": "2011",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E5",
+  "note": "precursor of BAFi"
+ },
+ {
+  "key": "doi:10.1007/978-3-319-29485-8_11",
+  "title": "Secure Audit Logs with Verifiable Excerpts",
+  "year": "2016",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "secure audit logs with verifiable excerpts"
+ },
+ {
+  "key": "doi:10.1007/s10207-022-00643-1",
+  "title": "SealFSv2: combining storage-based and ratcheting for tamper-evident logging",
+  "year": "2022",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "SealFSv2 local tamper-evident logging"
+ },
+ {
+  "key": "doi:10.1145/3719027.3765024",
+  "title": "Rethinking Tamper-Evident Logging: A High-Performance, Co-Designed Auditing System",
+  "year": "2025",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "Nitro high-performance tamper-evident audit logging"
+ },
+ {
+  "key": "doi:10.14722/ndss.2020.24065",
+  "title": "Custos: Practical Tamper-Evident Auditing of Operating Systems Using Trusted Execution",
+  "year": "2020",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "Custos tamper-evident OS auditing with trusted execution"
+ },
+ {
+  "key": "doi:10.1109/trustcom.2015.430",
+  "title": "Trusted Tamper-Evident Data Provenance",
+  "year": "2015",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "trusted tamper-evident data provenance"
+ },
+ {
+  "key": "doi:10.1109/cloud.2014.121",
+  "title": "Progger: An Efficient, Tamper-Evident Kernel-Space Logger for Cloud Data Provenance Tracking",
+  "year": "2014",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "Progger tamper-evident provenance logger"
+ },
+ {
+  "key": "doi:10.30574/wjaets.2023.10.2.0249",
+  "title": "Trust, but Verify: Audit-ready logging for clinical AI",
+  "year": "2023",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "clinical AI audit logging in low-evidence venue"
+ },
+ {
+  "key": "doi:10.1007/978-3-319-95729-6_2",
+  "title": "Blockchain-Based Auditing of Transparent Log Servers",
+  "year": "2018",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "blockchain auditing of transparency-log servers; tangential"
+ },
+ {
+  "key": "doi:10.1145/3415088.3415118",
+  "title": "A permissioned blockchain approach to electronic health record audit logs",
+  "year": "2020",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E3",
+  "note": "blockchain EHR audit logs; tangential domain"
+ },
+ {
+  "key": "doi:10.48550/arxiv.2205.07112",
+  "title": "FROG: Forward-Secure Post-Quantum Signature",
+  "year": "2022",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "arXiv preprint (forward-secure PQ signature)"
+ },
+ {
+  "key": "doi:10.48550/arxiv.2312.16322",
+  "title": "Blockchain-Envisioned Post-Quantum Secure Sanitizable Signature for Audit Logs Management",
+  "year": "2023",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "arXiv preprint (PQ sanitizable signature for audit logs)"
+ },
+ {
+  "key": "doi:10.48550/arxiv.2512.00110",
+  "title": "Post-Quantum-Resilient Audit Evidence for Long-Lived Regulated Systems: Security Models, Migration Patterns, and Case Study",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "arXiv preprint (PQ-resilient audit evidence)"
+ },
+ {
+  "key": "doi:10.2139/ssrn.5883842",
+  "title": "Hybrid Post-Quantum Signatures for Tamper-Evident Audit Trails:&amp;nbsp;Formal Security Analysis and Design Trade-offs",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "SSRN preprint"
+ },
+ {
+  "key": "doi:10.20944/preprints202601.0007.v1",
+  "title": "SOMA-DR: Decision Receipts for Explainable Recovery and Key Rotation in Post-Quantum IAM",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "Preprints.org preprint (PQ decision receipts in IAM)"
+ },
+ {
+  "key": "doi:10.1109/tcc.2026.3681599",
+  "title": "Optimized Post-Quantum Attribute-Based Logging for Real-Time and Tamper-Evident Cloud Forensics",
+  "year": "2026",
+  "decision": "INCLUDE",
+  "classification": "security infrastructure",
+  "reason_code": "",
+  "note": "post-quantum attribute-based tamper-evident logging (journal)"
+ },
+ {
+  "key": "doi:10.5281/zenodo.21821704",
+  "title": "Confidential Post-Quantum Settlement: Blind ML-DSA-65 Verification for Institutional Financial Pipelines",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "Zenodo preprint"
+ },
+ {
+  "key": "doi:10.2139/ssrn.6390738",
+  "title": "Cryptographically Anchored AI Governance for Explainable Decision Provenance",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "SSRN preprint"
+ },
+ {
+  "key": "doi:10.2139/ssrn.6321298",
+  "title": "Cryptographically Auditable Decision Governance for Autonomous Trading Systems: A Production Study OMNIX Quantum",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "SSRN preprint"
+ },
+ {
+  "key": "doi:10.5281/zenodo.17688094",
+  "title": "VERITAS OS: A Cryptographically Auditable, Safety-Aligned Decision Operating System for LLM-based Proto-AGI Agents",
+  "year": "2025",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "Zenodo preprint"
+ },
+ {
+  "key": "doi:10.2139/ssrn.6532518",
+  "title": "Institutional AI Accountability Fabric (IAAF): System and Method for Authority-Linked Decision Provenance, Human Override Capture, and Replayable Audit Reconstruction",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "SSRN preprint"
+ },
+ {
+  "key": "doi:10.2139/ssrn.6493442",
+  "title": "HDP: A Lightweight Cryptographic Protocol for Human Delegation Provenance in Agentic AI Systems",
+  "year": "2026",
+  "decision": "EXCLUDE",
+  "classification": "",
+  "reason_code": "E6",
+  "note": "SSRN preprint"
+ }
+]

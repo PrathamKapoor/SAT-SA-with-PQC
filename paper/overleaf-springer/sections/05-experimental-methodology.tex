@@ -1,0 +1,64 @@
+\section{Experimental Methodology}
+\label{sec:method}
+
+\paragraph{Research questions.} RQ1: does SAT-SA emit the finding families declared
+for controlled scenarios? RQ2: how does it compare with simple baselines, and what
+does each worker contribute? RQ3: how does it behave on imperfect evidence? RQ4: how
+sensitive is the peer rule to cohort size and dispersion? RQ5: what do durable
+orchestration and review cost, and do interrupted runs recover? RQ6: does
+verification detect alteration of the finalized record? EXT: does the pipeline run
+on independent real data, and is its risk associated with an outcome available
+there? Utility to supervisors was outside the evaluated scope because no
+human-subject study was conducted. Table~\ref{tab:design} maps every question to
+its experiment.
+
+\input{tables/tab-design}
+
+\paragraph{Data.} All controlled data are \emph{synthetic}. The \emph{controlled
+catalog} contains 5 executable scenarios (of 10
+catalog entries) authored with declared finding families and supervisory actions.
+Its labels are \emph{construction labels}: they encode what a scenario was built to
+contain, so agreement shows that the mechanism responds to its designed inputs, not
+that it detects real misconduct. \emph{Generated populations} (PR01) are
+20 independently seeded populations of 20 entities,
+5 of them declared pathological by the generator.
+\emph{Engineered peer cohorts} (P01) are 96 cells crossing cohort size,
+dispersion and subject value. Controlled data were necessary because no public dataset
+contains SOC workflow records with supervisory ground truth. The single \emph{external}
+dataset is the public UCI incident-management event log (dataset 498, Creative Commons Attribution licence) of one
+organization's IT service desk~\cite{amaral2018uci498,amaral2019completion}; it is IT
+incident data, not SOC data. Two security datasets were assessed and rejected: GUIDE
+has triage-graded SOC incidents but no acknowledgement, closure, investigation-step or
+escalation records~\cite{freitas2024guide}, and CIC-IDS2017 contains network flows,
+not workflow records~\cite{sharafaldin2018cicids}.
+
+\paragraph{Baselines.} Baselines are deliberately simple because they provide
+transparent reference points for assessing whether the additional analytical
+machinery yields measurable benefit. For closure-time detection:
+fixed threshold, MAD rule, z-score and interquartile-range (IQR) rules, and seeded
+random. For prioritization: random order, critical-and-high alert volume, and a
+closure-speed heuristic that ranks entities by \emph{fastest median closure time}.
+Externally: random, incident volume, reassignment rate and slowest median
+resolution; the last is close to the outcome's own construct and serves as an upper
+reference, not a competitor.
+
+\paragraph{Metrics and statistics.} Precision, recall and F1 against construction
+labels; recall and normalized discounted cumulative gain
+(NDCG)~\cite{jarvelin2002ndcg} within the top $k\in\{10,20,30\}\%$ of entities;
+review volume needed to find all pathological entities; conformance with the declared
+validation contract; wall-clock seconds and database statements; and Spearman $\rho$
+against the share of incidents that missed their service-level agreement (SLA). We
+report medians, 95th percentiles only when $n\ge 20$, and seeded percentile bootstrap
+intervals~\cite{efron1993bootstrap} only when there are at least ten independent
+units; comparisons are paired by seed or trial with counts of units where one arm was
+higher, equal or lower. No $p$-values are computed and no significance is claimed; all
+intervals are descriptive and uncorrected. Table~\ref{tab:design} distinguishes
+repeated trials from independent units.
+
+\paragraph{Evidence discipline.} Each experiment produces an experiment bundle
+(manifest with code commit and a dirty-tree flag, configuration, raw results,
+processed metrics) with SHA-256 hashes. The canonical bundles are frozen and
+hash-verified; superseded bundles (for example X02, replaced by X02b after a
+bookkeeping correction that left all analytical outputs identical) are kept but not
+cited. Every number in this paper is rendered from the frozen bundles; no detector,
+threshold or weight was changed on evaluation data.

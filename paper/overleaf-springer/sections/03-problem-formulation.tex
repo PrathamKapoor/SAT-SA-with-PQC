@@ -1,0 +1,92 @@
+\section{Problem Formulation}
+\label{sec:formulation}
+
+We formalize the workflow as it is implemented; no step below is learned from data.
+
+\paragraph{Submissions.} For a monitored organization (entity) $e$ and assessment
+period $t$, a \emph{submission} $S_{e,t}$ is a versioned set of records partitioned
+into six evidence categories (alerts, cases, investigation steps, escalations,
+dispositions, assets). Each record $r$ carries its source provenance (artifact digest
+and record locator). Validation is a total function
+$V(S_{e,t})\in\{\mathit{accept},\mathit{reject}\}$ that parses every record, resolves
+references (e.g.\ a step must reference an existing case) and enforces chronology; it
+is all-or-nothing, so a single invalid record rejects the version.
+
+\paragraph{Findings.} Each analytical worker $w_j$, $j=1,\dots,16$, maps
+an accepted submission (and, for peer analysis, a declared cohort) to findings
+\begin{equation}
+f=(\rho_f,\ \mathit{subject}_f,\ E_f,\ s_f,\ \theta_f,\ c_f),
+\end{equation}
+with rule $\rho_f$, subject, evidence references $E_f\subseteq S_{e,t}$, statistic $s_f$,
+threshold $\theta_f$ and confidence $c_f\in[0,1]$. A finding is a \emph{signal} only if
+$E_f\neq\emptyset$; findings without evidence references are withheld. Let $F_e$ be the
+signal findings of the entity's run.
+
+\paragraph{Confidence.} Every signal carries a confidence vector with an analytical
+support $a_f$, an evidence completeness $e_f$ and, for peer-based findings only, a peer
+confidence $p_f$; the scalar used downstream is the weakest component,
+\begin{equation}
+c_f=\min\bigl(a_f,\ e_f\ [,\ p_f]\bigr).
+\label{eq:confidence}
+\end{equation}
+Each worker sets these components by a fixed, hand-written rule
+(Tables~\ref{tab:workers} and~\ref{tab:workers-b}): a constant, or a clipped linear function of the finding's
+effect size (e.g.\ how far a median closure time falls below its limit) and of record
+counts (e.g.\ the share of qualifying alerts, or the number of peers). The rules are
+heuristic: they were not fitted to data and are not calibrated probabilities, and
+sample size enters only through the count-based terms. When the evidence category a
+rule depends on was not submitted, its $e_f$ is $0$, so the finding contributes nothing
+to risk.
+
+\paragraph{Rule families.} Most execution-gap rules are \emph{existence rules}: they
+fire when at least one qualifying record exists, e.g.\ a critical alert closed faster
+than a severity-specific limit. Peer deviation compares an entity metric $x_e$ with the
+median $\tilde m$ and median absolute deviation $\mathrm{MAD}$ of a declared cohort
+$C$ (after symmetric 10\% trimming when $|C|\ge 4$) and fires when
+\begin{equation}
+|C|\ge 3 \quad\text{and}\quad |x_e-\tilde m| \ge 2\,\mathrm{MAD}(C);
+\label{eq:peer}
+\end{equation}
+within-entity anomalies use the same statistic with factor $3$ over the entity's own
+values. MAD is unscaled.
+
+\paragraph{Risk fusion.} A fixed map $\delta$ assigns each rule to one of
+$7$ dimensions $d$ with weights $w_d$ (execution gap
+25, peer deviation 20, detection gap
+15, negative space 15, anomaly
+15, investigation quality 5,
+escalation discipline 5; sum 100). With
+$C_d=\sum_{f\in F_e,\ \delta(\rho_f)=d} c_f$,
+\begin{equation}
+R_d = w_d\,\frac{C_d}{1+C_d},\qquad R_e=\min\Bigl(100,\ \sum_d R_d\Bigr).
+\label{eq:risk}
+\end{equation}
+Each dimension saturates at its weight. Two properties matter later: $R_e$ is a
+heuristic score, not a probability or a severity; and it depends on summed confidences,
+not on how \emph{prevalent} a problem is within the submission. Findings from different
+families naming the same subject are reported as corroborating clusters that do not
+change $R_e$.
+
+\paragraph{Prioritization.} Entities are ordered by the priority score
+\begin{equation}
+P_e = R_e + 10\,\kappa_e + 5\,\tau_e + 2\,h_e,
+\label{eq:priority}
+\end{equation}
+where $\kappa_e\in\{0,\tfrac14,\tfrac35,1\}$ encodes the confidence bucket of the entity's
+findings, $\tau_e\in[0,1]$ decays linearly with run age over 30 days, and $h_e$ counts
+high-severity signals. The coefficients are fixed defaults, not fitted.
+
+\paragraph{Decision and binding.} A supervisor (or organization administrator)
+records a decision $D_e$ on the reviewed state. Finalization builds a canonical
+document $\mathit{doc}_e$ (decision, findings, observations, risk, recommendations,
+submission records and their provenance), computes $h_e=\mathrm{SHA3\text{-}256}(\mathit{doc}_e)$,
+signs $h_e$ with ML-DSA-65, stores a receipt, and appends a ledger entry
+$\ell_i$ whose hash is $\mathrm{SHA3\text{-}256}$ of its canonical body including the
+predecessor hash $\ell_{i-1}$. Verification rebuilds $\mathit{doc}_e$ from the live
+records and checks the digest, the decision binding, the signature and the chain.
+
+\paragraph{Questions.} Given this pipeline, we ask whether the declared mechanisms
+behave as specified under controlled conditions, how they compare with simple
+baselines, how they respond to imperfect evidence and cohort choice, what orchestration
+and integrity cost, and whether $R_e$ tracks an independent outcome on real data
+(Section~\ref{sec:method}).

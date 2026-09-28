@@ -1,0 +1,22 @@
+\begin{table}[!htbp]
+\caption{SAT-SA architecture inventory as implemented. ``Agent'' is the
+implementation's name for a registered component; each maps to deterministic code, and
+none is a language-model or autonomous agent. Only the rows marked ``yes'' are exercised
+by the reported experiments.}
+\label{tab:architecture}
+\centering
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{3.5cm}L{1.0cm}L{5.1cm}L{1.8cm}@{}}
+\toprule
+Layer & Count & Members & Evaluated \\
+\midrule
+Registered agents (agent registry) & \V{CODE-registry} & \V{CODE-registry-satsa} supervisory agents and \V{CODE-registry-mlops} retained MLOps agents & in part \\
+\quad Supervisory analytical agents & 11 & one agent per analysis family; they group the \V{CODE-workers} default analytical workers (the execution-gap agent groups six detectors) & yes \\
+\quad Supervisory pipeline agents & 12 & ingestion, normalization, correlation, risk scoring, prioritization, recommendation, review workflow, trust--provenance, evidence assembly, meta-audit, report generation, validation & ingestion to trust: yes; last four: no \\
+\quad Retained MLOps agents & \V{CODE-registry-mlops} & data, performance, security, quantum security, red team, training optimization, incident response, governance, optimization (inherited platform) & no \\
+Default analytical workers & \V{CODE-workers} & listed in Tables~\ref{tab:workers} and~\ref{tab:workers-b} & yes \\
+Orchestration graph nodes & \V{CODE-graph-nodes} & readiness, analysis, recommendations, human review, trust boundary (LangGraph mode) & yes \\
+\bottomrule
+\end{tabular}
+\end{table}

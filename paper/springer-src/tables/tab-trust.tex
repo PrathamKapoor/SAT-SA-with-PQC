@@ -1,0 +1,23 @@
+\begin{table}[!htbp]
+\caption{Integrity mutation matrix on one finalized workflow (T01): \V{T01-detected}
+of \V{T01-expected} mutations of signed state detected; the unsigned control still
+verified. Full targets are in the supplementary material.}
+\label{tab:trust}
+\centering
+\small
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}L{7.4cm}ll@{}}
+\toprule
+Mutated element & Expected & Observed \\
+\midrule
+Decision action; decision reason & tampered & tampered \\
+Finding rationale; observation scope & tampered & tampered \\
+Risk profile; recommendation & tampered & tampered \\
+Source provenance; submission record payload & tampered & tampered \\
+Artifact digest; canonical payload & tampered & tampered \\
+Receipt signature; receipt public key & tampered & tampered \\
+Ledger chain (predecessor hash) & tampered & tampered \\
+Unsigned queue field (control) & verified & verified \\
+\bottomrule
+\end{tabular}
+\end{table}
