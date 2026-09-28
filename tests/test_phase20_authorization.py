@@ -227,7 +227,9 @@ def test_cookie_sessions_require_csrf_for_every_mutation(api):
     c = api["client"]
     login = c.post("/api/v1/session", json={"credential": api["tokens"]["admin"]}).json()
     h = {"X-Organization-ID": api["org"]}
-    for token in [None, "", "0" * 64, login["csrf_token"][:-1] + "0"]:
+    valid = login["csrf_token"]
+    altered = valid[:-1] + ("1" if valid[-1] == "0" else "0")
+    for token in [None, "", "0" * 64, altered]:
         extra = {} if token is None else {"X-CSRF-Token": token}
         response = c.post("/api/v1/entities", headers={**h, **extra}, json={"display_name": "csrf"})
         assert response.status_code == 403, response.text
