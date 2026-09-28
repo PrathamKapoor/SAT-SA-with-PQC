@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -18,18 +18,29 @@ const DEMO = (repo: string, category: string) => path.join(repo, "docs", "demo",
 const CATEGORIES = ["alerts", "cases", "investigation_steps", "escalations", "dispositions", "assets"];
 const ENTITY = `E2E Bank ${Date.now().toString(36)}`;
 
-async function signIn(page: Page, credential: string) {
+type Role = "admin" | "analyst" | "supervisor";
+
+/**
+ * Sign in once per role and reuse the browser session in later tests, as a
+ * real user would. The backend allows five sign-in attempts per client
+ * address per minute; one sign-in per role keeps the suite within it.
+ */
+type SavedState = Awaited<ReturnType<BrowserContext["storageState"]>>;
+const sessions = new Map<Role, SavedState>();
+
+async function pageAs(browser: Browser, role: Role): Promise<Page> {
+  const saved = sessions.get(role);
+  const context = await browser.newContext(saved ? { storageState: saved } : {});
+  const page = await context.newPage();
+  if (saved) return page;
   await page.goto("/login");
-  await page.getByLabel("Issued credential").fill(credential);
+  await page.getByLabel("Issued credential").fill(state().credentials[role]);
   await page.getByRole("button", { name: "Sign in" }).click();
   // One membership: the organization is selected automatically.
   await expect(page).toHaveURL(/\/workbench$/);
   await expect(page.getByRole("heading", { name: "Workbench", level: 1 })).toBeVisible();
-}
-
-async function signOut(page: Page) {
-  await page.getByRole("button", { name: "Sign out" }).first().click();
-  await expect(page).toHaveURL(/\/login/);
+  sessions.set(role, await context.storageState());
+  return page;
 }
 
 test.describe.configure({ mode: "serial" });
@@ -50,9 +61,9 @@ test("unauthenticated and invalid sessions are sent to sign-in", async ({ page, 
   await expect(page.getByText("Credential not recognised.")).toBeVisible();
 });
 
-test("an analyst ingests, validates and starts a run", async ({ page }) => {
-  const { repo, credentials } = state();
-  await signIn(page, credentials.analyst);
+test("an analyst ingests, validates and starts a run", async ({ browser }) => {
+  const { repo } = state();
+  const page = await pageAs(browser, "analyst");
 
   await page.getByRole("link", { name: "Ingest evidence" }).first().click();
   await expect(page).toHaveURL(/\/workbench\/ingest/);
@@ -95,22 +106,19 @@ test("an analyst ingests, validates and starts a run", async ({ page }) => {
   const cited = page.locator("[data-evidence]");
   if ((await cited.count()) > 0) await expect(cited.first().locator("dl")).toBeVisible();
   await expect(page.getByText(/Rank \d+/)).toBeVisible();
-  await signOut(page);
 });
 
-test("the entity is ranked from its persisted risk", async ({ page }) => {
-  const { credentials } = state();
-  await signIn(page, credentials.supervisor);
+test("the entity is ranked from its persisted risk", async ({ browser }) => {
+  const page = await pageAs(browser, "supervisor");
   await page.getByRole("link", { name: "Entities" }).first().click();
   const row = page.getByRole("list", { name: "Entities" }).getByRole("link", { name: new RegExp(ENTITY) });
   await expect(row).toBeVisible();
   await expect(row).toContainText("Awaiting review");
-  await signOut(page);
 });
 
-test("a supervisor decides and TRUST-SAT verifies the decided record", async ({ page }) => {
-  const { credentials } = state();
-  await signIn(page, credentials.supervisor);
+test("a supervisor decides and TRUST-SAT verifies the decided record", async ({ browser }) => {
+  const page = await pageAs(browser, "supervisor");
+  await page.goto("/workbench");
   await page.getByRole("link", { name: /Review queue/ }).first().click();
   await page.getByRole("list", { name: "Runs awaiting review" }).getByRole("link", { name: new RegExp(ENTITY) }).click();
   await expect(page).toHaveURL(new RegExp(runUrl));
@@ -129,23 +137,30 @@ test("a supervisor decides and TRUST-SAT verifies the decided record", async ({ 
 
   await page.getByRole("link", { name: "Decisions" }).first().click();
   await expect(page.getByRole("link", { name: new RegExp(ENTITY) })).toBeVisible();
-  await signOut(page);
 });
 
-test("the administrator reads the audit trail of the run", async ({ page }) => {
-  const { credentials } = state();
-  await signIn(page, credentials.admin);
+test("the administrator reads the audit trail of the run", async ({ browser }) => {
+  const page = await pageAs(browser, "admin");
   await page.goto(`/workbench/audit?run=${runUrl.split("/").pop()}`);
   await expect(page.getByRole("table", { name: "Audit events" })).toBeVisible();
   await expect(page.getByText("trust.supervisory_finalized")).toBeVisible();
-  await signOut(page);
 });
 
-test("the backend refuses the audit log to a role without audit permission", async ({ page }) => {
+test("the backend refuses the audit log to a role without audit permission", async ({ browser }) => {
   // The analyst has no audit permission: the backend refuses, and the page says so.
-  const { credentials } = state();
-  await signIn(page, credentials.analyst);
+  const page = await pageAs(browser, "analyst");
   await page.goto("/workbench/audit");
   await expect(page.getByText("Audit events: Not permitted")).toBeVisible();
-  await signOut(page);
+});
+
+test("sign-out revokes the backend session", async ({ browser }) => {
+  const page = await pageAs(browser, "admin");
+  await page.goto("/workbench");
+  await page.getByRole("button", { name: "Sign out" }).first().click();
+  await expect(page).toHaveURL(/\/login/);
+
+  // The saved session token was revoked on the backend, not only deleted locally.
+  const replay = await pageAs(browser, "admin");
+  await replay.goto("/workbench");
+  await expect(replay).toHaveURL(/\/login\?reason=expired/);
 });
