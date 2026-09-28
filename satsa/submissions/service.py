@@ -244,7 +244,24 @@ class SubmissionService:
                 " AND submission_version_id=? AND category=?",
                 (self.org, version_id, category),
             ):
-                raise DomainValidationError("category already uploaded in this version")
+                # A concurrent request with this idempotency key may have
+                # inserted the row after the lookup above: that is a replay.
+                replay = self.db.query_one(
+                    "SELECT * FROM satsa_artifacts WHERE organization_id=?"
+                    " AND submission_version_id=? AND upload_idempotency_key=?",
+                    (self.org, version_id, idempotency_key),
+                )
+                if not (
+                    replay
+                    and replay["sha3_256_digest"] == artifact_digest
+                    and replay["category"] == category
+                    and replay["original_filename"] == filename
+                    and replay["content_type"] == content_type
+                ):
+                    raise DomainValidationError("category already uploaded in this version")
+                if replay.get("storage_status", "stored") == "stored":
+                    return replay
+                artifact_id, storage_key = replay["id"], replay["storage_key"]
             # Keep local paths below Windows MAX_PATH even under deep test/user roots.
             # Ownership is stored and checked in SQL; this is only an opaque blob key.
             scope_key = hashlib.sha3_256(

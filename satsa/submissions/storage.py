@@ -48,7 +48,10 @@ class LocalArtifactStorage:
 
     def _path(self, key: str) -> Path:
         validate_key(key)
-        path = (self.root / key).resolve()
+        # Lexical join: validated keys have no '.', '..' or empty components.
+        # resolve() here raced with concurrent writers creating the same
+        # directories (Windows) and misreported valid keys as escaping.
+        path = self.root.joinpath(*key.split("/"))
         if not path.is_relative_to(self.root):
             raise ValueError("artifact key escapes storage root")
         return path
