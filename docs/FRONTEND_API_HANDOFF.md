@@ -45,11 +45,9 @@ Recommended flow (contract section 1):
 Never call `DELETE /api/v1/session` with a raw credential as bearer: that
 revokes the credential itself and the user can no longer sign in.
 
-Current state of `web/src/lib/auth`: `exchangeCredential` posts the credential
-and discards the session the backend creates; `actions.ts` stores the raw
-credential in `satsa_session`; sign-out only deletes the cookie. That works
-but keeps a long-lived credential in a cookie and leaves one unused backend
-session per sign-in until it expires. Switch to the flow above.
+Implemented in Phase 18 (`web/src/lib/auth/actions.ts`,
+`web/src/lib/api/client.ts`): the web keeps only the session token, and
+sign-out revokes it.
 
 The session `role` is the identity's global role. The role that governs a
 tenant page is the membership role from `GET /api/v1/organizations`. Hide
