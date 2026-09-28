@@ -40,6 +40,14 @@ x-satsa-backend: &satsa_backend
   volumes:
     - satsa_durable:/data
   networks: [backend]
+  # A compromised process cannot gain privileges, keep kernel capabilities or
+  # modify the image: writes go only to the durable volume and a bounded /tmp
+  # (upload staging and validation work files).
+  read_only: true
+  tmpfs:
+    - /tmp:size=512m
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
 
 services:
   database:
@@ -127,6 +135,8 @@ services:
     environment:
       SATSA_API_BASE_URL: http://api:8000
       SATSA_FORWARD_CLIENT_IP: "true"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
     networks:
       edge: {}
       backend:
@@ -157,6 +167,7 @@ services:
       - caddy_config:/config
     networks:
       edge: {}
+    security_opt: ["no-new-privileges:true"]
     # No start dependency on web: Caddy answers 502 until the web tier is up,
     # and with bundled storage the API reaches S3 through this Caddy.
     restart: unless-stopped

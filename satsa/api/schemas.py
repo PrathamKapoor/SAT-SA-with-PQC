@@ -2,7 +2,7 @@
 
 from typing import Any, Generic, Literal, TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 T = TypeVar("T")
 
@@ -13,6 +13,14 @@ class Schema(BaseModel):
 
 class Input(Schema):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
+
+    # PostgreSQL text cannot hold NUL; reject it as invalid input, not a 500.
+    @field_validator("*", mode="after")
+    @classmethod
+    def _no_nul(cls, value):
+        if isinstance(value, str) and "\x00" in value:
+            raise ValueError("NUL characters are not allowed")
+        return value
 
 
 class Page(Schema, Generic[T]):

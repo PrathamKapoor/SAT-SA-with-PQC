@@ -13,6 +13,7 @@ import { defineConfig } from "@playwright/test";
  * and SATSA_E2E_CREDENTIALS (a JSON file with organization_id, admin, analyst,
  * supervisor credentials); nothing is started locally. Set
  * SATSA_E2E_IGNORE_HTTPS_ERRORS=true only for a certificate from a local CA.
+ * SATSA_E2E_SUITE=security runs e2e/security instead (proxy rate limiting).
  *
  * PLAYWRIGHT_CHANNEL selects an installed browser (for example msedge or
  * chrome); without it, run `npx playwright install chromium` once.
@@ -20,9 +21,14 @@ import { defineConfig } from "@playwright/test";
 export const E2E_API_PORT = Number(process.env.SATSA_E2E_API_PORT ?? 8765);
 const WEB_PORT = Number(process.env.SATSA_E2E_WEB_PORT ?? 3107);
 const external = process.env.SATSA_E2E_BASE_URL;
+// e2e/security holds checks that disturb other tests (for example a login
+// lockout); they run on their own with SATSA_E2E_SUITE=security.
+const securitySuite = process.env.SATSA_E2E_SUITE === "security";
 
 export default defineConfig({
   testDir: "./e2e",
+  testMatch: securitySuite ? "security/**/*.spec.ts" : "*.spec.ts",
+  testIgnore: securitySuite ? [] : ["**/security/**"],
   timeout: 8 * 60 * 1000,
   expect: { timeout: 20_000 },
   fullyParallel: false,

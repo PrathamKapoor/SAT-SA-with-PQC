@@ -9,9 +9,20 @@
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		# Everything is served from this origin (fonts are self-hosted at build
+		# time). Next.js hydration uses inline scripts and styles, so those stay
+		# 'unsafe-inline'; the policy still blocks third-party scripts, outbound
+		# connections, framing, <base> rewriting and cross-origin form posts.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		-Server
 		-X-Powered-By
 	}
+
+	# Pages carry tenant data rendered for one session: no shared or browser
+	# cache may keep them. Only content-hashed build assets are cacheable.
+	@dynamic not path /_next/static/*
+	header @dynamic >Cache-Control "no-store"
 
 	# Evidence uploads pass through the web tier to the API (17 MiB limit there).
 	request_body {

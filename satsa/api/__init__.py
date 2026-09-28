@@ -201,6 +201,13 @@ def create_app(
                     return await error(request, exc.status, exc.code, exc.message)(
                         scope, receive, send
                     )
+            # NUL cannot be stored in PostgreSQL text; identifiers carrying it
+            # are malformed input and must not reach the database as a 500.
+            query = scope.get("query_string", b"")
+            if "\x00" in scope.get("path", "") or b"%00" in query or b"\x00" in query:
+                return await error(
+                    request, 400, "MALFORMED_REQUEST", "Malformed request"
+                )(scope, receive, send)
             try:
                 declared = int(headers.get(b"content-length", b"0"))
             except ValueError:
@@ -969,14 +976,17 @@ def create_app(
     )
     def verify(run_id: str, t: Tenant, request: Request, user: User):
         svc = execution(t)
-        svc.get_run(run_id)
+        run = svc.get_run(run_id)
         try:
             ok, reason = svc.verify_trust(run_id)
+            # A supervised run completes only after finalization, so a
+            # completed run without one has lost (or had removed) its record.
+            finished = run["review_required"] and run["status"] in {"completed", "partial"}
             status = (
                 "verified"
                 if ok
                 else "not_finalized"
-                if reason == "finalization missing"
+                if reason == "finalization missing" and not finished
                 else "inconsistent"
             )
         except (OSError, QSMLOPSError):

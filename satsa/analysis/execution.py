@@ -79,6 +79,19 @@ def _stable_id(prefix: str, *parts: str) -> str:
     return f"{prefix}_{digest}"
 
 
+def _lock_run(db, organization_id: str, run_id: str) -> dict | None:
+    """Row-lock a run inside a transaction and return its committed status.
+
+    A no-op UPDATE is the portable SELECT ... FOR UPDATE: PostgreSQL waits for
+    a concurrent writer and re-reads the row; SQLite serializes transactions.
+    """
+    return db.query_one(
+        "UPDATE satsa_runs SET status=status WHERE organization_id=? AND id=?"
+        " RETURNING status",
+        (organization_id, run_id),
+    )
+
+
 def _membership_role(engine, org: str, user: str) -> str | None:
     row = engine.query_one(
         "SELECT m.role FROM satsa_memberships m JOIN satsa_organizations o"
@@ -292,10 +305,7 @@ class AnalysisExecutionService:
         if role not in {"satsa_supervisor", "satsa_admin"}:
             raise PermissionDeniedError("only a supervisor may cancel an analysis run")
         with self.db.transaction():
-            row = self.db.query_one(
-                "SELECT status FROM satsa_runs WHERE organization_id=? AND id=?",
-                (self.org, run_id),
-            )
+            row = _lock_run(self.db, self.org, run_id)
             if row is None:
                 raise PermissionDeniedError(
                     "analysis run does not belong to organization"
@@ -509,6 +519,9 @@ class AnalysisExecutionService:
             "created_at": now,
         }
         with self.db.transaction():
+            # Lock the run row first: competing decisions and a concurrent
+            # cancel serialize here, and the checks below see their commits.
+            current = _lock_run(self.db, self.org, run_id)
             prior = self.db.query_one(
                 "SELECT id,action,reason FROM satsa_run_review_decisions"
                 " WHERE organization_id=? AND run_id=?",
@@ -520,10 +533,6 @@ class AnalysisExecutionService:
                     assert decision is not None
                     return decision
                 raise DomainValidationError("supervisory decision already recorded")
-            current = self.db.query_one(
-                "SELECT status FROM satsa_runs WHERE organization_id=? AND id=?",
-                (self.org, run_id),
-            )
             if current is None or current["status"] != "awaiting_review":
                 raise DomainValidationError("run is no longer awaiting review")
             self.db.execute(
