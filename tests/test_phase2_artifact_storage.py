@@ -63,3 +63,35 @@ def test_s3_adapter_uses_streamed_body_and_server_digest(tmp_path):
     store.copy_to("org-a/version-a/alerts/data.csv", dest)
     assert dest.read_bytes() == b"hello"
     assert client.last_put["Metadata"] == {"sha3-256": digest}
+
+
+def test_s3_adapter_reads_digest_metadata_case_insensitively(tmp_path):
+    """S3-compatible stores behind a Go reverse proxy return X-Amz-Meta-Sha3-256.
+
+    Found by the production-stack CI job (SeaweedFS behind Caddy): botocore then
+    exposes the metadata key as "Sha3-256", and uploads failed verification.
+    """
+    from satsa.submissions import S3ArtifactStorage
+
+    class CanonicalizingClient:
+        def __init__(self):
+            self.objects = {}
+
+        def put_object(self, **kwargs):
+            self.objects[kwargs["Key"]] = (kwargs["Body"].read(), kwargs["Metadata"])
+
+        def head_object(self, **kwargs):
+            body, metadata = self.objects[kwargs["Key"]]
+            return {
+                "ContentLength": len(body),
+                "Metadata": {k.title(): v for k, v in metadata.items()},
+            }
+
+    store = S3ArtifactStorage(bucket="test-bucket", client=CanonicalizingClient())
+    source = tmp_path / "source"
+    source.write_bytes(b"hello")
+    digest = sha3_hex(b"hello")
+    store.put_file(source, "org-a/version-a/alerts/data.csv", "text/csv", digest)
+    store.verify_object("org-a/version-a/alerts/data.csv", digest=digest, size=5)
+    with pytest.raises(ValueError, match="digest metadata mismatch"):
+        store.verify_object("org-a/version-a/alerts/data.csv", digest="0" * 64)

@@ -102,6 +102,20 @@ class LocalArtifactStorage:
             raise
 
 
+def _object_digest(head: dict) -> str | None:
+    """The SHA3-256 recorded in an object's user metadata.
+
+    Metadata names are matched case-insensitively: AWS returns them lowercase,
+    but S3-compatible stores and proxies that canonicalize header names (for
+    example a Go reverse proxy) return X-Amz-Meta-Sha3-256, which botocore
+    exposes as "Sha3-256"."""
+    metadata = head.get("Metadata") or {}
+    return next(
+        (value for name, value in metadata.items() if name.lower() == "sha3-256"),
+        None,
+    )
+
+
 class S3ArtifactStorage:
     """S3-compatible object backend; endpoint/credentials come from the caller."""
 
@@ -150,7 +164,7 @@ class S3ArtifactStorage:
             }:
                 raise
             existing = self.client.head_object(Bucket=self.bucket, Key=object_key)
-            if existing.get("Metadata", {}).get("sha3-256") != digest:
+            if _object_digest(existing) != digest:
                 raise FileExistsError(
                     "artifact key already contains different bytes"
                 ) from exc
@@ -160,7 +174,7 @@ class S3ArtifactStorage:
         self, key: str, *, digest: str | None = None, size: int | None = None
     ) -> None:
         result = self.client.head_object(Bucket=self.bucket, Key=self._key(key))
-        if digest is not None and result.get("Metadata", {}).get("sha3-256") != digest:
+        if digest is not None and _object_digest(result) != digest:
             raise ValueError("stored artifact digest metadata mismatch")
         if size is not None and result.get("ContentLength") != size:
             raise ValueError("stored artifact size mismatch")
