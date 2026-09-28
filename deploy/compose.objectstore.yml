@@ -6,20 +6,20 @@
 #
 # SAT-SA production requires S3 over HTTPS, so SeaweedFS is reached through
 # Caddy's internal TLS endpoint https://s3.satsa.internal:9443 (backend network
-# only) and the backend trusts Caddy's local CA via AWS_CA_BUNDLE. Data lives in
+# only) and the backend trusts Caddy's local CA (copied by s3-ca) via AWS_CA_BUNDLE. Data lives in
 # the object_data volume on this host's disk: back it up with the database and
 # the durable volume (deploy/README.md). Managed object storage is more durable.
 x-bundled-s3: &bundled_s3
   environment:
     SATSA_S3_ENDPOINT_URL: https://s3.satsa.internal:9443
     SATSA_S3_ADDRESSING_STYLE: path
-    AWS_CA_BUNDLE: /caddy-data/caddy/pki/authorities/local/root.crt
+    AWS_CA_BUNDLE: /satsa-ca/root.crt
   volumes:
     - satsa_durable:/data
-    - caddy_data:/caddy-data:ro
+    - satsa_ca:/satsa-ca:ro
   depends_on:
-    caddy:
-      condition: service_healthy
+    s3-ca:
+      condition: service_completed_successfully
     objectstore:
       condition: service_started
 
@@ -52,6 +52,22 @@ services:
       timeout: 3s
       retries: 40
 
+  # Caddy keeps its PKI directory owner-only; copy just the public root
+  # certificate to a volume the (non-root) API and worker can read.
+  s3-ca:
+    image: caddy:2
+    entrypoint:
+      - /bin/sh
+      - -c
+      - cp /caddy-data/caddy/pki/authorities/local/root.crt /satsa-ca/root.crt && chmod 0644 /satsa-ca/root.crt
+    volumes:
+      - caddy_data:/caddy-data:ro
+      - satsa_ca:/satsa-ca
+    depends_on:
+      caddy:
+        condition: service_healthy
+    restart: "no"
+
   migrate: *bundled_s3
   key-init: *bundled_s3
   api: *bundled_s3
@@ -59,3 +75,4 @@ services:
 
 volumes:
   object_data:
+  satsa_ca:
