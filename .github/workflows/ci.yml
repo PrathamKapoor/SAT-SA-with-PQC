@@ -146,6 +146,131 @@ jobs:
           path: web/test-results
           if-no-files-found: ignore
 
+  production-stack:
+    name: production stack (HTTPS, web, API, worker, PostgreSQL, S3) + browser E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      COMPOSE: docker compose -f deploy/compose.production.yml -f deploy/compose.objectstore.yml --env-file deploy/production.env
+    steps:
+      - uses: actions/checkout@v4
+      - name: Production settings (throwaway secrets for this run)
+        run: |
+          umask 077
+          {
+            echo "SATSA_SITE_ADDRESS=localhost"
+            echo "SATSA_POSTGRES_PASSWORD=$(openssl rand -hex 32)"
+            echo "SATSA_S3_ENDPOINT_URL=https://s3.satsa.internal:9443"
+            echo "SATSA_S3_REGION=us-east-1"
+            echo "SATSA_S3_BUCKET=satsa-evidence"
+            echo "SATSA_S3_ACCESS_KEY=ci$(openssl rand -hex 12)"
+            echo "SATSA_S3_SECRET_KEY=$(openssl rand -hex 32)"
+          } > deploy/production.env
+      - name: Validate the compose topology
+        run: $COMPOSE config --quiet
+      - name: Build and start (SATSA_ENVIRONMENT=production)
+        run: $COMPOSE up -d --build
+      - name: Wait for the public HTTPS site and the API
+        run: |
+          for attempt in $(seq 1 90); do
+            if curl -skf https://localhost/login >/dev/null && $COMPOSE exec -T api python -m satsa.api.healthcheck --role api; then exit 0; fi
+            sleep 4
+          done
+          $COMPOSE ps
+          exit 1
+      - name: Bootstrap an organization and provision members through the API
+        run: |
+          set -euo pipefail
+          PW=$(grep '^SATSA_POSTGRES_PASSWORD=' deploy/production.env | cut -d= -f2)
+          $COMPOSE exec -T api python scripts/bootstrap_satsa_admin.py \
+            --database-url "postgresql://satsa:${PW}@database:5432/satsa" \
+            --ledger /data/identity-audit-ledger.jsonl \
+            --name "CI administrator" --email ci-admin@example.test \
+            --organization "CI organization" > bootstrap.txt
+          ORG=$(grep '^organization_id=' bootstrap.txt | cut -d= -f2)
+          ADMIN=$(tail -n 1 bootstrap.txt)
+          echo "::add-mask::${ADMIN}"
+          MEMBERS=$($COMPOSE exec -T api python scripts/provision_members.py --api http://api:8000 \
+            --credential "$ADMIN" --organization "$ORG" \
+            --member analyst "CI analyst" ci-analyst@example.test \
+            --member supervisor "CI supervisor" ci-supervisor@example.test \
+            --member auditor "CI auditor" ci-auditor@example.test)
+          python3 - "$ORG" "$ADMIN" "$MEMBERS" <<'EOF'
+          import json, sys
+          org, admin, members = sys.argv[1], sys.argv[2], json.loads(sys.argv[3])
+          creds = {"organization_id": org, "admin": admin, **members}
+          for value in creds.values():
+              print(f"::add-mask::{value}")
+          open("credentials.json", "w").write(json.dumps(creds))
+          EOF
+          chmod 600 credentials.json
+      - name: Deployment smoke (HTTPS entry point, readiness, full workflow on the worker)
+        env:
+          SMOKE_INSECURE_TLS: "1"
+          SATSA_PUBLIC_URL: https://localhost
+        run: |
+          set -euo pipefail
+          export SATSA_SMOKE_ORGANIZATION_ID=$(python3 -c "import json;print(json.load(open('credentials.json'))['organization_id'])")
+          export SATSA_SMOKE_ANALYST_CREDENTIAL=$(python3 -c "import json;print(json.load(open('credentials.json'))['analyst'])")
+          export SATSA_SMOKE_SUPERVISOR_CREDENTIAL=$(python3 -c "import json;print(json.load(open('credentials.json'))['supervisor'])")
+          export SATSA_SMOKE_AUDITOR_CREDENTIAL=$(python3 -c "import json;print(json.load(open('credentials.json'))['auditor'])")
+          COMPOSE="$COMPOSE" bash deploy/smoke.sh
+      - name: Worker restart recovery (queued work survives a stopped worker)
+        run: |
+          set -euo pipefail
+          export SATSA_SMOKE_ORGANIZATION_ID=$(python3 -c "import json;print(json.load(open('credentials.json'))['organization_id'])")
+          export SATSA_SMOKE_ANALYST_CREDENTIAL=$(python3 -c "import json;print(json.load(open('credentials.json'))['analyst'])")
+          export SATSA_SMOKE_SUPERVISOR_CREDENTIAL=$(python3 -c "import json;print(json.load(open('credentials.json'))['supervisor'])")
+          export SATSA_SMOKE_AUDITOR_CREDENTIAL=$(python3 -c "import json;print(json.load(open('credentials.json'))['auditor'])")
+          $COMPOSE stop worker
+          $COMPOSE exec -T -e SATSA_SMOKE_API_URL=http://api:8000 -e SATSA_SMOKE_ORGANIZATION_ID \
+            -e SATSA_SMOKE_ANALYST_CREDENTIAL -e SATSA_SMOKE_SUPERVISOR_CREDENTIAL -e SATSA_SMOKE_AUDITOR_CREDENTIAL \
+            -e SATSA_SMOKE_TIMEOUT_SECONDS=600 api python scripts/deployment_smoke.py --report /tmp/recovery.json &
+          SMOKE=$!
+          sleep 25
+          if ! kill -0 "$SMOKE" 2>/dev/null; then echo "smoke finished without a worker" >&2; exit 1; fi
+          echo "run is waiting with the worker stopped; starting the worker"
+          $COMPOSE start worker
+          wait "$SMOKE"
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Browser end-to-end through HTTPS against the production stack
+        working-directory: web
+        env:
+          SATSA_E2E_BASE_URL: https://localhost
+          SATSA_E2E_CREDENTIALS: ${{ github.workspace }}/credentials.json
+          SATSA_E2E_IGNORE_HTTPS_ERRORS: "true"
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+      - name: API restart keeps sessions and serves the site
+        run: |
+          $COMPOSE restart api
+          for attempt in $(seq 1 60); do
+            if $COMPOSE exec -T api python -m satsa.api.healthcheck --role api && curl -skf https://localhost/login >/dev/null; then exit 0; fi
+            sleep 3
+          done
+          exit 1
+      - name: Service logs
+        if: always()
+        run: $COMPOSE logs --no-color --tail 200 > production-stack.log || true
+      - name: Upload logs and Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-stack-results
+          path: |
+            production-stack.log
+            web/test-results
+          if-no-files-found: ignore
+      - name: Tear down
+        if: always()
+        run: $COMPOSE down -v
+
   docker-build-smoke:
     name: Docker build/smoke
     runs-on: ubuntu-latest
