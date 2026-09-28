@@ -5,9 +5,9 @@
 # ============================================
 
 # IMPORTANT: Node.js Version Maintenance
-# This Dockerfile defaults to Node.js 24.14.1-slim to match the repo's Node 24 baseline.
+# This Dockerfile defaults to Node.js 24.21.0-slim to match the repo's Node 24 baseline.
 # To ensure security and compatibility, update the NODE_VERSION ARG when the project's Node baseline changes.
-ARG NODE_VERSION=24.14.1-slim
+ARG NODE_VERSION=24.21.0-slim
 
 FROM node:${NODE_VERSION} AS dependencies
 
@@ -77,6 +77,15 @@ FROM node:${NODE_VERSION} AS runner
 
 # Set working directory
 WORKDIR /app
+
+# The server runs `node server.js` only: apply pending Debian security
+# updates and remove the package managers (npm, corepack), whose bundled
+# dependencies are otherwise the image's main scanner findings (CI image-scan).
+RUN apt-get update \
+  && apt-get upgrade -y --no-install-recommends \
+  && rm -rf /var/lib/apt/lists/* \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 
 # Set production environment variables
 ENV NODE_ENV=production

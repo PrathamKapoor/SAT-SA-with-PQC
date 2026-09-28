@@ -25,6 +25,10 @@
 	header @dynamic >Cache-Control "no-store"
 
 	# Evidence uploads pass through the web tier to the API (17 MiB limit there).
+	# max_size applies only while an upstream reads the body, so a declared
+	# body of 19 MB or more is refused here before any tier touches it.
+	@oversized header_regexp Content-Length ^([0-9]{9,}|19[0-9]{6}|[2-9][0-9]{7})$
+	respond @oversized 413
 	request_body {
 		max_size 18MB
 	}
