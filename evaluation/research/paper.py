@@ -3,7 +3,7 @@
 ``paper/data/claims-spec.json`` declares each quantitative value used in the
 manuscript: its claim id, experiment, canonical bundle, a path into that
 bundle's ``raw/results.json`` (or a named derivation computed from the same
-file, or a code fact read from the installed source), metric, unit, sample
+file, or a code fact pinned to the freeze's code commit), metric, unit, sample
 size, dataset, status, limitations and display format. ``build_paper_data``
 verifies every cited bundle against the freeze, resolves every value and
 writes ``paper-data.json`` plus ``values.tex`` (LaTeX macros read by the
@@ -165,8 +165,73 @@ DERIVATIONS: dict[str, Callable[[dict[str, Any], dict[str, Any]], Any]] = {
 }
 
 
+# Code facts as they held in the source the paper describes: the freeze's
+# canonical code commit. The product keeps evolving (for example, API routes
+# are added), so the paper must not read these from whatever code is
+# installed now. Each value was computed with ``_code_fact`` against that
+# commit and equals the value in ``paper/data/paper-data.json``. A new code
+# fact needs an entry here before the paper can cite it.
+PAPER_CODE_FACTS_COMMIT = "837d1eff8f7525a5a8078c524076dfdb52cb79a2"
+_ROUTES = "count of @app.<method>( decorators in satsa/api/__init__.py"
+_WEIGHT = "satsa.analysis.risk.DIMENSION_WEIGHTS entry"
+PAPER_CODE_FACTS: dict[str, dict[str, Any]] = {
+    "default_worker_count": {
+        "value": 16,
+        "derivation": "len(satsa.analysis.run._default_workers(DEFAULT_FAST_CLOSURE_POLICY))",
+    },
+    "risk_dimension_count": {
+        "value": 7,
+        "derivation": "len(satsa.analysis.risk.DIMENSION_WEIGHTS)",
+    },
+    "graph_node_count": {
+        "value": 5,
+        "derivation": "add_node( calls in AnalysisGraphRuntime.__init__",
+    },
+    "trust_signature_algorithm": {
+        "value": "ML-DSA-65",
+        "derivation": "satsa.analysis.trust.DEFAULT_ALGORITHM",
+    },
+    "api_route_count": {"value": 44, "derivation": _ROUTES},
+    "registry_component_count": {
+        "value": 32,
+        "derivation": "len(satsa.supervisor.agents.AGENT_REGISTRY)",
+    },
+    "registry_satsa_count": {
+        "value": 23,
+        "derivation": "len(satsa.supervisor.agents.SATSA_AGENTS)",
+    },
+    "registry_mlops_count": {
+        "value": 9,
+        "derivation": "len(satsa.supervisor.agents.RETAINED_MLOPS_AGENTS)",
+    },
+    "risk_weight:execution_gap": {"value": 25, "derivation": _WEIGHT},
+    "risk_weight:peer_deviation": {"value": 20, "derivation": _WEIGHT},
+    "risk_weight:detection_gap": {"value": 15, "derivation": _WEIGHT},
+    "risk_weight:negative_space": {"value": 15, "derivation": _WEIGHT},
+    "risk_weight:anomaly": {"value": 15, "derivation": _WEIGHT},
+    "risk_weight:investigation_quality": {"value": 5, "derivation": _WEIGHT},
+    "risk_weight:escalation_discipline": {"value": 5, "derivation": _WEIGHT},
+}
+
+
+def paper_code_fact(name: str, freeze_record: dict[str, Any]) -> Any:
+    """The pinned value of a code fact for the paper built from this freeze."""
+    commit = freeze_record.get("canonical_code_commit")
+    if commit != PAPER_CODE_FACTS_COMMIT:
+        raise ValueError(
+            f"paper code facts are pinned to {PAPER_CODE_FACTS_COMMIT[:7]},"
+            f" but the freeze records canonical code commit {str(commit)[:7]}"
+        )
+    if name not in PAPER_CODE_FACTS:
+        raise KeyError(f"code fact {name!r} is not pinned for the paper")
+    return PAPER_CODE_FACTS[name]["value"]
+
+
 def _code_fact(name: str) -> Any:
-    """Facts read from the installed source (recorded with the code commit)."""
+    """Facts read from the currently installed source (the live product).
+
+    The paper uses ``paper_code_fact``; this reader serves checks of the
+    current code and records how each pinned value was derived."""
     if name == "default_worker_count":
         from satsa.analysis.run import DEFAULT_FAST_CLOSURE_POLICY, _default_workers
 
@@ -241,7 +306,7 @@ def build_paper_data(freeze_dir: Path, spec_path: Path) -> dict[str, Any]:
         seen.add(claim_id)
         source: dict[str, Any]
         if "code_fact" in item:
-            value = _code_fact(item["code_fact"])
+            value = paper_code_fact(item["code_fact"], record)
             source = {"kind": "code", "fact": item["code_fact"]}
         elif "supporting_file" in item:
             import hashlib
