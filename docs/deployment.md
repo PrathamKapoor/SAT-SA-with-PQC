@@ -4,10 +4,10 @@
 
 | Item | Status |
 |---|---|
-| Hosting provider | None configured. The earlier Render Blueprint (`render.yaml`, which built the separate `feat/sat-sa-site` branch) and its start script were removed. |
-| Deployment configuration | Provider-neutral: `Dockerfile`, `web/Dockerfile`, `docker-compose.saas.yml`, migrations, health checks. |
-| Local execution | Supported (native processes; Compose where Docker is available). |
-| Hosted deployment | Not currently configured; nothing in this repository is claimed to be deployed. |
+| Hosting model | A single Linux host running `deploy/compose.production.yml` (Caddy HTTPS, web, API, worker, PostgreSQL, object storage). Decision and runbook: [`deploy/README.md`](../deploy/README.md). No provider-specific files; the earlier Render Blueprint was removed. |
+| Production topology | CI-tested end to end with production settings in the `production-stack` job (run 36444188066 at `5fe192b`): HTTPS entry point, deployment smoke, worker restart recovery, browser workflow through HTTPS, API restart. |
+| Local execution | Supported without Docker: `scripts/local_stack.py` (SQLite, separate API and worker). |
+| Hosted deployment | **Not deployed.** No host and no public hostname have been provided yet; nothing in this repository is claimed to be running publicly. |
 
 A replacement host must provide the following. Nothing here names or assumes a
 provider.
@@ -39,17 +39,11 @@ the hosted API and worker, and record the result separately from local results.
 * **Web image** (`web/Dockerfile`): standalone Next.js server on port 3000;
   `web/docker-compose.yml` runs it on its own.
 
-Discrepancies with the intended five-part topology (frontend, API, worker,
-PostgreSQL, object storage), recorded rather than changed because Docker is
-not available on the development machine:
-
-1. `docker-compose.saas.yml` has no frontend service, and `web/docker-compose.yml`
-   does not set `SATSA_API_BASE_URL`. The web workbench is wired to the API
-   (Phase 18, browser-tested against a real API and worker); joining the two
-   compose files is part of the hosting phase.
-2. The compose database is PostgreSQL 16 (CI-tested at `c0c99cc`); the local
-   PostgreSQL verification in Phases 16 and 17 used PostgreSQL 18. The two
-   Phase 16 routes have run on 18 only until CI runs this branch.
+The production topology with all five parts (frontend, API, worker,
+PostgreSQL, object storage) behind an HTTPS reverse proxy is
+`deploy/compose.production.yml` (Phase 19; PostgreSQL 17). `docker-compose.saas.yml`
+remains the development-mode backend topology used by the `saas-topology-smoke`
+job (PostgreSQL 16).
 
 ### Verification status of the runtime
 
@@ -57,9 +51,10 @@ not available on the development machine:
 |---|---|---|
 | API + separate worker processes over HTTP, SQLite, local storage | locally verified; regression-tested | `tests/test_phase17_http_topology.py` (runs in every suite run) |
 | API + separate worker processes over HTTP, PostgreSQL 18, local storage | PostgreSQL verified locally | same test with `SATSA_TEST_POSTGRES_DSN`; Phase 16 manual run 20/20 smoke checks |
-| Compose topology: PostgreSQL + SeaweedFS + migrate + key-init + API + worker | CI-tested at `c0c99cc` (run 36348111664) | `saas-topology-smoke` job; not yet run for the Phase 17 branch |
+| Compose topology: PostgreSQL + SeaweedFS + migrate + key-init + API + worker | CI-tested (run 36444188066 at `5fe192b`) | `saas-topology-smoke` job |
+| Production topology: Caddy (HTTPS) + web + API + worker + PostgreSQL 17 + S3 over TLS, `SATSA_ENVIRONMENT=production` | CI-tested (run 36444188066 at `5fe192b`) | `production-stack` job: `deploy/smoke.sh`, worker restart recovery, browser E2E through HTTPS (9 tests), API restart |
 | Container build locally | not executed | Docker is not installed on the development machine |
-| Hosted deployment | not configured | no provider selected |
+| Hosted deployment | not deployed | no host or public hostname provided yet |
 
 ## Phase 7 production deployment
 
