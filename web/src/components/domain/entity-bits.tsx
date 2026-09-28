@@ -1,6 +1,6 @@
 import { CATEGORY_LABEL, DIMENSION_LABEL, DIMENSION_ORDER } from "@/lib/domain/labels";
 import { fmtNum } from "@/lib/domain/format";
-import { EVIDENCE_CATEGORIES, type RiskDimension, type Submission } from "@/lib/types/domain";
+import { EVIDENCE_CATEGORIES, type EvidenceCategory, type RiskDimension } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 /** Seven dimension cells; fill depth = score / weight. A compact risk signature. */
@@ -32,13 +32,13 @@ export function RiskSignature({ dimensions, className }: { dimensions: RiskDimen
   );
 }
 
-/** Six evidence categories: present (count) or missing. */
-export function CompletenessStrip({ submission, className, showLabels = false }: { submission: Submission | null; className?: string; showLabels?: boolean }) {
-  if (!submission) return <p className="text-[12px] text-muted">No submission</p>;
+/** Six evidence categories: canonical record count (GET /versions/{id}/summary) or missing. */
+export function CompletenessStrip({ counts, className, showLabels = false }: { counts: Partial<Record<EvidenceCategory, number>> | null; className?: string; showLabels?: boolean }) {
+  if (!counts) return <p className="text-[12px] text-muted">No validated submission</p>;
   return (
     <ul aria-label="Evidence categories submitted" className={cn(showLabels ? "grid grid-cols-2 gap-1.5 sm:grid-cols-3" : "flex gap-[3px]", className)}>
       {EVIDENCE_CATEGORIES.map((c) => {
-        const n = submission.declaredCounts[c] ?? 0;
+        const n = counts[c] ?? 0;
         return showLabels ? (
           <li key={c} className={cn("flex items-center justify-between rounded-sm border px-2.5 py-1.5 text-[12.5px]", n ? "border-line" : "border-dashed border-attention/50 bg-attention-tint/40")}>
             <span className={n ? "text-ink-2" : "text-attention-strong"}>{CATEGORY_LABEL[c]}</span>

@@ -1,37 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ArrowLeft, Lock } from "lucide-react";
 import { Wordmark } from "@/components/brand";
 import { LoginVisual } from "@/components/public/evidence-field/LoginVisual";
-import { backendAuthConfigured } from "@/lib/auth/config";
-import { DEV_IDENTITIES } from "@/lib/auth/identities";
-import { can, ROLE_LABEL } from "@/lib/auth/permissions";
-import { getSession, sessionMode } from "@/lib/auth/session";
-import { NAV } from "@/lib/nav";
-import type { SatsaRole } from "@/lib/types/domain";
-import { CredentialForm, DevelopmentIdentities, type IdentityCard } from "./forms";
+import { apiBase, SESSION_COOKIE } from "@/lib/api/client";
+import { CredentialForm } from "./forms";
 
 export const metadata: Metadata = { title: "Sign in", robots: { index: false } };
 
-export default async function LoginPage() {
-  if (await getSession()) redirect("/workbench");
-  const mode = sessionMode();
+const NOTICE: Record<string, string> = {
+  expired: "Your session ended. Sign in again to continue.",
+  "signed-out": "You are signed out.",
+};
 
-  // Areas each role opens beyond the read-only set every role shares (existing permissions only).
-  const areasFor = (role: SatsaRole) => NAV.flatMap((g) => g.items).filter((i) => !i.requires || can(role, i.requires)).map((i) => i.label);
-  const shared = new Set(areasFor("satsa_viewer"));
-  const cards: IdentityCard[] = DEV_IDENTITIES.map((d) => {
-    const extra = areasFor(d.role).filter((a) => !shared.has(a));
-    const decides = can(d.role, "decision.record");
-    return {
-      principal: d.principal,
-      roleLabel: ROLE_LABEL[d.role],
-      displayName: d.displayName,
-      summary: d.summary,
-      access: [extra.length ? `Read-only areas, plus ${extra.join(", ")}` : "Read-only areas only", decides ? "records review decisions" : "cannot record decisions"].join(" · "),
-    };
-  });
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ reason?: string }> }) {
+  // A present session cookie is resolved by the workbench, which returns here if it is invalid.
+  if ((await cookies()).get(SESSION_COOKIE)) redirect("/workbench");
+  const { reason } = await searchParams;
 
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,36rem)]">
@@ -60,20 +47,19 @@ export default async function LoginPage() {
             <p className="label">Sign in</p>
           </div>
           <h1 className="mt-3 text-[26px] font-semibold tracking-[-0.02em] text-ink">Sign in to SAT-SA</h1>
-
-          {mode === "development" ? (
-            <DevelopmentIdentities cards={cards} />
-          ) : (
-            <>
-              <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
-                Use the credential issued to your identity by a SAT-SA administrator. Access is limited to your assigned role.
-              </p>
-              <CredentialForm configured={backendAuthConfigured()} />
-              <p className="mt-10 text-[12px] leading-relaxed text-faint">
-                Sessions use an HttpOnly cookie. Credentials are verified by the SAT-SA service, never in the browser.
-              </p>
-            </>
+          <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
+            Use the credential issued to your identity by a SAT-SA administrator. Access is limited to your role in each organization.
+          </p>
+          {reason && NOTICE[reason] && (
+            <p role="status" className="mt-4 rounded-md border border-line bg-canvas px-3 py-2 text-[13px] text-ink-2">
+              {NOTICE[reason]}
+            </p>
           )}
+          <CredentialForm configured={Boolean(apiBase())} />
+          <p className="mt-10 text-[12px] leading-relaxed text-faint">
+            The credential is sent once to the SAT-SA service, which returns a revocable session. Only that session is kept, in an HttpOnly cookie; the credential is not
+            stored.
+          </p>
         </div>
       </main>
     </div>

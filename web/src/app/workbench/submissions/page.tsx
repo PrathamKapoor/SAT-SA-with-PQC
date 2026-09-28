@@ -1,132 +1,124 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronDown, Upload } from "lucide-react";
-import { CompletenessStrip } from "@/components/domain/entity-bits";
+import { Upload } from "lucide-react";
+import { ApiErrorPanel } from "@/components/ui/api-state";
 import { Tag } from "@/components/ui/badges";
 import { ButtonLink } from "@/components/ui/button";
+import { DataTable } from "@/components/ui/data";
 import { PageHeader } from "@/components/ui/layout";
+import { offsetOf, Pager } from "@/components/ui/pager";
 import { EmptyState } from "@/components/ui/states";
+import { all, api, orNull } from "@/lib/api/client";
+import { requireContext } from "@/lib/api/context";
+import { load } from "@/lib/api/guard";
+import type { Assessment, Submission, Validation, Version } from "@/lib/api/types";
 import { can } from "@/lib/auth/permissions";
-import { getSession } from "@/lib/auth/session";
-import { fmtDate, fmtPeriod, shortDigest, sourceName } from "@/lib/domain/format";
-import { CATEGORY_LABEL } from "@/lib/domain/labels";
-import { loadCore } from "@/lib/model";
+import { fmtDateTime, fmtPeriod } from "@/lib/domain/format";
+import { VERSION_STATUS } from "@/lib/domain/status";
+import { entityName, loadPortfolio } from "@/lib/workbench/data";
 
 export const metadata: Metadata = { title: "Submissions" };
 
-interface CategoryReport {
-  received?: number;
-  accepted?: number;
-  rejected?: number;
-  present?: boolean;
-}
+type Row = { submission: Submission; assessment: Assessment | null; latest: Version | null; versions: number; validation: Validation | null };
 
-export default async function SubmissionsPage() {
-  const session = (await getSession())!;
-  const core = await loadCore();
-  const names = new Map(core.entities.map((e) => [e.id, e.displayName]));
+export default async function SubmissionsPage({ searchParams }: { searchParams: Promise<{ offset?: string }> }) {
+  const ctx = await requireContext();
+  const offset = offsetOf((await searchParams).offset);
+  const loaded = await load(async () => {
+    const [page, portfolio, assessments] = await Promise.all([api.submissions({ offset, limit: 25 }), loadPortfolio(), all((q) => api.assessments(q))]);
+    const byId = new Map(assessments.map((a) => [a.id, a]));
+    const rows: Row[] = await Promise.all(
+      page.items.map(async (submission) => {
+        const versions = await all((q) => api.versions(submission.id, q), 400);
+        const latest = versions.sort((a, b) => b.version - a.version)[0] ?? null;
+        const validated = latest && ["valid", "invalid", "failed"].includes(latest.status);
+        return {
+          submission,
+          assessment: byId.get(submission.assessment_id) ?? null,
+          latest,
+          versions: versions.length,
+          validation: validated ? await orNull(api.validation(latest.id)) : null,
+        };
+      }),
+    );
+    return { page, portfolio, rows };
+  });
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-8">
       <PageHeader
         eyebrow="Data"
         title="Submissions"
-        description="Periodic CSE submissions as received. Each file is fingerprinted with SHA3-256 and each accepted snapshot is frozen before analysis."
+        description="Evidence submissions per assessment period. Each upload creates an immutable version; validation parses every record and resolves references before any analysis can run."
         actions={
-          can(session.user.role, "analysis.run") && (
+          can(ctx.role, "analysis.run") ? (
             <ButtonLink href="/workbench/ingest" variant="primary">
               <Upload className="size-4" aria-hidden="true" />
-              New submission
+              Ingest evidence
             </ButtonLink>
-          )
+          ) : undefined
         }
       />
-      {core.submissions.length === 0 ? (
-        <EmptyState title="No submissions yet" />
+      {!loaded.ok ? (
+        <ApiErrorPanel error={loaded.error} context="Submissions" />
       ) : (
-        <ul className="space-y-2">
-          {core.submissions.map((s) => {
-            const cats = ((s.ingestReport.categories ?? {}) as Record<string, CategoryReport>) ?? {};
-            const rejected = Object.values(cats).reduce((n, c) => n + (c.rejected ?? 0), 0);
-            return (
-              <li key={s.id} className="rounded-md border border-line bg-paper">
-                <details className="group">
-                  <summary className="grid cursor-pointer list-none grid-cols-1 gap-x-6 gap-y-2 px-5 py-4 hover:bg-canvas md:grid-cols-[minmax(0,1fr)_minmax(0,12rem)_7rem_8rem_1rem] md:items-center [&::-webkit-details-marker]:hidden">
-                    <span className="min-w-0">
-                      <Link href={`/workbench/entities/${s.entityId}`} className="text-[14px] font-semibold text-ink hover:text-brand">
-                        {names.get(s.entityId)}
-                      </Link>
-                      <span className="mt-0.5 block truncate text-[12.5px] text-muted">
-                        {sourceName(s.sourceSystem)} · received {fmtDate(s.receivedAt)}
-                      </span>
+        <>
+          <DataTable
+            caption="Submissions"
+            rows={loaded.data.rows}
+            rowKey={(r) => r.submission.id}
+            empty={<EmptyState title="No submissions yet">Submissions are created on the Ingest page.</EmptyState>}
+            columns={[
+              {
+                key: "entity",
+                header: "Entity",
+                cell: (r: Row) => (
+                  <Link href={`/workbench/entities/${r.submission.entity_id}`} className="font-medium text-ink hover:text-brand-strong">
+                    {entityName(loaded.data.portfolio, r.submission.entity_id)}
+                  </Link>
+                ),
+              },
+              { key: "period", header: "Period", cell: (r: Row) => (r.assessment ? fmtPeriod(r.assessment.period_start, r.assessment.period_end) : "Unknown") },
+              {
+                key: "status",
+                header: "Latest version",
+                cell: (r: Row) =>
+                  r.latest ? (
+                    <span className="inline-flex items-center gap-2">
+                      <Tag tone={VERSION_STATUS[r.latest.status].tone}>{VERSION_STATUS[r.latest.status].label}</Tag>
+                      <span className="num text-[12px] text-muted">v{r.latest.version}</span>
                     </span>
-                    <span className="text-[12.5px] text-ink-2">{fmtPeriod(s.declaredPeriodStart, s.declaredPeriodEnd)}</span>
-                    <CompletenessStrip submission={s} />
-                    <span className="flex items-center gap-1.5">
-                      <Tag tone={s.ingestStatus === "accepted" ? "brand" : "attention"}>{s.ingestStatus}</Tag>
-                      {rejected > 0 && <Tag tone="attention">{rejected} rejected</Tag>}
+                  ) : (
+                    <span className="text-muted">No version</span>
+                  ),
+              },
+              {
+                key: "records",
+                header: "Records",
+                cell: (r: Row) =>
+                  r.validation ? (
+                    <span className="num">
+                      {r.validation.totals.accepted ?? 0} accepted · {r.validation.totals.rejected ?? 0} rejected
                     </span>
-                    <ChevronDown className="hidden size-4 text-faint transition-transform group-open:rotate-180 md:block" aria-hidden="true" />
-                  </summary>
-                  <div className="grid gap-6 border-t border-line bg-canvas/60 px-5 py-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-                    <table className="w-full text-left text-[12.5px]">
-                      <caption className="label pb-2 text-left">Files</caption>
-                      <thead className="sr-only">
-                        <tr>
-                          <th scope="col">File</th>
-                          <th scope="col">SHA3-256</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(s.fileDigests).map(([file, digest]) => (
-                          <tr key={file} className="border-t border-line/70">
-                            <td className="py-1.5 pr-4 font-mono text-ink">{file}</td>
-                            <td className="py-1.5 font-mono text-muted">{shortDigest(digest, 24)}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <table className="w-full text-left text-[12.5px]">
-                      <caption className="label pb-2 text-left">Validation</caption>
-                      <thead>
-                        <tr className="text-muted">
-                          <th scope="col" className="pb-1 font-normal">
-                            Category
-                          </th>
-                          <th scope="col" className="pb-1 text-right font-normal">
-                            Received
-                          </th>
-                          <th scope="col" className="pb-1 text-right font-normal">
-                            Accepted
-                          </th>
-                          <th scope="col" className="pb-1 text-right font-normal">
-                            Rejected
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Object.entries(CATEGORY_LABEL).map(([k, label]) => {
-                          const c = cats[k];
-                          return (
-                            <tr key={k} className="border-t border-line/70">
-                              <td className="py-1.5 text-ink">{label}</td>
-                              <td className="num py-1.5 text-right">{c?.present ? c.received : "not submitted"}</td>
-                              <td className="num py-1.5 text-right">{c?.present ? c.accepted : ""}</td>
-                              <td className="num py-1.5 text-right">{c?.present ? c.rejected : ""}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                    <p className="text-[12px] text-muted lg:col-span-2">
-                      Snapshot digest <span className="font-mono">{shortDigest(s.snapshotDigest, 24)}</span> · signature status {s.signatureStatus}
-                    </p>
-                  </div>
-                </details>
-              </li>
-            );
-          })}
-        </ul>
+                  ) : (
+                    <span className="text-muted">Not validated</span>
+                  ),
+              },
+              {
+                key: "data",
+                header: "Data",
+                cell: (r: Row) =>
+                  r.latest?.status === "valid" ? (
+                    <Link className="text-brand hover:underline" href={`/workbench/security-data?version=${r.latest.id}`}>
+                      Records
+                    </Link>
+                  ) : null,
+              },
+              { key: "created", header: "Created", cell: (r: Row) => fmtDateTime(r.submission.created_at) },
+            ]}
+          />
+          <Pager page={loaded.data.page} path="/workbench/submissions" label="Submission pages" />
+        </>
       )}
     </div>
   );

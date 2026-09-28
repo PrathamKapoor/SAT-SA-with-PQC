@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { CONFIDENCE_BUCKET_LABEL, DIMENSION_LABEL, DIMENSION_ORDER } from "@/lib/domain/labels";
 import { fmtNum, fmtPct } from "@/lib/domain/format";
-import type { ConfidenceVector, RiskDimension } from "@/lib/types/domain";
+import type { ConfidenceVector, RiskDimension } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 
 /** Thin horizontal meter. Always paired with a printed value. */

@@ -1,35 +1,76 @@
 import type { Metadata } from "next";
-import { toRowData } from "@/components/domain/finding-row";
-import { ReviewQueue, type QueueItem } from "@/components/domain/review-queue";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { AutoRefresh } from "@/components/domain/auto-refresh";
+import { ApiErrorPanel } from "@/components/ui/api-state";
+import { RiskScore } from "@/components/ui/data";
 import { PageHeader } from "@/components/ui/layout";
-import { getSource } from "@/lib/api";
-import { can, ROLE_LABEL } from "@/lib/auth/permissions";
-import { getSession } from "@/lib/auth/session";
-import { byPriority, loadFindingViews } from "@/lib/model";
+import { EmptyState } from "@/components/ui/states";
+import { all, api, orNull } from "@/lib/api/client";
+import { requireContext } from "@/lib/api/context";
+import { load } from "@/lib/api/guard";
+import { can } from "@/lib/auth/permissions";
+import { fmtDateTime } from "@/lib/domain/format";
+import { entityName, loadPortfolio, loadRunFindings } from "@/lib/workbench/data";
 
 export const metadata: Metadata = { title: "Review queue" };
 
 export default async function ReviewQueuePage() {
-  const session = (await getSession())!;
-  const [findings, decisions] = await Promise.all([loadFindingViews(), getSource().listReviewDecisions()]);
-  const items: QueueItem[] = findings
-    .filter((f) => f.state === "signal")
-    .sort(byPriority)
-    .map((f) => ({
-      ...toRowData(f),
-      contentDigest: f.contentDigest,
-      limitations: f.limitations,
-      history: decisions.filter((d) => d.findingId === f.id).sort((a, b) => a.occurredAt - b.occurredAt),
-    }));
+  const ctx = await requireContext();
+  const loaded = await load(async () => {
+    const [runs, portfolio, running] = await Promise.all([
+      all((q) => api.runs({ ...q, status: "awaiting_review" })),
+      loadPortfolio(),
+      api.runs({ status: "running", limit: 1 }),
+    ]);
+    const rows = await Promise.all(
+      runs.map(async (run) => {
+        const [findings, risk] = await Promise.all([loadRunFindings(run.id), orNull(api.risk(run.id))]);
+        return { run, signals: findings.filter((f) => f.state === "signal").length, risk };
+      }),
+    );
+    rows.sort((a, b) => (b.risk?.profile.total_score ?? 0) - (a.risk?.profile.total_score ?? 0) || a.run.requested_at - b.run.requested_at);
+    return { rows, portfolio, working: running.items.length > 0 };
+  });
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-8">
+    <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-8">
       <PageHeader
         eyebrow="Supervision"
         title="Review queue"
-        description="Findings waiting for a supervisory decision, most important first. Each decision is bound to the finding's content digest at the moment it is recorded."
+        description={`Runs the worker released for human review, highest risk first. ${
+          can(ctx.role, "review.create") ? "Open a run to inspect its evidence and record the decision." : "A supervisor or organization administrator records the decision."
+        }`}
       />
-      <ReviewQueue items={items} canRecord={can(session.user.role, "decision.record")} roleLabel={ROLE_LABEL[session.user.role]} sessionMode={session.mode} />
+      {!loaded.ok ? (
+        <ApiErrorPanel error={loaded.error} context="Review queue" />
+      ) : (
+        <>
+          <AutoRefresh active={loaded.data.working} label="Runs are still processing and may join the queue." seconds={5} />
+          {loaded.data.rows.length === 0 ? (
+            <EmptyState title="Nothing awaiting review">Runs appear here when their analytical stages finish.</EmptyState>
+          ) : (
+            <ul aria-label="Runs awaiting review" className="overflow-hidden rounded-md border border-line bg-paper">
+              {loaded.data.rows.map(({ run, signals, risk }) => (
+                <li key={run.id} className="border-b border-line last:border-0">
+                  <Link href={`/workbench/runs/${run.id}`} className="group grid grid-cols-1 gap-x-5 gap-y-2 px-5 py-4 hover:bg-canvas md:grid-cols-[minmax(0,1fr)_9rem_8rem_12rem_1rem] md:items-center">
+                    <span className="min-w-0">
+                      <span className="block truncate text-[15px] font-semibold text-ink group-hover:text-brand-strong">{entityName(loaded.data.portfolio, run.entity_id)}</span>
+                      <span className="mono-id">{run.id}</span>
+                    </span>
+                    <RiskScore score={risk?.profile.total_score ?? null} bucket={risk?.profile.confidence_bucket} size="sm" />
+                    <span className="text-[13px] text-ink-2">
+                      <span className="num font-medium text-ink">{signals}</span> signal{signals === 1 ? "" : "s"}
+                    </span>
+                    <span className="text-[12.5px] text-muted">Ready since {fmtDateTime(run.finished_at ?? run.started_at)}</span>
+                    <ChevronRight className="hidden size-4 text-faint group-hover:text-ink md:block" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
+      )}
     </div>
   );
 }

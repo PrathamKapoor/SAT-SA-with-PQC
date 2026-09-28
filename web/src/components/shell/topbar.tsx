@@ -1,112 +1,70 @@
 "use client";
 
-import { CalendarRange, Database, FlaskConical, LogOut } from "lucide-react";
+import { Building2, Database, LogOut } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense } from "react";
 import { Tooltip } from "@/components/ui/tooltip";
 import { signOut } from "@/lib/auth/actions";
 import { titleFor } from "@/lib/nav";
 import { MobileNav, type SidebarProps } from "./sidebar";
-import { WorkbenchScope, type ScopeOption } from "./workbench-scope";
 
-export interface OriginInfo {
-  kind: "api" | "fixture";
-  label: string;
-  detail: string;
-}
-
-export interface SessionBadge {
-  mode: "development" | "backend";
-  roleLabel: string;
-  principal: string;
+export interface TopBarContext {
+  organization: string;
+  canSwitch: boolean;
   displayName: string;
+  roleLabel: string;
+  /** Where the data comes from: always the SAT-SA API. */
+  apiBase: string;
 }
 
-export function TopBar({
-  nav,
-  period,
-  origin,
-  session,
-  scope,
-}: {
-  nav: SidebarProps;
-  period: string | null;
-  origin: OriginInfo;
-  session: SessionBadge;
-  scope: { periods: ScopeOption[]; cohorts: ScopeOption[] };
-}) {
+export function TopBar({ nav, context }: { nav: SidebarProps; context: TopBarContext }) {
   const pathname = usePathname();
-  const onWorkbench = pathname === "/workbench";
-  const initials = session.roleLabel.slice(0, 2).toUpperCase();
+  const initials = context.roleLabel.slice(0, 2).toUpperCase();
 
   return (
     <header className="no-print flex h-14 shrink-0 items-center gap-3 border-b border-line bg-paper/95 px-4 backdrop-blur-sm md:px-6">
       <MobileNav {...nav} />
-      {onWorkbench ? (
-        <>
-          <p className="min-w-0 truncate text-[14px] font-semibold text-ink md:hidden">Workbench</p>
-          <Suspense fallback={null}>
-            <WorkbenchScope periods={scope.periods} cohorts={scope.cohorts} />
-          </Suspense>
-        </>
-      ) : (
-        <p className="min-w-0 truncate text-[14px] font-semibold text-ink">{titleFor(pathname)}</p>
-      )}
+      <p className="min-w-0 truncate text-[14px] font-semibold text-ink">{titleFor(pathname)}</p>
 
       <div className="ml-auto flex min-w-0 items-center gap-2">
-        {!onWorkbench && period && (
-          <span className="hidden items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[12.5px] text-ink-2 xl:inline-flex">
-            <CalendarRange className="size-3.5 text-muted" aria-hidden="true" />
-            <span className="sr-only">Assessment period </span>
-            {period}
+        {context.canSwitch ? (
+          <Link
+            href="/organization"
+            className="hidden max-w-[16rem] items-center gap-1.5 sm:inline-flex rounded-sm border border-line px-2 py-1 text-[12.5px] text-ink-2 hover:border-ink/40 hover:text-ink"
+            title="Switch organization"
+          >
+            <Building2 className="size-3.5 shrink-0 text-muted" aria-hidden="true" />
+            <span className="sr-only">Organization: </span>
+            <span className="truncate">{context.organization}</span>
+          </Link>
+        ) : (
+          <span className="hidden max-w-[16rem] items-center gap-1.5 sm:inline-flex rounded-sm border border-line px-2 py-1 text-[12.5px] text-ink-2">
+            <Building2 className="size-3.5 shrink-0 text-muted" aria-hidden="true" />
+            <span className="sr-only">Organization: </span>
+            <span className="truncate">{context.organization}</span>
           </span>
         )}
-        <Tooltip tip={origin.detail} side="bottom">
-          <span
-            tabIndex={0}
-            className={
-              origin.kind === "fixture"
-                ? "inline-flex items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[12px] text-ink-2"
-                : "inline-flex items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[12px] text-ink-2"
-            }
-          >
-            {origin.kind === "fixture" ? <FlaskConical className="size-3.5 text-attention" aria-hidden="true" /> : <Database className="size-3.5" aria-hidden="true" />}
-            <span className="max-lg:sr-only">{origin.label}</span>
+        <Tooltip tip={`Every value on these pages is read from the SAT-SA API at ${context.apiBase}.`} side="bottom">
+          <span tabIndex={0} className="inline-flex items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[12px] text-ink-2">
+            <Database className="size-3.5" aria-hidden="true" />
+            <span className="max-lg:sr-only">Live backend</span>
           </span>
         </Tooltip>
 
-        {session.mode === "development" ? (
-          <div className="flex items-center overflow-hidden rounded-sm border border-attention/40 bg-attention-tint">
-            <span
-              className="flex items-center gap-1.5 px-2 py-1 font-mono text-[11px] font-semibold tracking-[0.06em] text-attention-strong uppercase"
-              title={`Development principal ${session.principal}. Not an authenticated identity.`}
-            >
-              <span className="max-md:sr-only">Development session ·</span> {session.roleLabel}
-              <span className="font-normal tracking-normal text-attention-strong/80 normal-case max-lg:hidden">{session.principal}</span>
-            </span>
-            <form action={signOut} className="border-l border-attention/30">
-              <button type="submit" className="flex items-center gap-1 px-2 py-1 text-[12px] font-medium text-attention-strong hover:bg-attention/10" title="Exit development session">
-                <LogOut className="size-3.5" aria-hidden="true" />
-                <span className="max-2xl:sr-only">Exit development session</span>
-              </button>
-            </form>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full bg-brand font-mono text-[11px] font-semibold text-white">
-              {initials}
-            </span>
-            <span className="hidden leading-tight md:block">
-              <span className="block text-[13px] font-medium text-ink">{session.displayName}</span>
-              <span className="block text-[11.5px] text-muted">{session.roleLabel}</span>
-            </span>
-            <form action={signOut}>
-              <button type="submit" aria-label="Sign out" title="Sign out" className="rounded-sm p-1.5 text-muted hover:bg-sunken hover:text-ink">
-                <LogOut className="size-4" aria-hidden="true" />
-              </button>
-            </form>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full bg-brand font-mono text-[11px] font-semibold text-white">
+            {initials}
+          </span>
+          <span className="hidden leading-tight md:block">
+            <span className="block text-[13px] font-medium text-ink">{context.displayName}</span>
+            <span className="block text-[11.5px] text-muted">{context.roleLabel}</span>
+          </span>
+          <form action={signOut}>
+            <button type="submit" aria-label="Sign out" title="Sign out" className="rounded-sm p-1.5 text-muted hover:bg-sunken hover:text-ink">
+              <LogOut className="size-4" aria-hidden="true" />
+            </button>
+          </form>
+        </div>
       </div>
     </header>
   );
