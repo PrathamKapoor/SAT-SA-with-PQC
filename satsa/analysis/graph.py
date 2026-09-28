@@ -42,11 +42,22 @@ def durable_checkpointer(engine):
             saver.setup()
             yield saver
     else:
+        import sqlite3
+        from contextlib import closing
+
         from langgraph.checkpoint.sqlite import SqliteSaver
 
         path = engine.db_path.with_name(engine.db_path.name + ".langgraph.sqlite")
-        with SqliteSaver.from_conn_string(str(path)) as saver:
-            yield saver
+        # The API reads checkpoints (run progress) while the worker process
+        # writes them. WAL lets readers proceed during a write, and the busy
+        # timeout waits out the short exclusive phase of a commit, instead of
+        # failing with "database is locked".
+        with closing(
+            sqlite3.connect(str(path), check_same_thread=False, timeout=30)
+        ) as conn:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.execute("PRAGMA busy_timeout=30000")
+            yield SqliteSaver(conn)
 
 
 class AnalysisGraphRuntime:

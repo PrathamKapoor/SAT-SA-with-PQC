@@ -148,3 +148,38 @@ def test_sqlite_graph_checkpointer_needs_no_postgres_driver(tmp_path, monkeypatc
     engine = create_engine(f"sqlite:///{(tmp_path / 'offline.db').as_posix()}")
     with durable_checkpointer(engine) as saver:
         assert type(saver).__name__ == "SqliteSaver"
+
+
+def test_sqlite_graph_checkpointer_tolerates_a_concurrent_reader(tmp_path):
+    """The API reads checkpoints while the worker writes them (WAL, busy timeout)."""
+    import threading
+
+    from qsmlops.database.engine import create_engine
+    from satsa.analysis.graph import durable_checkpointer
+
+    engine = create_engine(f"sqlite:///{(tmp_path / 'offline.db').as_posix()}")
+    with durable_checkpointer(engine) as writer:
+        assert writer.conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+        assert writer.conn.execute("PRAGMA busy_timeout").fetchone()[0] >= 30000
+        writer.setup()
+        # Hold an open write transaction, as a checkpoint write in progress does.
+        writer.conn.execute("BEGIN IMMEDIATE")
+        writer.conn.execute(
+            "INSERT INTO writes (thread_id, checkpoint_ns, checkpoint_id, task_id,"
+            " idx, channel, type, value) VALUES ('t','','c','k',0,'ch','t',x'00')"
+        )
+        errors: list[BaseException] = []
+
+        def read():
+            try:
+                with durable_checkpointer(engine) as reader:
+                    reader.get_tuple({"configurable": {"thread_id": "satsa:none"}})
+            except BaseException as exc:  # noqa: BLE001 - reported below
+                errors.append(exc)
+
+        thread = threading.Thread(target=read)
+        thread.start()
+        thread.join(timeout=20)
+        writer.conn.commit()
+        assert not thread.is_alive()
+        assert errors == []
