@@ -52,3 +52,8 @@ tests/spiral-model.test.mjs
 
 # Local temp files
 temp/
+
+# Playwright end-to-end runs
+/e2e/.e2e-state.json
+/test-results/
+/playwright-report/
