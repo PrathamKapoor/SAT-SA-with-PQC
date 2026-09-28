@@ -3,7 +3,7 @@ import { Tag } from "@/components/ui/badges";
 import { KeyValue, PageHeader, Panel, SectionHeader } from "@/components/ui/layout";
 import { apiBase, health } from "@/lib/api/client";
 import { requireContext } from "@/lib/api/context";
-import { ROLE_LABEL } from "@/lib/auth/permissions";
+import { can, ROLE_LABEL } from "@/lib/auth/permissions";
 import { fmtDateTime } from "@/lib/domain/format";
 
 export const metadata: Metadata = { title: "System" };
@@ -21,7 +21,7 @@ export default async function SystemPage() {
           <KeyValue
             columns={1}
             items={[
-              ["API", <span key="a" className="mono-id">{apiBase()}</span>],
+              ...(can(ctx.role, "config.manage") ? [["API (internal address)", <span key="a" className="mono-id">{apiBase()}</span>] as [string, React.ReactNode]] : []),
               [
                 "Liveness (GET /health/live)",
                 status ? <Tag key="l" tone={status.live ? "brand" : "critical"}>{status.live ? "alive" : "not responding"}</Tag> : <Tag key="l" tone="critical">unreachable</Tag>,

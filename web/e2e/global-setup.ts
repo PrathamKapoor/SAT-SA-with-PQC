@@ -13,6 +13,14 @@ export const STATE_FILE = path.join(__dirname, ".e2e-state.json");
 
 export default async function globalSetup() {
   const repo = path.resolve(__dirname, "..", "..");
+  // A deployed stack: use its provisioned credentials and start nothing.
+  const deployed = process.env.SATSA_E2E_CREDENTIALS;
+  if (process.env.SATSA_E2E_BASE_URL) {
+    if (!deployed) throw new Error("SATSA_E2E_BASE_URL requires SATSA_E2E_CREDENTIALS");
+    const credentials = JSON.parse(readFileSync(deployed, "utf-8"));
+    writeFileSync(STATE_FILE, JSON.stringify({ pid: null, repo, credentials }, null, 2));
+    return;
+  }
   const dataDir = mkdtempSync(path.join(tmpdir(), "satsa-e2e-"));
   const python = process.env.SATSA_PYTHON ?? (process.platform === "win32" ? "python" : "python3");
   const child = spawn(python, ["scripts/local_stack.py", "--data-dir", dataDir, "--port", String(E2E_API_PORT)], {

@@ -138,9 +138,9 @@ class ApiRepository:
         )
         sql = (
             f"SELECT a.event_id,a.timestamp,a.actor,a.action,a.resource,a.result FROM audit_events a WHERE "
-            f"{expression}= ? OR (a.action IN ('session.login','session.logout') AND EXISTS "
+            f"({expression}= ? OR (a.action IN ('session.login','session.logout') AND EXISTS "
             "(SELECT 1 FROM satsa_users u JOIN satsa_memberships m ON m.user_id=u.id "
-            "WHERE u.identity_id=a.actor AND m.organization_id=? AND m.status='active'))"
+            "WHERE u.identity_id=a.actor AND m.organization_id=? AND m.status='active')))"
         )
         params = [self.org, self.org]
         if run_id:

@@ -1,0 +1,78 @@
+# Overlay: bundled single-node S3-compatible storage (SeaweedFS) on the same
+# host, for a self-contained deployment. Use with compose.production.yml:
+#
+#   docker compose -f deploy/compose.production.yml -f deploy/compose.objectstore.yml \
+#     --env-file deploy/production.env up -d --build
+#
+# SAT-SA production requires S3 over HTTPS, so SeaweedFS is reached through
+# Caddy's internal TLS endpoint https://s3.satsa.internal:9443 (backend network
+# only) and the backend trusts Caddy's local CA (copied by s3-ca) via AWS_CA_BUNDLE. Data lives in
+# the object_data volume on this host's disk: back it up with the database and
+# the durable volume (deploy/README.md). Managed object storage is more durable.
+x-bundled-s3: &bundled_s3
+  environment:
+    SATSA_S3_ENDPOINT_URL: https://s3.satsa.internal:9443
+    SATSA_S3_ADDRESSING_STYLE: path
+    AWS_CA_BUNDLE: /satsa-ca/root.crt
+  volumes:
+    - satsa_durable:/data
+    - satsa_ca:/satsa-ca:ro
+  depends_on:
+    s3-ca:
+      condition: service_completed_successfully
+    objectstore:
+      condition: service_started
+
+services:
+  objectstore:
+    image: chrislusf/seaweedfs:4.47
+    environment:
+      AWS_ACCESS_KEY_ID: ${SATSA_S3_ACCESS_KEY:?set SATSA_S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${SATSA_S3_SECRET_KEY:?set SATSA_S3_SECRET_KEY}
+      S3_BUCKET: ${SATSA_S3_BUCKET:?set SATSA_S3_BUCKET}
+    volumes:
+      - object_data:/data
+    networks: [backend]
+    restart: unless-stopped
+
+  caddy:
+    volumes:
+      - ./caddy/Caddyfile.objectstore:/etc/caddy/Caddyfile:ro
+      - ./caddy/site.caddy:/etc/caddy/site.caddy:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      edge: {}
+      backend:
+        aliases: [s3.satsa.internal]
+    healthcheck:
+      # Ready once the local CA the backend trusts has been created.
+      test: ["CMD", "test", "-f", "/data/caddy/pki/authorities/local/root.crt"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+
+  # Caddy keeps its PKI directory owner-only; copy just the public root
+  # certificate to a volume the (non-root) API and worker can read.
+  s3-ca:
+    image: caddy:2
+    entrypoint:
+      - /bin/sh
+      - -c
+      - cp /caddy-data/caddy/pki/authorities/local/root.crt /satsa-ca/root.crt && chmod 0644 /satsa-ca/root.crt
+    volumes:
+      - caddy_data:/caddy-data:ro
+      - satsa_ca:/satsa-ca
+    depends_on:
+      caddy:
+        condition: service_healthy
+    restart: "no"
+
+  migrate: *bundled_s3
+  key-init: *bundled_s3
+  api: *bundled_s3
+  worker: *bundled_s3
+
+volumes:
+  object_data:
+  satsa_ca:

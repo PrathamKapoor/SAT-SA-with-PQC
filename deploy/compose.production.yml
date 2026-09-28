@@ -1,0 +1,175 @@
+# SAT-SA production topology for a single Linux host (docs: deploy/README.md).
+#
+#   browser --HTTPS--> caddy --> web (Next.js) --> api (FastAPI) --> PostgreSQL
+#                                                     worker (queue, LangGraph,
+#                                                     analytics, TRUST-SAT)
+#                                                     object storage (S3, HTTPS)
+#
+# Only caddy publishes ports (80, 443). The API is reachable from the web tier
+# and from operators (`docker compose exec`), never from the internet. The API
+# and worker share one durable volume for the TRUST-SAT ledger and signing key.
+#
+# External S3-compatible storage (recommended):
+#   docker compose -f deploy/compose.production.yml --env-file deploy/production.env up -d --build
+# Bundled single-node storage on this host instead: add -f deploy/compose.objectstore.yml
+name: satsa
+
+x-satsa-backend: &satsa_backend
+  build:
+    context: ..
+  image: satsa-backend:${SATSA_IMAGE_TAG:-local}
+  environment: &satsa_env
+    SATSA_ENVIRONMENT: production
+    SATSA_DATABASE_URL: postgresql://satsa:${SATSA_POSTGRES_PASSWORD:?set SATSA_POSTGRES_PASSWORD}@database:5432/satsa
+    SATSA_DB_POOL_MIN_SIZE: ${SATSA_DB_POOL_MIN_SIZE:-1}
+    SATSA_DB_POOL_MAX_SIZE: ${SATSA_DB_POOL_MAX_SIZE:-10}
+    SATSA_DATA_DIR: /data
+    SATSA_LEDGER_PATH: /data/evidence-ledger.jsonl
+    SATSA_TRUST_KEY_DIR: /data/keys
+    SATSA_STORAGE_BACKEND: s3
+    SATSA_S3_ENDPOINT_URL: ${SATSA_S3_ENDPOINT_URL:?set the HTTPS endpoint of the S3-compatible storage}
+    SATSA_S3_REGION: ${SATSA_S3_REGION:-us-east-1}
+    SATSA_S3_BUCKET: ${SATSA_S3_BUCKET:?set SATSA_S3_BUCKET}
+    SATSA_S3_PREFIX: ${SATSA_S3_PREFIX:-}
+    SATSA_S3_ACCESS_KEY: ${SATSA_S3_ACCESS_KEY:?set SATSA_S3_ACCESS_KEY}
+    SATSA_S3_SECRET_KEY: ${SATSA_S3_SECRET_KEY:?set SATSA_S3_SECRET_KEY}
+    SATSA_S3_USE_SSL: "true"
+    SATSA_S3_ADDRESSING_STYLE: ${SATSA_S3_ADDRESSING_STYLE:-auto}
+    SATSA_AUTO_MIGRATE: "false"
+    SATSA_LOG_LEVEL: ${SATSA_LOG_LEVEL:-INFO}
+  volumes:
+    - satsa_durable:/data
+  networks: [backend]
+
+services:
+  database:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: satsa
+      POSTGRES_USER: satsa
+      POSTGRES_PASSWORD: ${SATSA_POSTGRES_PASSWORD:?set SATSA_POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U satsa -d satsa"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  migrate:
+    <<: *satsa_backend
+    command: ["python", "-m", "satsa.api.migrate", "upgrade"]
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: "no"
+
+  key-init:
+    <<: *satsa_backend
+    # Provisions the TRUST-SAT ML-DSA-65 signing key on the durable volume once;
+    # later starts only confirm it is present.
+    command: ["python", "scripts/initialize_trust_key.py"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  api:
+    <<: *satsa_backend
+    command: ["python", "-m", "satsa.api.server"]
+    environment:
+      <<: *satsa_env
+      SATSA_API_HOST: 0.0.0.0
+      SATSA_API_PORT: "8000"
+      SATSA_COOKIE_SECURE: "true"
+      # The web tier calls the API as http://api:8000; browsers never reach it.
+      SATSA_ALLOWED_HOSTS: api
+      SATSA_ALLOWED_ORIGINS: ""
+      # Per-address limits (login attempts) use the browser address the web
+      # tier forwards; it is trusted only from the web tier's fixed address.
+      SATSA_TRUST_PROXY_HEADERS: "true"
+      SATSA_TRUSTED_PROXIES: 172.30.0.10
+    depends_on:
+      key-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-m", "satsa.api.healthcheck", "--role", "api"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    stop_grace_period: 30s
+    restart: unless-stopped
+
+  worker:
+    <<: *satsa_backend
+    command: ["sat-sa-worker"]
+    depends_on:
+      key-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-m", "satsa.api.healthcheck", "--role", "worker"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    # A stopped worker finishes its current safe boundary; a killed one loses
+    # its lease, and another worker (or this one after restart) recovers the run.
+    stop_grace_period: 2m
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../web
+    image: satsa-web:${SATSA_IMAGE_TAG:-local}
+    environment:
+      SATSA_API_BASE_URL: http://api:8000
+      SATSA_FORWARD_CLIENT_IP: "true"
+    networks:
+      edge: {}
+      backend:
+        ipv4_address: 172.30.0.10
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    environment:
+      SATSA_SITE_ADDRESS: ${SATSA_SITE_ADDRESS:?set the public hostname, e.g. satsa.example.org}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/site.caddy:/etc/caddy/site.caddy:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      edge: {}
+    # No start dependency on web: Caddy answers 502 until the web tier is up,
+    # and with bundled storage the API reaches S3 through this Caddy.
+    restart: unless-stopped
+
+networks:
+  edge: {}
+  backend:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+
+volumes:
+  postgres_data:
+  satsa_durable:
+  caddy_data:
+  caddy_config:

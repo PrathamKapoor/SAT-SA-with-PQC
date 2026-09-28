@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import sys
 
 from qsmlops.database.migrations import MigrationRunner
 from satsa.api.runtime import build_runtime
@@ -16,13 +17,17 @@ def main() -> int:
     try:
         engine.query_one("SELECT 1 AS ready")
         if not MigrationRunner(engine).status()["is_current"]:
+            print(f"{role} not ready: database schema is not current", file=sys.stderr)
             return 1
         storage.check_ready()
         if role == "worker":
             engine.query_one("SELECT COUNT(*) AS jobs FROM satsa_execution_jobs")
         print(f"{role} ready")
         return 0
-    except Exception:  # noqa: BLE001 - readiness must report dependency failures uniformly.
+    except Exception as exc:  # noqa: BLE001 - readiness must report dependency failures uniformly.
+        # The reason goes to the container's health log (docker inspect); it
+        # names the failing dependency, never a credential.
+        print(f"{role} not ready: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
     finally:
         storage.close()
