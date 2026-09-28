@@ -11,6 +11,9 @@ import { expect, test } from "@playwright/test";
  *   SATSA_E2E_SUITE=security npm run test:e2e
  */
 test("forged X-Forwarded-For does not bypass the login limit", async ({ page }) => {
+  // The API counts attempts in fixed one-minute windows; earlier sign-ins
+  // from this address may have used part of the current one. Start fresh.
+  await page.waitForTimeout(60_000 - (Date.now() % 60_000) + 1_000);
   const outcomes: string[] = [];
   for (let attempt = 0; attempt < 7; attempt++) {
     await page.setExtraHTTPHeaders({ "X-Forwarded-For": `203.0.113.${attempt + 1}` });
