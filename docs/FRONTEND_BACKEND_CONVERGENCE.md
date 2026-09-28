@@ -40,8 +40,11 @@ The backend is the complete product path. The web workbench is not yet on it.
 * Server actions `ingest-actions.ts` and `review-actions.ts` post to routes
   that do not exist (`POST /submissions` as one multipart request,
   `POST /findings/{id}/reviews`).
-* Sign-in already matches the backend: `POST /api/v1/session` with a
-  credential and `GET /api/v1/session` with the bearer credential.
+* Sign-in calls the right routes (`POST /api/v1/session`, `GET /api/v1/session`)
+  but stores the raw credential in the web's cookie and discards the backend
+  session that login creates (Phase 17 audit). It works, but the handoff asks
+  for the session token instead: a raw credential used for
+  `DELETE /api/v1/session` would revoke the credential itself.
 
 ## 3. Page-by-page mapping
 
@@ -100,6 +103,21 @@ findings or scores outside the generated, labelled fixture.
   record listing, so cited evidence can be inspected as record content.
 * `scripts/deployment_smoke.py` checks both, and was run against a local
   PostgreSQL topology with separate API and worker processes (20/20 checks).
+
+### Phase 17 (backend contract closure)
+
+* `docs/API_CONTRACT.md` rewritten from the live application (46 routes) and
+  kept in step by `tests/test_phase17_api_contract.py` (route index,
+  pagination, idempotency, schema fields).
+* Frontend-facing behaviour tested on SQLite and PostgreSQL
+  (`tests/test_phase17_api_behaviour.py`): multi-entity priorities with
+  pagination, record ordering, decisions by organization administrators,
+  receipts without private material, the error shape, session logout.
+* Real API and worker processes over HTTP are a regression test
+  (`tests/test_phase17_http_topology.py`).
+* The frozen paper's code facts are pinned to the freeze's code commit, so
+  API additions no longer change paper values
+  (`evaluation/research/paper.py`, `tests/test_phase17_paper_code_facts.py`).
 
 ## 6. Remaining work for the frontend owner
 
