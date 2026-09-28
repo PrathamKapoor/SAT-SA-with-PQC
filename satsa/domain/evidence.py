@@ -166,6 +166,16 @@ class Finding:
     id: str = field(default_factory=lambda: new_id("finding"))
     schema_version: int = CURRENT_SCHEMA_VERSION
 
+    def __post_init__(self) -> None:
+        # The numeric fields are persisted in REAL columns, which return floats.
+        # A worker that computes an int (for example statistics.mean over step
+        # counts) would otherwise digest `1` while the stored row reads back as
+        # `1.0`, and trust verification of the row would fail.
+        for name in ("statistic", "effect", "threshold"):
+            value = getattr(self, name)
+            if isinstance(value, int) and not isinstance(value, bool):
+                setattr(self, name, float(value))
+
     def validate(self) -> list[str]:
         errors: list[str] = []
         require(bool(self.observation_id), "observation_id is required", errors)
