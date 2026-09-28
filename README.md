@@ -280,13 +280,11 @@ workbench is a client of that API; a browser end-to-end test drives the full
 workflow against a real API and worker (`web/e2e/`, CI job `web-e2e`). History
 of the convergence: [`docs/FRONTEND_BACKEND_CONVERGENCE.md`](docs/FRONTEND_BACKEND_CONVERGENCE.md).
 
-**Hosting.** The repository contains provider-neutral deployment
-infrastructure (backend image, Compose topology with PostgreSQL and
-S3-compatible storage, separate API and worker, migrations, health checks,
-and a web image). No hosting provider is currently configured in `main`, and
-no hosted deployment is claimed. The earlier Render configuration has been
-removed. See [`docs/deployment.md`](docs/deployment.md#hosting-status-and-provider-neutral-contract)
-for the hosting contract.
+**Hosting.** `deploy/` runs the whole product on one Linux host: Caddy with
+automatic HTTPS, the web tier, the API, a separate worker, PostgreSQL and
+S3-compatible object storage, with production settings that fail closed. CI
+starts that stack and runs the browser workflow through HTTPS against it. It
+is not deployed publicly yet. Runbook: [`deploy/README.md`](deploy/README.md).
 
 The backend UI is FastAPI + Jinja2 + vanilla JS, all local: Overview (command center) ·
 Entities · Entity detail · Findings · Finding detail (WHAT/WHY/EVIDENCE/
