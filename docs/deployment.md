@@ -14,7 +14,7 @@ provider.
 
 | Requirement | Contract |
 |---|---|
-| Frontend runtime | Node.js 24 serving the standalone Next.js build from `web/Dockerfile` (`node server.js`, listens on `PORT`, default 3000, `HOSTNAME=0.0.0.0`). Server-side settings: `SATSA_DATA_SOURCE=api`, `SATSA_API_BASE_URL` (backend base URL), `SATSA_AUTH_ADAPTER` (defaults to `backend` in production builds). |
+| Frontend runtime | Node.js 24 serving the standalone Next.js build from `web/Dockerfile` (`node server.js`, listens on `PORT`, default 3000, `HOSTNAME=0.0.0.0`). Server-side setting: `SATSA_API_BASE_URL` (backend base URL); the browser never calls the API directly, so no CORS origin is needed for the workbench. |
 | API runtime | Root `Dockerfile` image, default command `python -m satsa.api.server` (port 8000). Behind a TLS-terminating proxy. |
 | Worker runtime | Same image, command `sat-sa-worker`; long-running, no inbound port; at least one instance. |
 | Migration job | Same image, `python -m satsa.api.migrate upgrade`, run once per rollout before API/worker start; a failure stops the rollout. |
@@ -44,9 +44,9 @@ PostgreSQL, object storage), recorded rather than changed because Docker is
 not available on the development machine:
 
 1. `docker-compose.saas.yml` has no frontend service, and `web/docker-compose.yml`
-   does not set `SATSA_DATA_SOURCE=api` or `SATSA_API_BASE_URL`. Joining them
-   is part of the hosting phase, after the web adapter is wired to the API
-   (`docs/FRONTEND_API_HANDOFF.md`).
+   does not set `SATSA_API_BASE_URL`. The web workbench is wired to the API
+   (Phase 18, browser-tested against a real API and worker); joining the two
+   compose files is part of the hosting phase.
 2. The compose database is PostgreSQL 16 (CI-tested at `c0c99cc`); the local
    PostgreSQL verification in Phases 16 and 17 used PostgreSQL 18. The two
    Phase 16 routes have run on 18 only until CI runs this branch.

@@ -5,6 +5,10 @@ Audited on branch `phase16/product-convergence` (based on GitHub `main`
 `c0c99cc`). Status words follow the claim classes in `docs/CLAIMS.md`:
 implemented, tested, CI-tested, locally verified, hosted verified, unverified.
 
+> **Status (Phase 18): resolved.** The web workbench is now a client of the
+> SAT-SA API. Sections 2 to 7 record the Phase 16 audit that led there;
+> section 8 records how each gap was closed.
+
 ## 1. What exists
 
 | Layer | Implementation | Status |
@@ -138,3 +142,26 @@ made in this phase.
 * No per-finding review workflow was added to the API: the backend records
   one supervisory decision per run, which TRUST-SAT binds. Changing that is
   a product decision, not an integration fix.
+
+## 8. Phase 18: how the gaps were closed
+
+| Phase 16 gap | Resolution |
+|---|---|
+| `api` adapter calling about fifteen routes that do not exist | Replaced by `web/src/lib/api/client.ts`, one function per contract route, with wire types in `web/src/lib/api/types.ts`. The fixture adapter, the fixture file and its exporter were removed; there is no mock data path. |
+| No `X-Organization-ID` | Organization context (`web/src/lib/api/context.ts`): memberships from `GET /api/v1/organizations`, automatic with one membership, `/organization` otherwise; every tenant call carries the header. |
+| camelCase, unpaginated expectations | Pages consume the snake_case wire types; lists page with `{items, limit, offset, has_more}` (`web/src/components/ui/pager.tsx`). |
+| Ingest action posting one multipart request to a nonexistent route | `web/src/components/domain/ingest-workflow.tsx` performs the real sequence (entity, assessment, submission, version, one upload per file, complete, validate, run) with idempotency keys reused on retry. |
+| Review action posting per-finding reviews | Replaced by the run decision (`POST /runs/{id}/decision`) on the run page; per-finding review actions were removed. |
+| Raw credential stored in the web cookie | Sign-in keeps only the backend session token; sign-out revokes that session. |
+| Development identities and fixture presented beside live data | Removed. Local development runs the real backend offline on SQLite (`scripts/local_stack.py`, demo via `scripts/seed_demo_via_api.py`). |
+| Offline-only panels (meta-audit, benchmark validation, supervisor engine, observations, agent registry) | Benchmarks shows the documented benchmark and states that `sat-sa validate` is offline-only; Agents shows the static registry mapping with live worker status from a run's steps; the other panels were removed from the workbench. |
+
+A backend defect was found by the browser test and fixed: a finding whose
+worker produced an integer statistic was digested as `1` but read back from
+its REAL column as `1.0`, so finalization of a decided run failed with
+"finding digest mismatch" (`satsa/domain/evidence.py`,
+`tests/test_phase18_finding_numeric_digest.py`).
+
+Verification: `web/e2e/workbench.spec.ts` drives the whole workflow in a
+browser against a real API and worker (6 tests), and CI runs it in the
+`web-e2e` job.
