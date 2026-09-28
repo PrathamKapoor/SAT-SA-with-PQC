@@ -465,7 +465,8 @@ def test_worker_heartbeat_keeps_long_stage_lease_alive(hosted_scope):
         version = "1"
 
         def evaluate(self, snapshot, dataset, baselines, policy, run_context):
-            time.sleep(0.18)
+            # Three lease lengths: without heartbeats the lease would expire.
+            time.sleep(0.9)
             return ObservationBatch(self.name, self.version, {}, "not_applicable")
 
     scope = hosted_scope
@@ -475,7 +476,9 @@ def test_worker_heartbeat_keeps_long_stage_lease_alive(hosted_scope):
     worker = AnalysisExecutionWorker(
         scope["engine"],
         worker_id="heartbeat-worker",
-        lease_seconds=0.06,
+        # A 0.3 s lease (heartbeat every 0.1 s) keeps the property under test
+        # while leaving margin for scheduling delays on loaded CI runners.
+        lease_seconds=0.3,
         workers_factory=lambda: [SlowWorker()],
         audit=scope["audit"],
     )
