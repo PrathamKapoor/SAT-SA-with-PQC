@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import { cookies, headers as requestHeaders } from "next/headers";
 import { ApiError, type ApiErrorInfo } from "./errors";
 import { requestOrganization } from "./org-scope";
 import type {
@@ -69,8 +69,28 @@ function url(path: string, query?: CallOptions["query"]): string {
   return `${base}${path}${params.length ? `?${new URLSearchParams(params.map(([k, v]) => [k, String(v)]))}` : ""}`;
 }
 
+/**
+ * The browser's address, for the API's per-address limits (login attempts,
+ * unauthenticated requests). Only when SATSA_FORWARD_CLIENT_IP=true: the
+ * deployment's reverse proxy must set X-Forwarded-For itself (Caddy replaces
+ * any client-supplied value), and the API must trust it only from this server
+ * (SATSA_TRUST_PROXY_HEADERS with SATSA_TRUSTED_PROXIES = this server's address).
+ */
+async function clientAddress(): Promise<string | null> {
+  if (process.env.SATSA_FORWARD_CLIENT_IP !== "true") return null;
+  try {
+    const value = (await requestHeaders()).get("x-forwarded-for");
+    const first = value?.split(",")[0]?.trim();
+    return first && /^[0-9a-fA-F:.]{2,45}$/.test(first) ? first : null;
+  } catch {
+    return null; // outside a request (build time)
+  }
+}
+
 async function raw(path: string, options: CallOptions): Promise<Response> {
   const headers: Record<string, string> = { Accept: "application/json" };
+  const client = await clientAddress();
+  if (client) headers["X-Forwarded-For"] = client;
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
   if (options.organization) headers["X-Organization-ID"] = options.organization;
   if (options.idempotencyKey) headers["Idempotency-Key"] = options.idempotencyKey;
