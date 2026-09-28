@@ -1,5 +1,11 @@
-# SAT-SA — single-process container: the sat-sa CLI + the FastAPI/
-# Jinja2 UI, both backed by a SQLite file mounted as a volume.
+# SAT-SA backend image. The default command serves the tenant-scoped API
+# (`python -m satsa.api.server`, port 8000). docker-compose.saas.yml runs the
+# same image as separate services: `migrate` (schema upgrade), `key-init`
+# (TRUST-SAT signing key), `api` and `worker` (`sat-sa-worker`), with
+# PostgreSQL and S3-compatible storage. The `sat-sa` CLI and the offline
+# FastAPI/Jinja2 UI are installed too and can be run with `--entrypoint
+# sat-sa` against a SQLite file on the /data volume. The Next.js web UI has
+# its own image (web/Dockerfile).
 #
 # Verification status (reconciled P32, September 2026): this image's
 # `docker build` and a `sat-sa ... doctor` smoke run were verified on

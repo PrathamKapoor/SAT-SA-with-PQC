@@ -29,11 +29,37 @@ provider.
 After the provider is chosen, verify with `scripts/deployment_smoke.py` against
 the hosted API and worker, and record the result separately from local results.
 
-**Image note.** The root `Dockerfile` builds the Python backend image. Its
-header comment still describes the earlier single-process CLI/Jinja container,
-but its default command is the FastAPI API server, and `docker-compose.saas.yml`
-reuses the same image for the worker, migration and key-initialization steps.
-The Next.js frontend is built separately from `web/Dockerfile`.
+### Container images and topology (as implemented)
+
+* **Backend image** (root `Dockerfile`): default command
+  `python -m satsa.api.server`. `docker-compose.saas.yml` runs it as separate
+  `migrate`, `key-init`, `api` and `worker` services next to `database`
+  (PostgreSQL 16) and `objectstore` (SeaweedFS, S3-compatible). API and worker
+  are separate processes and must stay separate.
+* **Web image** (`web/Dockerfile`): standalone Next.js server on port 3000;
+  `web/docker-compose.yml` runs it on its own.
+
+Discrepancies with the intended five-part topology (frontend, API, worker,
+PostgreSQL, object storage), recorded rather than changed because Docker is
+not available on the development machine:
+
+1. `docker-compose.saas.yml` has no frontend service, and `web/docker-compose.yml`
+   does not set `SATSA_DATA_SOURCE=api` or `SATSA_API_BASE_URL`. Joining them
+   is part of the hosting phase, after the web adapter is wired to the API
+   (`docs/FRONTEND_API_HANDOFF.md`).
+2. The compose database is PostgreSQL 16 (CI-tested at `c0c99cc`); the local
+   PostgreSQL verification in Phases 16 and 17 used PostgreSQL 18. The two
+   Phase 16 routes have run on 18 only until CI runs this branch.
+
+### Verification status of the runtime
+
+| Configuration | Status | Evidence |
+|---|---|---|
+| API + separate worker processes over HTTP, SQLite, local storage | locally verified; regression-tested | `tests/test_phase17_http_topology.py` (runs in every suite run) |
+| API + separate worker processes over HTTP, PostgreSQL 18, local storage | PostgreSQL verified locally | same test with `SATSA_TEST_POSTGRES_DSN`; Phase 16 manual run 20/20 smoke checks |
+| Compose topology: PostgreSQL + SeaweedFS + migrate + key-init + API + worker | CI-tested at `c0c99cc` (run 36348111664) | `saas-topology-smoke` job; not yet run for the Phase 17 branch |
+| Container build locally | not executed | Docker is not installed on the development machine |
+| Hosted deployment | not configured | no provider selected |
 
 ## Phase 7 production deployment
 
