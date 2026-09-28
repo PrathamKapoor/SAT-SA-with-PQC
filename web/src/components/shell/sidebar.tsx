@@ -8,25 +8,17 @@ import { Wordmark, BrandMark } from "@/components/brand";
 import { Drawer } from "@/components/ui/dialog";
 import { signOut } from "@/lib/auth/actions";
 import type { NavGroup } from "@/lib/nav";
-import { useReviewStore } from "@/lib/review-store";
 import { cn } from "@/lib/utils";
 import { NavIcon } from "./nav-icon";
 
 export interface SidebarProps {
   groups: NavGroup[];
-  signalFindingIds: string[];
-  decidedFindingIds: string[];
-  user: { displayName: string; roleLabel: string; principal: string };
-  sessionMode: "development" | "backend";
+  /** Runs in awaiting_review in the selected organization (GET /api/v1/runs?status=awaiting_review). */
+  awaitingReview: number;
+  user: { displayName: string; roleLabel: string; organization: string };
 }
 
 const COLLAPSE_KEY = "satsa.sidebar.collapsed";
-
-function useAwaitingCount(signalFindingIds: string[], decidedFindingIds: string[]) {
-  const { decisions } = useReviewStore();
-  const decided = new Set([...decidedFindingIds, ...decisions.map((d) => d.findingId)]);
-  return signalFindingIds.filter((id) => !decided.has(id)).length;
-}
 
 function NavList({ groups, collapsed, awaiting, onNavigate }: { groups: NavGroup[]; collapsed: boolean; awaiting: number; onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -72,7 +64,7 @@ function NavList({ groups, collapsed, awaiting, onNavigate }: { groups: NavGroup
                         )}
                       >
                         {count}
-                        <span className="sr-only"> awaiting review</span>
+                        <span className="sr-only"> runs awaiting review</span>
                       </span>
                     )}
                   </Link>
@@ -86,7 +78,7 @@ function NavList({ groups, collapsed, awaiting, onNavigate }: { groups: NavGroup
   );
 }
 
-function SessionFooter({ user, sessionMode, collapsed }: Pick<SidebarProps, "user" | "sessionMode"> & { collapsed: boolean }) {
+function SessionFooter({ user, collapsed }: Pick<SidebarProps, "user"> & { collapsed: boolean }) {
   const initials = user.roleLabel.slice(0, 2).toUpperCase();
   return (
     <div className={cn("border-t border-line p-2.5", collapsed && "flex flex-col items-center gap-2")}>
@@ -97,11 +89,11 @@ function SessionFooter({ user, sessionMode, collapsed }: Pick<SidebarProps, "use
         {!collapsed && (
           <div className="min-w-0 flex-1">
             <p className="truncate text-[13px] font-medium text-ink">{user.roleLabel}</p>
-            <p className="truncate font-mono text-[11px] text-muted">{sessionMode === "development" ? `${user.principal} · development` : user.displayName}</p>
+            <p className="truncate text-[11.5px] text-muted">{user.displayName} · {user.organization}</p>
           </div>
         )}
         <form action={signOut}>
-          <button type="submit" aria-label={sessionMode === "development" ? "Exit development session" : "Sign out"} title={sessionMode === "development" ? "Exit development session" : "Sign out"} className="rounded-sm p-1.5 text-muted hover:bg-sunken hover:text-ink">
+          <button type="submit" aria-label="Sign out" title="Sign out" className="rounded-sm p-1.5 text-muted hover:bg-sunken hover:text-ink">
             <LogOut className="size-4" aria-hidden="true" />
           </button>
         </form>
@@ -112,7 +104,7 @@ function SessionFooter({ user, sessionMode, collapsed }: Pick<SidebarProps, "use
 
 export function Sidebar(props: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const awaiting = useAwaitingCount(props.signalFindingIds, props.decidedFindingIds);
+  const awaiting = props.awaitingReview;
 
   useEffect(() => {
     try {
@@ -160,7 +152,7 @@ export function Sidebar(props: SidebarProps) {
         </button>
       )}
       <NavList groups={props.groups} collapsed={collapsed} awaiting={awaiting} />
-      <SessionFooter user={props.user} sessionMode={props.sessionMode} collapsed={collapsed} />
+      <SessionFooter user={props.user} collapsed={collapsed} />
     </aside>
   );
 }
@@ -168,7 +160,7 @@ export function Sidebar(props: SidebarProps) {
 /** Below the lg breakpoint the navigation lives in a drawer opened from the top bar. */
 export function MobileNav(props: SidebarProps) {
   const [open, setOpen] = useState(false);
-  const awaiting = useAwaitingCount(props.signalFindingIds, props.decidedFindingIds);
+  const awaiting = props.awaitingReview;
   return (
     <>
       <button
@@ -188,7 +180,7 @@ export function MobileNav(props: SidebarProps) {
             </Link>
           </div>
           <NavList groups={props.groups} collapsed={false} awaiting={awaiting} onNavigate={() => setOpen(false)} />
-          <SessionFooter user={props.user} sessionMode={props.sessionMode} collapsed={false} />
+          <SessionFooter user={props.user} collapsed={false} />
         </div>
       </Drawer>
     </>

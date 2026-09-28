@@ -1,4 +1,7 @@
-import type { RecommendationAction, RiskDimensionName, Severity } from "@/lib/types/domain";
+import type { RecommendationAction, RiskDimensionName } from "@/lib/api/types";
+
+/** Coarse rule-family bucket (satsa.analysis.prioritize._severity_of); the hosted API does not serve it per finding. */
+export type Severity = "high" | "medium" | "low";
 
 /** Finding families = the first segment of rule_or_category (satsa/analysis/workers). */
 export type FindingFamily =

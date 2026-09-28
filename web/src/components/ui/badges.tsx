@@ -1,7 +1,7 @@
 import { AlertTriangle, CircleDot, Minus, ShieldAlert, ShieldCheck, ShieldQuestion } from "lucide-react";
 import type { ReactNode } from "react";
 import { FAMILY_LABEL, SEVERITY_LABEL, type FindingFamily } from "@/lib/domain/labels";
-import type { Severity } from "@/lib/types/domain";
+import type { Severity } from "@/lib/domain/labels";
 import { cn } from "@/lib/utils";
 
 export type Tone = "neutral" | "brand" | "info" | "attention" | "critical";

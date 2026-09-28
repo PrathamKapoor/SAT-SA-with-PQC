@@ -1,15 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, FileText, X } from "lucide-react";
+import { FileText } from "lucide-react";
 import { Tag } from "@/components/ui/badges";
 import { DataTable } from "@/components/ui/data";
 import { Metric, PageHeader, Panel, SectionHeader } from "@/components/ui/layout";
 import { EmptyState } from "@/components/ui/states";
 import { CONTROLLED_BENCHMARK as CB } from "@/content/documented";
-import { getSource } from "@/lib/api";
+import { ApiErrorPanel } from "@/components/ui/api-state";
+import { load } from "@/lib/api/guard";
+import type { Finding } from "@/lib/api/types";
 import { fmtNum, fmtPct } from "@/lib/domain/format";
+import { familyOf } from "@/lib/domain/labels";
 import { fmtMeasure, measureFor } from "@/lib/domain/measures";
-import { loadFindingViews } from "@/lib/model";
+import { entityName, loadCurrentFindings, loadPortfolio } from "@/lib/workbench/data";
+
+type PeerRow = { finding: Finding; entity: string };
 
 export const metadata: Metadata = { title: "Benchmarks" };
 
@@ -23,48 +28,63 @@ function Source({ children }: { children: React.ReactNode }) {
 }
 
 export default async function BenchmarksPage() {
-  const [findings, validation] = await Promise.all([loadFindingViews(), getSource().getValidation()]);
-  const peer = findings.filter((f) => f.family === "peer_benchmark" && f.state === "signal");
-  const comp = validation?.composition ?? [];
+  const loaded = await load(async () => ({ current: await loadCurrentFindings(), portfolio: await loadPortfolio() }));
+  const peer: PeerRow[] = loaded.ok
+    ? loaded.data.current
+        .filter((r) => familyOf(r.finding.rule_or_category) === "peer_benchmark" && r.finding.state === "signal")
+        .map((r) => ({ finding: r.finding, entity: entityName(loaded.data.portfolio, r.priority.entity_id) }))
+    : [];
 
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-8">
       <PageHeader
         eyebrow="Analytics"
         title="Benchmarks"
-        description="Peer comparison from the current period, the synthetic ground-truth checks the backend runs, and the documented controlled benchmark. Each is labelled with what it does and does not show."
+        description="Peer comparison from each entity's current run, read live, and the documented controlled benchmark. Each is labelled with what it does and does not show."
       />
 
       <section aria-labelledby="peer-h">
         <SectionHeader id="peer-h" label="Current period" title="Peer deviation" aside="trimmed cohort median, same sector" />
-        {peer.length ? (
+        {!loaded.ok ? (
+          <ApiErrorPanel error={loaded.error} context="Peer deviation" />
+        ) : peer.length ? (
           <Panel className="px-5 py-2">
             <DataTable
               caption="Peer deviation findings"
               rows={peer}
-              rowKey={(f) => f.id}
+              rowKey={(r) => r.finding.id}
               columns={[
-                { key: "e", header: "Entity", cell: (f) => <span className="font-medium text-ink">{f.entityName}</span> },
+                { key: "e", header: "Entity", cell: (r: PeerRow) => <span className="font-medium text-ink">{r.entity}</span> },
                 {
                   key: "m",
                   header: "Metric",
-                  cell: (f) => (
-                    <Link href={`/workbench/findings/${f.id}`} className="hover:text-brand">
-                      {f.ruleOrCategory.split(".")[1]?.replaceAll("_", " ")}
+                  cell: (r: PeerRow) => (
+                    <Link href={`/workbench/findings/${r.finding.id}`} className="hover:text-brand">
+                      {r.finding.rule_or_category.split(".")[1]?.replaceAll("_", " ")}
                     </Link>
                   ),
                 },
-                { key: "o", header: "Entity value", align: "right", cell: (f) => <span className="num font-medium text-ink">{fmtMeasure(f.statistic, measureFor(f.ruleOrCategory).unit)}</span> },
-                { key: "p", header: "Peer median", align: "right", cell: (f) => <span className="num">{fmtMeasure(f.threshold, measureFor(f.ruleOrCategory).unit)}</span> },
+                {
+                  key: "o",
+                  header: "Entity value",
+                  align: "right",
+                  cell: (r: PeerRow) => <span className="num font-medium text-ink">{fmtMeasure(r.finding.statistic, measureFor(r.finding.rule_or_category).unit)}</span>,
+                },
+                {
+                  key: "p",
+                  header: "Peer median",
+                  align: "right",
+                  cell: (r: PeerRow) => <span className="num">{fmtMeasure(r.finding.threshold, measureFor(r.finding.rule_or_category).unit)}</span>,
+                },
                 {
                   key: "d",
                   header: "Deviation",
                   align: "right",
-                  cell: (f) =>
-                    f.statistic != null && f.threshold ? (
+                  cell: (r: PeerRow) =>
+                    r.finding.statistic != null && r.finding.threshold ? (
                       <span className="num text-attention-strong">
-                        {f.statistic >= f.threshold ? "+" : ""}
-                        {fmtPct((f.statistic - f.threshold) / f.threshold)}
+                        {r.finding.statistic >= r.finding.threshold ? "+" : ""}
+                        {fmtPct((r.finding.statistic - r.finding.threshold) / r.finding.threshold)}
                       </span>
                     ) : (
                       "n/a"
@@ -74,7 +94,7 @@ export default async function BenchmarksPage() {
             />
           </Panel>
         ) : (
-          <EmptyState title="No peer deviation in this period" />
+          <EmptyState title="No peer deviation in current runs">Peer comparison needs at least three entities in the cohort.</EmptyState>
         )}
       </section>
 
@@ -132,39 +152,11 @@ export default async function BenchmarksPage() {
       </section>
 
       <section aria-labelledby="val-h" className="mt-10">
-        <SectionHeader id="val-h" label="Backend" title="Synthetic ground-truth checks" aside="sat-sa validate" />
-        {comp.length ? (
-          <Panel className="px-5 py-2">
-            <DataTable
-              dense
-              caption="Composition validation cases"
-              rows={comp}
-              rowKey={(c) => c.case_id}
-              columns={[
-                { key: "c", header: "Scenario", cell: (c) => <span className="font-mono text-[12.5px] text-ink">{c.case_id}</span> },
-                { key: "e", header: "Expected signal", cell: (c) => <span className="text-[12.5px]">{c.expected_signals.join(", ") || "none"}</span> },
-                { key: "a", header: "Expected action", cell: (c) => <span className="font-mono text-[12px]">{c.expected_action}</span> },
-                {
-                  key: "ok",
-                  header: "Agrees",
-                  align: "right",
-                  cell: (c) =>
-                    c.signals_ok && c.action_ok ? (
-                      <Check className="ml-auto size-4 text-brand" aria-label="agrees" />
-                    ) : (
-                      <X className="ml-auto size-4 text-critical" aria-label="disagrees" />
-                    ),
-                },
-              ]}
-            />
-          </Panel>
-        ) : (
-          <EmptyState title="No validation report" />
-        )}
-        <p className="mt-2 text-[12px] text-muted">
-          These cases check the scenario catalogue against its declared expectations. They are a consistency check, not an accuracy measurement; the controlled benchmark above is the
-          measured result.
-        </p>
+        <SectionHeader id="val-h" label="Offline tool" title="Synthetic ground-truth checks" aside="sat-sa validate" />
+        <EmptyState title="Available in the offline tool">
+          The scenario-catalogue consistency checks run with <span className="font-mono">sat-sa validate</span> against a local SQLite store. The hosted SAT-SA API does not serve
+          them, so they are not shown here.
+        </EmptyState>
       </section>
     </div>
   );

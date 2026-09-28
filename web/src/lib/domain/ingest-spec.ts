@@ -1,4 +1,4 @@
-import type { EvidenceCategory } from "@/lib/types/domain";
+import type { EvidenceCategory } from "@/lib/api/types";
 
 /**
  * Mirror of satsa/ingest/spec.py CATEGORY_FIELDS: canonical field names,

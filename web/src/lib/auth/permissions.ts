@@ -1,4 +1,4 @@
-import type { SatsaRole } from "@/lib/types/domain";
+import type { MembershipRole as SatsaRole } from "@/lib/api/types";
 
 /**
  * Mirror of the backend role model (qsmlops/security/permissions/model.py,

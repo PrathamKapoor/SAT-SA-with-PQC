@@ -27,7 +27,7 @@ export interface NavItem {
   icon: NavIcon;
   /** Hidden unless the session role holds this permission (UI only; backend enforces). */
   requires?: Permission;
-  /** Key into the live counts passed to the sidebar. */
+  /** Key into the live counts passed to the sidebar (runs awaiting review). */
   countKey?: "awaitingReview";
 }
 
@@ -41,7 +41,6 @@ export const NAV: NavGroup[] = [
     label: "Command",
     items: [
       { href: "/workbench", label: "Workbench", icon: "workbench" },
-      { href: "/workbench/overview", label: "Overview", icon: "overview" },
     ],
   },
   {
@@ -50,7 +49,7 @@ export const NAV: NavGroup[] = [
       { href: "/workbench/entities", label: "Entities", icon: "entities" },
       { href: "/workbench/findings", label: "Findings", icon: "findings" },
       { href: "/workbench/review-queue", label: "Review queue", icon: "queue", countKey: "awaitingReview" },
-      { href: "/workbench/decisions", label: "Decisions", icon: "decisions", requires: "review.read" },
+      { href: "/workbench/decisions", label: "Decisions", icon: "decisions" },
     ],
   },
   {
@@ -58,7 +57,7 @@ export const NAV: NavGroup[] = [
     items: [
       { href: "/workbench/analytics", label: "Analytics", icon: "analytics" },
       { href: "/workbench/benchmarks", label: "Benchmarks", icon: "benchmarks" },
-      { href: "/workbench/pipeline", label: "Pipeline", icon: "pipeline" },
+      { href: "/workbench/runs", label: "Analysis runs", icon: "pipeline" },
     ],
   },
   {
@@ -87,8 +86,8 @@ export const NAV: NavGroup[] = [
   {
     label: "Admin",
     items: [
-      { href: "/workbench/admin", label: "Administration", icon: "admin", requires: "identity.manage" },
-      { href: "/workbench/system", label: "System", icon: "system", requires: "config.manage" },
+      { href: "/workbench/admin", label: "Members", icon: "admin", requires: "identity.manage" },
+      { href: "/workbench/system", label: "System", icon: "system" },
     ],
   },
 ];
