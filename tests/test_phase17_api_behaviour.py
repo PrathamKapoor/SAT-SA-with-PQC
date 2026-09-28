@@ -176,3 +176,26 @@ def test_session_token_logout_keeps_the_credential(api):
     assert c.get("/api/v1/session", headers=as_session).status_code == 401
     still = c.get("/api/v1/session", headers={"Authorization": f"Bearer {credential}"})
     assert still.status_code == 200
+
+
+def test_audit_run_filter_returns_only_that_runs_events(api):
+    """GET /audit/events?run_id= must not return other runs' events.
+
+    Found by the production-stack browser test: the run condition bound only
+    to the login/logout branch of the query (AND binds tighter than OR), so a
+    run-filtered read returned every event of the organization.
+    """
+    c = api["client"]
+    _, first, _ = _first_entity_run(api)
+    _, second = _second_entity_run(api)
+    page = c.get(
+        f"/api/v1/audit/events?run_id={first}", headers=headers(api, "auditor")
+    )
+    assert page.status_code == 200, page.text
+    items = page.json()["items"]
+    assert items, "run creation is audited"
+    assert {event["resource"] for event in items} == {f"analysis_run:{first}"}
+    other = c.get(
+        f"/api/v1/audit/events?run_id={second}", headers=headers(api, "auditor")
+    )
+    assert {e["resource"] for e in other.json()["items"]} == {f"analysis_run:{second}"}
