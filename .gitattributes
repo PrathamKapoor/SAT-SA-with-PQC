@@ -17,3 +17,7 @@ paper/submission/supplementary/generated/** -text
 
 # Release candidate: files must keep the bytes hashed in its MANIFEST.json.
 paper/release-candidate/** -text
+
+# Overleaf package: files keep the bytes hashed in its MANIFEST.json.
+paper/overleaf-springer/** -text
+paper/overleaf-springer.zip binary

@@ -16,7 +16,7 @@
     "Code publication (push or archive)",
     "Human grammar proofread"
   ],
-  "build_date_utc": "2026-09-27T15:40:50.314218+00:00",
+  "build_date_utc": "2026-09-27T18:05:38.862325+00:00",
   "figures": {
     "figures-static/fig-architecture.pdf": "79185612256c9f99e0a175b1f40290a9eb29768dccb3412aa01dcf0dc28a630e",
     "figures/fig-ablation.pdf": "33186154e4d7452af886aa2cbad1ff1faccf04195b021b8b89e1bf68f9183c84",
@@ -33,7 +33,7 @@
   },
   "manuscript": {
     "pages": 13,
-    "pdf_sha256": "a3ad4b2bc2ff8ba2f06dc3a3014467f0689a72649b741f6865fee1743172ea73",
+    "pdf_sha256": "fa6f63fda711c8b6cdba1490d1457ef8a9c899d881b3c272e212e368e32f0c47",
     "tex_sha256": "4ef452e3947fe7b622355836d9e59e9721bd3ca700ad8152eacfe5c5f7646040"
   },
   "paper_tree_dirty": false,
@@ -41,17 +41,17 @@
     "path": "research/evidence/publication-v3",
     "publication_json_sha256": "fbe774f76861bbaf633e303746eb2435b743c265bb52d051d3e36a4aab5ec603"
   },
-  "references_sha256": "5796323d1090f75803e5f90507b1aef15ca1d6947557e55c515d64362de48263",
-  "release_candidate_manifest_sha256": "801efe3307c2e4726aac8c1f3f341f76a25abc4fedbf1b34e0076207d185871d",
+  "references_sha256": "77faba71ea038c633119cdd25fa3752b15469f0ff54a9be418bdf50bf6294523",
+  "release_candidate_manifest_sha256": "7efd2b830e5ccddd9e759b5842127cb3d7eb8f5f6cba73e9fec08e7a629f971e",
   "schema": "satsa-submission-release/1",
-  "source_commit": "baa2950b38f0ff29d240cc5c0baf30012fc69cb6",
+  "source_commit": "23e33e27e62e30d9b240e69bad4193e730198efb",
   "submission_ready": false,
   "supplementary": {
     "supplementary/README.md": "ffb9f12046b56258d275df4a57152fd377bf2d2657ca5424e2ea6be1181d1817",
     "supplementary/S2-metric-definitions.md": "4fe1e3626ea63ce07b1719c8d7135b0777c18a03709edcea3d33c8e52f8d076f",
     "supplementary/S7-dataset-mapping.md": "fca0eb8f467fc987bd7cb8d06c5a1ae75dbaee422569c445e6cd1f4785b107d2",
     "supplementary/S8-limitations.md": "e7ec8e3d46b352421f25aa62f753c9c45b8a0c7913d7eae5d6a2ff8568da83f3",
-    "supplementary/S9-reproducibility.md": "89fa2d7b4f5b3313ede2192157c3101c92577b1b391b58ad54467b9e9340a2d5",
+    "supplementary/S9-reproducibility.md": "b7e9bee41a7d6a752e8889e075ba560e5c09351704e59520a001852e1d05f210",
     "supplementary/generated/S1-configurations.md": "907b63c75806c38ed8e1a1d10b5fb5cdaa7457404568d6709d850db36ac94050",
     "supplementary/generated/S10-additional-results.md": "499b360feaf12ef14e28e69df921cfac380c594ca8b9f92f7a1c3c9b6fff9cdd",
     "supplementary/generated/S3-robustness.md": "7b710c5136f37ef374e97fac7d70ed6cf67ead531862161d5a27a8f8a2a3de6f",
@@ -70,7 +70,12 @@
     "supplementary/literature-review/run_searches.py": "16db5c2f7d7ccd5029f37005088df379cedb55c18304e1a45e81570be4b110f6",
     "supplementary/literature-review/screen.py": "77e74657fdea5fcfdd38e697bca10aa4d9b9623b960230e85b0d4dbf9bbdf6a9",
     "supplementary/literature-review/screening.csv": "8d947e881823a21e4230c62913cec610b4379a485f9b2bbbe800c20e8c066092",
-    "supplementary/literature-review/searches.csv": "3ebae94b8b7fa276771285f96c41455a76be70d72787a791ff32e078d139759b"
+    "supplementary/literature-review/searches.csv": "3ebae94b8b7fa276771285f96c41455a76be70d72787a791ff32e078d139759b",
+    "supplementary/literature-review/update-2026-09-27/protocol.md": "cb330e703e1af4df0a9c89f47821ca8688089d77db1b1275aa98962be5bf6cc5",
+    "supplementary/literature-review/update-2026-09-27/queries.csv": "9f0033497ec39bfc021eac7f2e2b419a2db75443dce27cd5226cebf58fd1e3a1",
+    "supplementary/literature-review/update-2026-09-27/records.csv": "db85c677f753670db5338f2ceea3707930632d74a7937c3d3fe464cd491e7380",
+    "supplementary/literature-review/update-2026-09-27/run_update.py": "17d7e5e323cee7cb88d73697ee696713d76df30e79f9891165fb2aaa28e84e9e",
+    "supplementary/literature-review/update-2026-09-27/screening.csv": "320f7ad02b12d2f325592f00cae5b1e9b6f131cf3bf7a128b1c0dc9bfa6ed099"
   },
   "tables": {
     "tables/tab-ablation.tex": "9484b5f92b77a34712ecf0031955a15a73580726b5f69744e22416c49b8d17cf",
@@ -90,20 +95,20 @@
   "verification": {
     "audits": {
       "paper": {
-        "bib_entries": 48,
+        "bib_entries": 52,
         "citations": 48,
         "claims": 286,
         "claims_used_in_text": 155,
-        "matrix_rows": 48,
+        "matrix_rows": 52,
         "ok": true,
         "problems": {}
       },
       "submission": {
-        "bib_entries": 48,
+        "bib_entries": 52,
         "citations": 48,
         "claims": 286,
         "claims_used_in_text": 155,
-        "matrix_rows": 48,
+        "matrix_rows": 52,
         "ok": true,
         "problems": {}
       }

@@ -1,0 +1,47 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{Multi-signal supervision versus simple heuristics.} The controlled results
+show the mechanisms working as specified, while leaving open whether the multi-worker
+design adds value over transparent rules: fixed-threshold and MAD rules tie the
+fast-closure detector, a fastest-median-closure ranking equals or nearly equals SAT-SA
+in most generated populations---populations that favour SAT-SA by construction---and
+four workers \emph{lowered} population recall in the ablation. This is consistent with
+a generator whose pathological profile includes fast closures; more elaborate workers
+can only earn their place on data where pathologies are not separable by one rate,
+which the present evaluation does not contain. For a supervisor, a small set of transparent
+rates may be a reasonable first instrument, with record-cited findings serving as the
+explanation layer rather than the ranking signal.
+
+\paragraph{Mechanism validation versus external validity.} Controlled experiments with
+construction labels answer whether each mechanism does what it declares; they cannot
+answer whether its output reflects supervisory quality. The external evaluation shows
+why the distinction matters: the same fast-closure signal that is a warning in a SOC is
+a success indicator in a service desk, so a construct defined for one setting inverts
+in the other. The methodological lesson generalizes beyond SAT-SA: an external outcome
+used to ``validate'' a supervisory score must measure the same construct, and a
+negative association with a different construct is evidence about constructs, not a
+defect to tune away. The external study also exposed a design limitation within SAT-SA's
+own domain---existence rules fused by summed confidence saturate on large
+submissions---which calls for prevalence-aware scoring developed on held-out SOC data.
+
+\paragraph{Orchestration versus overhead.} On this workload, checkpointed orchestration
+cost a median 0.096\,s per workflow with an interval that includes zero, at
+the price of 38 additional database statements; in exchange, all evaluated
+interruptions recovered without duplicated decisions. Whether this trade holds under
+load, on PostgreSQL or across machines was not measured.
+
+\paragraph{Integrity versus cost.} Finalization and verification are sub-second on this
+machine, and the tested alterations of the decided record were detected. The guarantee
+is narrow by construction: it binds what was analysed and decided, and it is only as
+strong as key custody, which was not evaluated.
+
+\paragraph{Peer analysis versus cohort dependence.} Peer comparison is the most
+supervisor-specific signal, but P01 shows that its output is a function of cohort size
+and spread as much as of the subject. Cohort definition is therefore a supervisory
+decision that should be recorded and reviewed with the finding.
+
+\paragraph{The human in the loop.} SAT-SA is decision support. Automation bias is a
+documented risk for such tools~\cite{parasuraman2010automation,tilbury2024automationbias};
+without a study with supervisors we cannot say whether record-cited findings help or
+anchor their judgement.
