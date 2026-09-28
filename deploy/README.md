@@ -167,17 +167,37 @@ starting the older version.
 
 ## 7. Backups
 
-Back up these together, as one recovery set:
+`deploy/backup.sh` takes one consistent recovery set; `deploy/restore.sh`
+puts it back on a host with no stack and no SAT-SA volumes. CI runs the whole
+cycle on every push (production-stack job): record every finished run's
+TRUST-SAT status, back up, `down -v`, restore, start, and require every run
+that verified before to verify again.
 
-| Data | Where | How |
+```bash
+COMPOSE="docker compose -f deploy/compose.production.yml --env-file deploy/production.env"
+deploy/backup.sh /secure/backups          # stops api+worker for the snapshot (about a minute)
+# restore, on an empty host or after `$COMPOSE down -v`:
+deploy/restore.sh /secure/backups/satsa-<UTC stamp>
+$COMPOSE up -d && deploy/smoke.sh
+```
+
+| In the backup | Contents | Notes |
 |---|---|---|
-| Database | volume `satsa_postgres_data` | `$COMPOSE exec -T database pg_dump -U satsa -Fc satsa > satsa-$(date +%F).dump` |
-| TRUST-SAT ledger and signing key | volume `satsa_satsa_durable` | `docker run --rm -v satsa_satsa_durable:/data -v "$PWD":/backup alpine tar czf /backup/durable-$(date +%F).tgz -C /data .` (the key is secret: store the archive encrypted) |
-| Evidence files | external bucket, or volume `satsa_object_data` (bundled) | provider versioning/replication, or a tar of the volume as above |
+| `database.dump` | PostgreSQL (`pg_dump -Fc`) | every tenant's records, runs, decisions, receipts |
+| `durable.tar.gz` | volume `satsa_satsa_durable` | TRUST-SAT ledger, identity audit ledger, **ML-DSA signing key** |
+| `objects.tar.gz` | volume `satsa_object_data` | bundled storage only; with external S3 use the provider's versioning/replication |
+| `SHA3-256SUMS` | digests | `restore.sh` refuses a set whose digests do not match |
 
-Restore the database, durable volume and objects to the same point, then run
-the smoke test. The ledger and the key must match the database: restoring one
+The API and worker are stopped during the backup so the database, the
+append-only ledgers and evidence are captured at one instant; a finalization
+row must never reference a ledger entry the backup lacks. Restoring one part
 without the others breaks verification of finalized runs.
+
+The backup holds the private signing key and every tenant's evidence: encrypt
+it (for example `age` or `gpg`) before it leaves the host, keep it
+access-controlled, and keep at least one copy off the host. Test a restore on
+a spare machine periodically; `scripts/verify_restored_state.py` is the check
+CI uses (record before, compare after).
 
 ## 8. Operations and troubleshooting
 

@@ -385,13 +385,33 @@ class SubmissionService:
             return existing
         if version["status"] != "uploaded":
             raise DomainValidationError("version must be uploaded before validation")
-        self.db.execute("UPDATE satsa_submission_versions SET status='validating'"
-                        " WHERE organization_id=? AND id=? AND status='uploaded'",
-                        (self.org, version_id))
-        self._audit("submission.validation_started", f"version:{version_id}")
         artifacts = self._artifacts(version_id)
         if any(a.get("storage_status", "stored") != "stored" for a in artifacts):
             raise DomainValidationError("all artifacts must be stored before completion")
+        # Claim the version atomically: one concurrent caller validates, the
+        # others return the recorded report or a conflict.
+        claimed = self.db.query_one(
+            "UPDATE satsa_submission_versions SET status='validating'"
+            " WHERE organization_id=? AND id=? AND status='uploaded' RETURNING id",
+            (self.org, version_id))
+        if claimed is None:
+            existing = self.get_validation_report(version_id)
+            if existing:
+                return existing
+            raise DomainValidationError("validation already in progress for this version")
+        self._audit("submission.validation_started", f"version:{version_id}")
+        try:
+            return self._validate_claimed(version_id, version, artifacts)
+        except BaseException:
+            # An interrupted validation must not strand the version in
+            # 'validating'; it returns to 'uploaded' and can be retried.
+            self.db.execute(
+                "UPDATE satsa_submission_versions SET status='uploaded'"
+                " WHERE organization_id=? AND id=? AND status='validating'",
+                (self.org, version_id))
+            raise
+
+    def _validate_claimed(self, version_id: str, version: dict, artifacts: list) -> dict:
         parsed, errors, failures, results = {}, [], [], {}
         with tempfile.TemporaryDirectory(prefix="satsa-validate-") as temporary:
             for artifact in artifacts:
@@ -436,6 +456,9 @@ class SubmissionService:
             for row in result.rejected:
                 errors.append({"category": category, "locator": row.locator,
                                "native_id": row.native_id, "reasons": row.reasons})
+        if not accepted and not errors and not failures:
+            # Otherwise an empty dataset is reported invalid with no reason.
+            errors.append({"category": "submission", "message": "no records were accepted"})
         status = "failed" if failures else "invalid" if errors or not accepted else "valid"
         report = {
             "status": status, "validator_version": VALIDATOR_VERSION,

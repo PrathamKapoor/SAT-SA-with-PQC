@@ -1,5 +1,9 @@
 # SAT-SA security and deployment boundary
 
+Phase 20 security review of the hosted system (threat model, authorization
+matrix, secrets and logging, failure model, and the tests and CI checks that
+back them): [`docs/security/`](security/THREAT_MODEL.md).
+
 ## Application controls
 
 The `/api/v1` surface authenticates existing QSMLOps credentials and persistent

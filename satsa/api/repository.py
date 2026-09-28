@@ -101,7 +101,11 @@ class ApiRepository:
     def members(self, limit, offset):
         self.tenant._require("identity.read")
         rows = self.db.query_all(
-            "SELECT u.id,u.identity_id,i.name,u.email,m.role,u.status FROM satsa_users u"
+            "SELECT u.id,u.identity_id,i.name,u.email,m.role,"
+            # A revoked membership must read as revoked even while the user
+            # remains active in other organizations.
+            " CASE WHEN m.status<>'active' THEN m.status ELSE u.status END AS status"
+            " FROM satsa_users u"
             " JOIN satsa_memberships m ON m.user_id=u.id AND m.organization_id=?"
             " JOIN identities i ON i.identity_id=u.identity_id"
             " ORDER BY i.name,u.id LIMIT ? OFFSET ?",
@@ -116,6 +120,9 @@ class ApiRepository:
 
     def set_member_status(self, user_id, status):
         self.tenant._require("identity.manage")
+        if user_id == self.tenant.user_id:
+            # Self-revocation can leave an organization without an administrator.
+            raise DomainValidationError("administrators cannot revoke their own membership")
         with self.db.transaction():
             row = self.db.query_one(
                 "SELECT user_id FROM satsa_memberships WHERE organization_id=? AND user_id=?",
