@@ -5,9 +5,11 @@
 # ============================================
 
 # IMPORTANT: Node.js Version Maintenance
-# This Dockerfile defaults to Node.js 24.21.0-slim to match the repo's Node 24 baseline.
+# This Dockerfile defaults to Node.js 24.21.0 on Debian 13 (trixie) to match the repo's Node 24
+# baseline. Trixie replaced bookworm because the bookworm image carried unfixed CRITICAL
+# findings (perl-base, zlib1g) that the trixie backend image does not (CI image-scan).
 # To ensure security and compatibility, update the NODE_VERSION ARG when the project's Node baseline changes.
-ARG NODE_VERSION=24.21.0-slim
+ARG NODE_VERSION=24.21.0-trixie-slim
 
 FROM node:${NODE_VERSION} AS dependencies
 
