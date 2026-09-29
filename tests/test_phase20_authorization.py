@@ -64,7 +64,38 @@ MATRIX = {
     ("GET", "/api/v1/runs/{run_id}/receipt"): ALL,
     ("POST", "/api/v1/runs/{run_id}/verify"): ALL,
     ("GET", "/api/v1/audit/events"): {"auditor", "admin"},
+    # Phase 21 MLOps: everyone reads; analysts build datasets and request
+    # training; model governance (approve/deploy/rollback/retire, accepting
+    # retraining) is supervisory.
+    ("GET", "/api/v1/ml/datasets"): ALL,
+    ("POST", "/api/v1/ml/datasets"): WRITERS,
+    ("GET", "/api/v1/ml/datasets/{dataset_id}"): ALL,
+    ("POST", "/api/v1/ml/datasets/{dataset_id}/validate"): WRITERS,
+    ("POST", "/api/v1/ml/training-runs"): WRITERS,
+    ("GET", "/api/v1/ml/training-runs"): ALL,
+    ("GET", "/api/v1/ml/training-runs/{training_run_id}"): ALL,
+    ("GET", "/api/v1/ml/jobs/{job_id}"): ALL,
+    ("POST", "/api/v1/ml/jobs/{job_id}/cancel"): WRITERS,
+    ("GET", "/api/v1/ml/models"): ALL,
+    ("GET", "/api/v1/ml/models/{model_id}"): ALL,
+    ("POST", "/api/v1/ml/models/{model_id}/approve"): REVIEWERS,
+    ("POST", "/api/v1/ml/models/{model_id}/deploy"): REVIEWERS,
+    ("POST", "/api/v1/ml/models/{model_id}/retire"): REVIEWERS,
+    ("POST", "/api/v1/ml/rollback"): REVIEWERS,
+    ("GET", "/api/v1/ml/deployments"): ALL,
+    ("GET", "/api/v1/ml/monitoring"): ALL,
+    ("POST", "/api/v1/ml/drift-checks"): WRITERS,
+    ("GET", "/api/v1/ml/drift-reports"): ALL,
+    ("GET", "/api/v1/ml/retraining-requests"): ALL,
+    ("POST", "/api/v1/ml/retraining-requests"): WRITERS,
+    ("POST", "/api/v1/ml/retraining-requests/{request_id}/accept"): REVIEWERS,
+    ("POST", "/api/v1/ml/retraining-requests/{request_id}/dismiss"): REVIEWERS,
+    ("GET", "/api/v1/runs/{run_id}/model-inference"): ALL,
 }
+# Allowed callers of these routes reach a domain precondition when nothing is
+# deployed (409 no active deployment / 422 nothing to check), which is still
+# past authorization.
+NEEDS_DEPLOYMENT = {("POST", "/api/v1/ml/rollback"), ("POST", "/api/v1/ml/drift-checks")}
 PUBLIC = {("GET", "/health/live"), ("GET", "/health/ready"), ("POST", "/api/v1/session")}
 
 
@@ -80,11 +111,19 @@ def test_every_route_has_an_explicit_authorization_decision(api):
     assert routes - PUBLIC == set(MATRIX) - PUBLIC, "update MATRIX and the matrix document"
 
 
-def test_every_non_public_route_requires_authentication(api):
+def test_every_non_public_route_requires_authentication(api, monkeypatch):
+    import types
+
     c = api["client"]
+    # Five unauthenticated requests per route from one address exceed the
+    # per-address limit once there are enough routes; give each route its own
+    # one-minute window so the check under test is authentication, not 429.
+    clock = {"now": 1_800_000_000.0}
+    monkeypatch.setattr("satsa.api.security.time", types.SimpleNamespace(time=lambda: clock["now"]))
     for method, path in api_routes(c.app):
         if (method, path) in PUBLIC:
             continue
+        clock["now"] += 60.0
         url = path.replace("{", "x").replace("}", "")
         for auth in [None, "Bearer ", "Bearer not-a-credential", "Basic YTpi",
                      "Bearer " + "A" * 4096]:
@@ -131,6 +170,10 @@ def world(api):
         "submission_id": submission["id"], "version_id": version["id"],
         "artifact_id": artifact["id"], "run_id": run, "queued": queued,
         "finding_id": finding["id"], "user_id": member["id"], "fresh": fresh,
+        # MLOps objects that do not exist: allowed roles get 404, others 403.
+        "dataset_id": "mlds_missing", "training_run_id": "mltrain_missing",
+        "job_id": "mljob_missing", "model_id": "mlmodel_missing",
+        "request_id": "mlretrain_missing",
     }
 
 
@@ -164,6 +207,20 @@ def call(api, role, method, path, w):
         body = {"name": f"m-{role}", "email": f"m-{role}@example.test", "role": "satsa_viewer"}
     elif (method, path) == ("POST", "/api/v1/organizations"):
         body = {"name": f"org by {role}"}
+    elif (method, path) == ("POST", "/api/v1/ml/datasets"):
+        body = {"name": "matrix", "data_origin": "synthetic"}
+    elif (method, path) == ("POST", "/api/v1/ml/training-runs"):
+        body = {"dataset_id": w["dataset_id"]}
+    elif (method, path) == ("POST", "/api/v1/ml/models/{model_id}/approve"):
+        body = {"justification": "matrix"}
+    elif (method, path) == ("POST", "/api/v1/ml/rollback"):
+        body = {"reason": "matrix"}
+    elif path.endswith(("/retire", "/dismiss")) or (method, path) == (
+        "POST", "/api/v1/ml/retraining-requests"
+    ):
+        body = {"reason": "matrix"}
+    elif (method, path) == ("POST", "/api/v1/ml/retraining-requests/{request_id}/accept"):
+        body = {"dataset_id": w["dataset_id"]}
     return c.request(method, url, headers=h, json=body, files=files)
 
 
@@ -175,7 +232,8 @@ def test_role_matrix_over_every_tenant_route(api, world, role):
         response = call(api, role, method, path, world)
         if role in allowed:
             # Allowed: past authorization (404 = no decision/receipt yet).
-            assert response.status_code < 400 or response.status_code == 404, (
+            passed = {404, 409, 422} if (method, path) in NEEDS_DEPLOYMENT else {404}
+            assert response.status_code < 400 or response.status_code in passed, (
                 role, method, path, response.text)
         else:
             assert response.status_code == 403, (role, method, path, response.text)

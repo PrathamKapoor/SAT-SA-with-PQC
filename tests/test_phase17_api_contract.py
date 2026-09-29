@@ -57,8 +57,8 @@ def test_route_index_matches_live_application(openapi):
     documented = _documented_routes()
     assert len(documented) == len(set(documented)), "duplicate route in the index"
     assert set(documented) == _live_routes(openapi)
-    assert len(documented) == 46
-    assert "**46 routes**" in CONTRACT.read_text(encoding="utf-8")
+    assert len(documented) == 70
+    assert "**70 routes**" in CONTRACT.read_text(encoding="utf-8")
 
 
 def test_every_collection_route_is_paginated(openapi):
@@ -90,6 +90,11 @@ def test_idempotency_key_is_required_exactly_where_documented(openapi):
         ("POST", "/api/v1/submissions/{submission_id}/versions"),
         ("POST", "/api/v1/versions/{version_id}/artifacts"),
         ("POST", "/api/v1/runs"),
+        # Phase 21: every route that queues an MLOps job.
+        ("POST", "/api/v1/ml/datasets/{dataset_id}/validate"),
+        ("POST", "/api/v1/ml/training-runs"),
+        ("POST", "/api/v1/ml/drift-checks"),
+        ("POST", "/api/v1/ml/retraining-requests/{request_id}/accept"),
     }
 
 
