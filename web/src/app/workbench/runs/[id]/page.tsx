@@ -15,7 +15,8 @@ import { requireContext } from "@/lib/api/context";
 import { load } from "@/lib/api/guard";
 import type { Step } from "@/lib/api/types";
 import { can } from "@/lib/auth/permissions";
-import { fmtDateTime, prose, shortDigest } from "@/lib/domain/format";
+import { fmtDateTime, fmtNum, prose, shortDigest } from "@/lib/domain/format";
+import { ABSTAIN_LABEL } from "@/lib/domain/models";
 import { RECOMMENDATION_LABEL, ruleTitle, workerLabel } from "@/lib/domain/labels";
 import { DECISION_ACTION, RUN_IN_PROGRESS, RUN_STATUS, STEP_STATUS } from "@/lib/domain/status";
 import { bySignalThenConfidence, loadRunFindings } from "@/lib/workbench/data";
@@ -41,15 +42,16 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
   const ctx = await requireContext();
   const loaded = await load(async () => {
     const run = await api.run(id);
-    const [entity, findings, risk, recommendations, decision, receipt] = await Promise.all([
+    const [entity, findings, risk, recommendations, decision, receipt, inference] = await Promise.all([
       api.entity(run.entity_id),
       loadRunFindings(id),
       orNull(api.risk(id)),
       all((q) => api.recommendations(id, q)),
       orNull(api.decision(id)),
       orNull(api.receipt(id)),
+      can(ctx.role, "model.read") ? orNull(api.runInference(id)) : Promise.resolve(null),
     ]);
-    return { run, entity, findings, risk, recommendations, decision, receipt };
+    return { run, entity, findings, risk, recommendations, decision, receipt, inference };
   });
 
   if (!loaded.ok) {
@@ -59,7 +61,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
       </div>
     );
   }
-  const { run, entity, findings, risk, recommendations, decision, receipt } = loaded.data;
+  const { run, entity, findings, risk, recommendations, decision, receipt, inference } = loaded.data;
   const status = RUN_STATUS[run.status];
   const finalizing = run.status === "awaiting_review" && decision !== null;
   const refreshing = RUN_IN_PROGRESS.includes(run.status) || finalizing;
@@ -169,6 +171,35 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
             <EmptyState title="No recommendations">Recommendations are produced for signal findings once analysis completes.</EmptyState>
           )}
         </Section>
+
+        {inference && (
+          <Section id="model" title="Advisory model score" aside="Orders the review queue; never a decision">
+            <div className="rounded-md border border-line bg-paper px-4 py-3" data-inference={inference.status}>
+              {inference.status === "scored" ? (
+                <p className="text-[14px] text-ink">
+                  Estimated likelihood a supervisor confirms or escalates: <span className="font-semibold">{fmtNum((inference.score ?? 0) * 100, 0)}%</span>
+                </p>
+              ) : (
+                <p className="text-[14px] text-ink">
+                  <Tag>abstained</Tag> {inference.abstain_reason ? ABSTAIN_LABEL[inference.abstain_reason] : "No score"}
+                </p>
+              )}
+              <p className="mt-1 text-[12px] text-muted">
+                {inference.model_id ? (
+                  <>
+                    Model{" "}
+                    <Link className="text-brand hover:underline" href={`/workbench/models/${inference.model_id}`}>
+                      {inference.model_id}
+                    </Link>{" "}
+                    · artifact <span className="mono-id">{shortDigest(inference.artifact_digest, 12)}</span> ·{" "}
+                  </>
+                ) : null}
+                {inference.feature_version} · record <span className="mono-id">{shortDigest(inference.content_digest, 12)}</span>, bound into the TRUST-SAT
+                finalization of this run
+              </p>
+            </div>
+          </Section>
+        )}
 
         <Section id="decision" title="Supervisory decision">
           {decision ? (

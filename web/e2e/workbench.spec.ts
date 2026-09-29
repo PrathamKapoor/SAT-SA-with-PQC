@@ -163,6 +163,34 @@ test("a supervisor decides and TRUST-SAT verifies the decided record", async ({ 
   await expect(page.getByRole("link", { name: new RegExp(ENTITY) })).toBeVisible();
 });
 
+test("the run records the advisory model's explicit abstention", async ({ browser }) => {
+  // No model has been trained or deployed on this stack: the worker still
+  // records an inference, as an abstention, and the page says why.
+  const page = await pageAs(browser, "supervisor");
+  await page.goto(runUrl);
+  await expect(page.getByRole("heading", { name: "Advisory model score" })).toBeVisible();
+  await expect(page.locator("[data-inference]")).toHaveAttribute("data-inference", "abstained");
+  await expect(page.getByText("No model is deployed")).toBeVisible();
+});
+
+test("an analyst builds and validates a dataset; the worker reports it too small", async ({ browser }) => {
+  const page = await pageAs(browser, "analyst");
+  await page.getByRole("link", { name: "Models" }).first().click();
+  await expect(page.getByText("No model is deployed")).toBeVisible();
+  await page.getByRole("button", { name: "Build dataset from recorded decisions" }).click();
+  const datasets = page.getByRole("region", { name: "Datasets" });
+  await expect(datasets.getByText("review-outcome v1")).toBeVisible();
+  await datasets.getByRole("button", { name: "Validate" }).click();
+  // Validation runs in the worker; one decided run is below the policy minimum.
+  await expect(async () => {
+    await page.reload();
+    await expect(page.getByRole("region", { name: "Datasets" }).getByText("invalid", { exact: true })).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 2 * 60_000 });
+  await expect(page.getByText(/Fail · minimum rows/)).toBeVisible();
+  // Training needs a valid dataset: no train control is offered.
+  await expect(page.getByRole("button", { name: "Train model" })).toHaveCount(0);
+});
+
 test("the administrator reads the audit trail of the run", async ({ browser }) => {
   const page = await pageAs(browser, "admin");
   await page.goto(`/workbench/audit?run=${runUrl.split("/").pop()}`);

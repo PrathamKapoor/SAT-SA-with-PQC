@@ -19,7 +19,8 @@ export type NavIcon =
   | "trust"
   | "audit"
   | "admin"
-  | "system";
+  | "system"
+  | "models";
 
 export interface NavItem {
   href: string;
@@ -58,6 +59,7 @@ export const NAV: NavGroup[] = [
       { href: "/workbench/analytics", label: "Analytics", icon: "analytics" },
       { href: "/workbench/benchmarks", label: "Benchmarks", icon: "benchmarks" },
       { href: "/workbench/runs", label: "Analysis runs", icon: "pipeline" },
+      { href: "/workbench/models", label: "Models", icon: "models", requires: "model.read" },
     ],
   },
   {

@@ -13,6 +13,7 @@ import {
   ListChecks,
   Scale,
   ScrollText,
+  Cpu,
   Settings2,
   ShieldCheck,
   Upload,
@@ -42,6 +43,7 @@ const ICONS: Record<NavIconName, LucideIcon> = {
   audit: ScrollText,
   admin: Users,
   system: Settings2,
+  models: Cpu,
 };
 
 export function NavIcon({ name, className }: { name: NavIconName; className?: string }) {
