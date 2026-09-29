@@ -84,3 +84,6 @@ Thumbs.db
 deploy/production.env
 deploy/*.env
 !deploy/production.env.example
+
+# LaTeX sources of the research paper are kept locally, not published (2026-09-30).
+*.tex
