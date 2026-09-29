@@ -154,13 +154,16 @@ ROLES: dict[str, frozenset[str]] = {
     # above (satsa_* prefix) so the two domains coexist without collision.
     # Read-only access to findings/evidence/review history/trust status.
     "satsa_viewer": frozenset(
-        {FINDING_VIEW, EVIDENCE_VIEW, REVIEW_READ, TRUST_VERIFY}
+        {FINDING_VIEW, EVIDENCE_VIEW, REVIEW_READ, TRUST_VERIFY, MODEL_READ}
     ),
     # Runs analytics/validation and reads everything a viewer can.
     "satsa_analyst": frozenset(
         {
             FINDING_VIEW, EVIDENCE_VIEW, REVIEW_READ,
             ANALYSIS_RUN, VALIDATION_RUN, TRUST_VERIFY, REPORT_EXPORT,
+            # Phase 21: may build datasets and request training; may not
+            # approve, deploy or roll back a model.
+            MODEL_READ, MODEL_TRAIN,
         }
     ),
     # The human supervisor: the only role that may record a review
@@ -170,6 +173,8 @@ ROLES: dict[str, frozenset[str]] = {
             FINDING_VIEW, EVIDENCE_VIEW, REVIEW_READ, REVIEW_CREATE,
             DECISION_RECORD, ANALYSIS_RUN, VALIDATION_RUN,
             TRUST_VERIFY, REPORT_EXPORT, CALIBRATION_APPROVE,
+            # Phase 21: model governance is a supervisory act.
+            MODEL_READ, MODEL_TRAIN, MODEL_APPROVE, MODEL_DEPLOY, MODEL_ROLLBACK,
         }
     ),
     # Read-heavy oversight role: everything a supervisor can see, plus
@@ -177,7 +182,7 @@ ROLES: dict[str, frozenset[str]] = {
     "satsa_auditor": frozenset(
         {
             FINDING_VIEW, EVIDENCE_VIEW, REVIEW_READ,
-            TRUST_VERIFY, REPORT_EXPORT, AUDIT_READ,
+            TRUST_VERIFY, REPORT_EXPORT, AUDIT_READ, MODEL_READ,
         }
     ),
     # Full SAT-SA control, including identity/config management via the
