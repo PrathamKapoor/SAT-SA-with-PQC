@@ -16,7 +16,7 @@
 
 - **No secret in the repository or its history.** `.gitignore` excludes
   `deploy/production.env`, `deploy/*.env` and `.env*` (examples excepted);
-  detect-secrets and a history search (Phase 19) found only test fixtures.
+  detect-secrets and a history search (Phase 19) found only test fixtures; a Phase 20 pattern scan of tracked files and history (private-key blocks, cloud keys, tokens) found nothing, and `tests/test_phase20_secret_hygiene.py` keeps that checked.
   CI generates throwaway secrets per run and masks every issued credential.
 - **Credentials and sessions are stored as digests**; a database dump does
   not yield usable credentials or sessions. Credential secrets are 256-bit

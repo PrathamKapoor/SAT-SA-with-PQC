@@ -58,6 +58,7 @@ API: the web tier holds the session token server-side and calls the API with
 | T6 | Stale sessions: logout, expiry, revoked credential, disabled user or identity, revoked membership | session resolution joins user and identity status; credential re-checked; membership per request | `test_revoked_or_expired_sessions_and_disabled_identities_are_rejected`, `test_revoked_membership_is_listed_as_revoked_and_denied` |
 | T7 | CSRF against cookie sessions (API) and server actions (web) | API: HMAC CSRF token for cookie mutations; web: SameSite=Lax HttpOnly cookie, Next.js server-action origin check, CSP `form-action 'self'` | `test_cookie_sessions_require_csrf_for_every_mutation`, HTTP smoke |
 | T8 | Credential guessing | 5 login attempts/min per client address, identical error for all failures | `test_failed_logins_do_not_distinguish_credential_states`, `web/e2e/security/login-rate-limit.spec.ts` through the proxy |
+| T9a | Authenticated request flooding | per-IP cap plus per-user, per-operation caps (30 mutations/min, 300 reads/min by default); limit belongs to the user, not the organization | `tests/test_phase20_rate_limits.py` |
 | T9 | Rate-limit bypass by forging `X-Forwarded-For` | Caddy overwrites the header; API trusts it only from the web tier | same E2E, run against the production stack in CI |
 | T10 | Malicious upload: traversal names, NUL, wrong type, binary, oversize, parser bombs | filename rules, type/extension agreement, 16 MiB service limit, 17 MiB edge limit, 18 MB proxy limit, opaque storage keys (no filename in the key) | `tests/test_phase20_upload_hardening.py` |
 | T11 | Malformed input reaching PostgreSQL (NUL bytes) as a 500 | edge rejects NUL in path/query; schemas reject NUL in strings | `test_nul_bytes_are_rejected_as_input_not_database_failures` (fixed in Phase 20) |
@@ -70,7 +71,7 @@ API: the web tier holds the session token server-side and calls the API with
 | T18 | Internal services exposed | only Caddy publishes; API/PostgreSQL/object store on the backend network only | CI port assertion |
 | T19 | Secrets in logs | structured logs carry IDs, route templates and error types, never tokens or bodies | CI log scan for every issued credential, session cookie and deployment secret |
 | T20 | Container breakout / persistence | non-root processes, `cap_drop: ALL`, `no-new-privileges`, read-only backend root filesystem | compose file, production-stack CI |
-| T21 | Vulnerable dependencies and base images | npm audit, pip-audit, Trivy in CI | `dependency-audit`, `image-scan` jobs |
+| T21 | Vulnerable dependencies and base images | npm audit, pip-audit, Trivy in CI; Bandit gates HIGH-severity findings in application and deployment code (Medium findings reviewed by hand: request-path SQL is parameterized, the rest are operator-only tools) | `dependency-audit`, `image-scan` jobs |
 | T22 | Loss of the host or its disk | executable backup/restore, restore verified in CI | `deploy/backup.sh`, `deploy/restore.sh`, production-stack job |
 
 ## Residual risks (accepted, documented)
