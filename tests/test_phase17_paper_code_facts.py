@@ -20,6 +20,14 @@ from evaluation.research.paper import (
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# The research paper and its evidence (paper/, research/) are kept locally and
+# are not published in the repository. These checks run where they exist.
+_REPO = Path(__file__).resolve().parents[1]
+needs_research_artifacts = pytest.mark.skipif(
+    not ((_REPO / "paper").is_dir() and (_REPO / "research" / "evidence").is_dir()),
+    reason="research paper and evidence are not in this checkout (kept locally, not published)",
+)
+
 # The paper's LaTeX sources are kept locally and are not published in the
 # repository (since 2026-09-30). Manuscript checks run where they exist.
 needs_paper_sources = pytest.mark.skipif(
@@ -53,6 +61,7 @@ def test_live_api_and_historical_paper_route_counts_differ():
         )
 
 
+@needs_research_artifacts
 def test_every_cited_code_fact_is_pinned_to_the_freeze_commit():
     record = _freeze_record()
     assert record["canonical_code_commit"] == PAPER_CODE_FACTS_COMMIT
@@ -67,6 +76,7 @@ def test_every_cited_code_fact_is_pinned_to_the_freeze_commit():
         assert committed[item["claim_id"]]["value"] == PAPER_CODE_FACTS[fact]["value"]
 
 
+@needs_research_artifacts
 def test_pinned_facts_refuse_a_different_freeze_commit():
     with pytest.raises(ValueError, match="pinned"):
         paper_code_fact("api_route_count", {"canonical_code_commit": "0" * 40})
@@ -74,6 +84,7 @@ def test_pinned_facts_refuse_a_different_freeze_commit():
         paper_code_fact("unpinned_fact", _freeze_record())
 
 
+@needs_research_artifacts
 def test_paper_data_rebuild_ignores_live_route_changes(monkeypatch):
     from evaluation.research import paper
 

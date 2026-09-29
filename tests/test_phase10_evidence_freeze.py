@@ -9,6 +9,15 @@ from evaluation.research.artifacts import write_experiment_bundle
 from evaluation.research.freeze import build_freeze, verify_bundle, verify_freeze
 from evaluation.research.tables import BundleIntegrityError, export_tables, load_bundle
 
+# The research paper and its evidence (paper/, research/) are kept locally and
+# are not published in the repository. These checks run where they exist.
+_REPO = __import__("pathlib").Path(__file__).resolve().parents[1]
+needs_research_artifacts = pytest.mark.skipif(
+    not ((_REPO / "paper").is_dir() and (_REPO / "research" / "evidence").is_dir()),
+    reason="research paper and evidence are not in this checkout (kept locally, not published)",
+)
+
+
 
 def _bundle(root: Path, name: str) -> Path:
     return write_experiment_bundle(
@@ -107,6 +116,7 @@ def test_freeze_refuses_a_bundle_that_already_fails_verification(tmp_path):
     assert not (tmp_path / "freeze").exists()
 
 
+@needs_research_artifacts
 def test_committed_freeze_v1_is_intact():
     """The paper's canonical evidence must verify byte-for-byte."""
     freeze = Path(__file__).resolve().parents[1] / "research" / "evidence" / "freeze-v1"
