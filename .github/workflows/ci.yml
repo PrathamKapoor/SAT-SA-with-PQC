@@ -413,12 +413,24 @@ jobs:
             echo "::endgroup::"
           done
           exit $status
+      - name: Export machine-readable reports and summarize findings
+        if: always()
+        run: |
+          mkdir -p scan-json
+          for image in satsa-backend:scan satsa-web:scan postgres:17-alpine caddy:2 chrislusf/seaweedfs:4.47 alpine:3; do
+            name=$(echo "$image" | tr '/:' '__')
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$HOME/.cache/trivy:/root/.cache/trivy" \
+              "$TRIVY" image --scanners vuln --no-progress --format json --severity HIGH,CRITICAL "$image" > "scan-json/$name.json"
+          done
+          python3 deploy/summarize_trivy.py scan-json/*.json
       - name: Upload scan report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: image-scan-report
-          path: image-scan.txt
+          path: |
+            image-scan.txt
+            scan-json/
           if-no-files-found: ignore
 
   dependency-audit:
