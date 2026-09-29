@@ -272,6 +272,11 @@ jobs:
             grep '^FAIL ' http-security.log | head -20 | while read -r line; do
               echo "::error title=http-security::${line:0:400}"
             done
+            # The server-side cause of a failing check, without secrets: the
+            # services log error types and routes, not tokens or bodies.
+            $COMPOSE logs --no-color --tail 200 web api 2>&1 \
+              | grep -iE 'error|exception|traceback|status[^0-9]*5[0-9][0-9]|429' | tail -8 \
+              | while read -r line; do echo "::error title=service-log::${line:0:400}"; done
             exit 1
           }
       - name: Only the reverse proxy publishes ports
