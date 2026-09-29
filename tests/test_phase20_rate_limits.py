@@ -6,6 +6,7 @@ authenticated per-user, per-operation limit.
 """
 
 from dataclasses import replace
+from types import SimpleNamespace
 
 from test_phase6_api import headers
 
@@ -18,7 +19,10 @@ def _entity(client, h, n):
     )
 
 
-def test_mutation_limit_is_per_user_and_reads_are_not_consumed(api):
+def test_mutation_limit_is_per_user_and_reads_are_not_consumed(api, monkeypatch):
+    # Limits use fixed one-minute windows; pin the clock so a minute rollover
+    # cannot split the burst across two windows.
+    monkeypatch.setattr("satsa.api.security.time", SimpleNamespace(time=lambda: 1_800_000_000.0))
     client = api["client"]
     state = client.app.state
     state.settings = replace(state.settings, mutation_limit=3)
