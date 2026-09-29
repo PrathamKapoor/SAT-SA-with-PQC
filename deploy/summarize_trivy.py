@@ -40,18 +40,19 @@ def findings(path: Path) -> list[dict]:
                     "installed": vuln.get("InstalledVersion", ""),
                     "fixed": vuln.get("FixedVersion") or "-",
                     "severity": vuln.get("Severity", ""),
+                    "path": vuln.get("PkgPath", ""),
                     "title": (vuln.get("Title") or "")[:90],
                 }
             )
-    rows.sort(key=lambda r: (r["severity"] != "CRITICAL", r["fixed"] == "-", r["image"], r["pkg"]))
     return rows
 
 
 def main(argv: list[str]) -> int:
     rows = [row for arg in argv for row in findings(Path(arg))]
+    rows.sort(key=lambda r: (r["severity"] != "CRITICAL", r["fixed"] == "-", r["image"], r["pkg"]))
     header = "| Image | Vulnerability | Package | Installed | Fixed | Severity | Class | Target |\n|---|---|---|---|---|---|---|---|"
     table = [
-        f"| {r['image']} | {r['id']} | {r['pkg']} | {r['installed']} | {r['fixed']} | {r['severity']} | {r['class']} | {r['target']} |"
+        f"| {r['image']} | {r['id']} | {r['pkg']} | {r['installed']} | {r['fixed']} | {r['severity']} | {r['class']} | {r['target']} | {r['path']} |"
         for r in rows
     ]
     text = f"### Trivy HIGH/CRITICAL findings ({len(rows)})\n\n{header}\n" + "\n".join(table) + "\n"
@@ -62,7 +63,7 @@ def main(argv: list[str]) -> int:
             handle.write(text)
 
     lines = [
-        f"{r['image']}|{r['severity']}|{r['id']}|{r['pkg']} {r['installed']}>{r['fixed']}|{r['class']}"
+        f"{r['image']}|{r['severity']}|{r['id']}|{r['pkg']} {r['installed']}>{r['fixed']}|{r['class']}|{r['path']}"
         for r in rows
     ]
     chunks, current = [], ""
