@@ -263,7 +263,8 @@ def test_graph_has_real_stage_edges(hosted_scope):
     assert {
         ("readiness", "analysis"),
         ("analysis", "recommendations"),
-        ("recommendations", "human_review"),
+        ("recommendations", "model_inference"),
+        ("model_inference", "human_review"),
         ("human_review", "trust_boundary"),
     } <= edges
 

@@ -974,8 +974,12 @@ class AnalysisExecutionWorker:
         trust_key_dir: str | None = None,
         workers_factory: Callable | None = None,
         audit=None,
+        storage=None,
     ) -> None:
         self.db = engine
+        # Artifact storage for the advisory model (Phase 21). Without it an
+        # active model cannot be loaded and inference abstains.
+        self.storage = storage
         self.worker_id = (
             worker_id or f"{socket.gethostname()}:{os.getpid()}:{uuid4().hex[:8]}"
         )
@@ -1038,6 +1042,7 @@ class AnalysisExecutionWorker:
                 self._execute(lease, context)
                 if context["review_required"] and self._finish(lease) != "failed":
                     self._persist_recommendations(lease)
+                    self._model_inference(lease)
                     decision = self.db.query_one(
                         "SELECT id FROM satsa_run_review_decisions WHERE organization_id=? AND run_id=?",
                         (lease.organization_id, lease.run_id),
@@ -1562,6 +1567,13 @@ class AnalysisExecutionWorker:
                 params = (self.org,) + tuple(params)
             return self.db.query_all(sql, params)
 
+    def _model_inference(self, lease: Lease) -> dict:
+        """Advisory review-outcome score (or explicit abstention) before review."""
+        from satsa.mlops.inference import infer_run
+
+        self._assert_lease(lease)
+        return infer_run(self.db, self.storage, lease.organization_id, lease.run_id)
+
     def _finalize_supervisory(self, lease: Lease) -> dict:
         self._assert_lease(lease)
         if self._cancel_requested(lease.run_id, lease.organization_id):
@@ -1735,6 +1747,14 @@ def worker_main() -> int:
         engine,
         trust_key_dir=str(trust_key_dir),
         audit=audit,
+        storage=storage,
+    )
+    from satsa.mlops.jobs import MLJobWorker
+
+    # MLOps jobs (validation, training, drift) share the worker process and
+    # its shutdown handling; analysis runs are polled first.
+    ml_worker = MLJobWorker(
+        engine, storage, worker_id=worker.worker_id, audit_service=audit
     )
     stopping = threading.Event()
     signal.signal(signal.SIGTERM, lambda _signum, _frame: stopping.set())
@@ -1743,6 +1763,8 @@ def worker_main() -> int:
         idle = 0
         while not stopping.is_set():
             outcome = worker.run_once()
+            if outcome is None:
+                outcome = ml_worker.run_once()
             if outcome is None:
                 idle += 1
                 stopping.wait(min(2.0, 0.1 * idle))
