@@ -37,6 +37,10 @@ RUN pip install --no-cache-dir -e ".[postgres,s3]" \
     && apt-get purge -y --auto-remove build-essential \
     && apt-get update && apt-get upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
+    # The runtime never installs packages. pip's vendored msgpack and
+    # pkg_resources were the image's only fixable scanner findings and no newer
+    # pip vendors fixed versions, so pip is removed instead (CI image-scan).
+    && python -m pip uninstall -y pip \
     && useradd --system --uid 10001 --create-home satsa \
     && mkdir -p /data \
     && chown -R satsa:satsa /app /data
