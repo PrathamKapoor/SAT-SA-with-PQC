@@ -17,6 +17,13 @@ from evaluation.research.paper_audit import audit_citations, audit_claims
 
 ROOT = Path(__file__).resolve().parents[1]
 PAPER = ROOT / "paper"
+
+# The paper's LaTeX sources are kept locally and are not published in the
+# repository (since 2026-09-30). Manuscript checks run where they exist.
+needs_paper_sources = pytest.mark.skipif(
+    not (ROOT / "paper" / "manuscript.tex").exists(),
+    reason="paper LaTeX sources are not in this checkout (kept locally, not published)",
+)
 FREEZE = ROOT / "research" / "evidence" / "freeze-v2"
 
 pytestmark = pytest.mark.skipif(
@@ -34,6 +41,7 @@ def _claims(data: dict) -> dict[str, dict]:
     return {c["claim_id"]: c for c in data["claims"]}
 
 
+@needs_paper_sources
 def test_paper_data_rebuilds_identically_from_freeze(rebuilt: dict) -> None:
     committed = json.loads((PAPER / "data" / "paper-data.json").read_text("utf-8"))
     assert rebuilt == committed
@@ -72,6 +80,7 @@ def test_every_claim_records_provenance(rebuilt: dict) -> None:
             ), claim["claim_id"]
 
 
+@needs_paper_sources
 def test_manuscript_uses_only_defined_values_and_no_typed_decimals(
     rebuilt: dict,
 ) -> None:
@@ -94,12 +103,14 @@ def test_audit_detects_typed_decimal_and_undefined_key(
     assert report["typed_decimals"] == ["bad.tex:1:0.417"]
 
 
+@needs_paper_sources
 def test_citations_are_verified_literature_rows() -> None:
     report = audit_citations(PAPER)
     assert report["problems"] == []
     assert report["bib_entries"] == report["matrix_rows"]
 
 
+@needs_paper_sources
 def test_manuscript_avoids_prohibited_claims(tmp_path: Path) -> None:
     assert audit_claims(PAPER)["problems"] == []
     fake = tmp_path / "paper"
@@ -148,6 +159,7 @@ def test_sih_safe_numbers_trace_to_paper_data(rebuilt: dict) -> None:
     assert len(steps) == 13
 
 
+@needs_paper_sources
 def test_publication_snapshot_verifies_and_detects_tampering(tmp_path: Path) -> None:
     from evaluation.research.publication import build_publication, verify_publication
 
@@ -183,6 +195,7 @@ def test_publication_snapshot_verifies_and_detects_tampering(tmp_path: Path) -> 
     assert "unlisted file paper/extra.txt" in problems
 
 
+@needs_paper_sources
 def test_generated_tables_and_figures_match_freeze() -> None:
     pytest.importorskip("matplotlib")
     from evaluation.research.paper_audit import audit_numbers
