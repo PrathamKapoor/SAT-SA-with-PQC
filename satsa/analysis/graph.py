@@ -70,12 +70,14 @@ class AnalysisGraphRuntime:
         builder.add_node("readiness", self.readiness)
         builder.add_node("analysis", self.analysis)
         builder.add_node("recommendations", self.recommendations)
+        builder.add_node("model_inference", self.model_inference)
         builder.add_node("human_review", self.human_review)
         builder.add_node("trust_boundary", self.trust_boundary)
         builder.add_edge(START, "readiness")
         builder.add_edge("readiness", "analysis")
         builder.add_edge("analysis", "recommendations")
-        builder.add_edge("recommendations", "human_review")
+        builder.add_edge("recommendations", "model_inference")
+        builder.add_edge("model_inference", "human_review")
         builder.add_edge("human_review", "trust_boundary")
         builder.add_edge("trust_boundary", END)
         self.graph = builder.compile(checkpointer=checkpointer)
@@ -116,7 +118,15 @@ class AnalysisGraphRuntime:
     def recommendations(self, state: AnalysisGraphState) -> dict:
         self._check(state)
         count = self.worker._persist_recommendations(self.lease)
-        return {"current_stage": "human_review", "recommendation_count": count}
+        return {"current_stage": "model_inference", "recommendation_count": count}
+
+    def model_inference(self, state: AnalysisGraphState) -> dict:
+        # One analytical capability consumed by the supervisory workflow: an
+        # advisory score or an explicit abstention. It never alters findings,
+        # and review proceeds the same whether or not a model scored.
+        self._check(state)
+        self.worker._model_inference(self.lease)
+        return {"current_stage": "human_review"}
 
     def human_review(self, state: AnalysisGraphState) -> dict:
         self._check(state)

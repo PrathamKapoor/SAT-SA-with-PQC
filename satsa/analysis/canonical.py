@@ -479,6 +479,31 @@ def supervisory_document(engine, organization_id: str, run_id: str) -> dict:
         "canonical_records": commitment(record_refs),
         "artifacts": commitment(artifact_refs),
     }
+    # Phase 21: when the advisory review-outcome model produced a record for
+    # this run, commit to it. The key is absent for runs without one, so
+    # documents of earlier runs are unchanged. The record's digest is
+    # recomputed from its fields, so an altered score or model identity
+    # breaks the reviewed-context check and finalization.
+    inference = engine.query_one(
+        "SELECT * FROM satsa_ml_inferences WHERE organization_id=? AND run_id=?",
+        (organization_id, run_id),
+    )
+    if inference is not None:
+        fields = (
+            "model_name", "model_id", "deployment_id", "artifact_digest",
+            "feature_version", "status", "abstain_reason", "score",
+        )
+        content = {"run_id": run_id, "organization_id": organization_id,
+                   **{key: inference[key] for key in fields},
+                   "features": (json.loads(inference["features_json"])
+                                if inference["features_json"] is not None else None)}
+        if digest_document(content) != inference["content_digest"]:
+            raise ValueError("model inference digest mismatch")
+        document["model_inference"] = {
+            "id": inference["id"],
+            **{key: inference[key] for key in fields},
+            "content_digest": inference["content_digest"],
+        }
     review_context = decision.get("review_context_digest")
     if review_context is not None and review_context != digest_document(document):
         raise ValueError("reviewed context changed before finalization")
