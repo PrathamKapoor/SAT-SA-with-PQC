@@ -413,7 +413,7 @@ jobs:
           if-no-files-found: ignore
 
   dependency-audit:
-    name: dependency audit (npm audit, pip-audit)
+    name: dependency audit and static analysis (npm audit, pip-audit, Bandit)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -431,6 +431,10 @@ jobs:
         run: |
           python -m pip install --quiet pip-audit
           pip-audit --requirement requirements.txt --progress-spinner off
+      - name: Bandit (application and deployment code; fails on HIGH severity)
+        run: |
+          python -m pip install --quiet bandit
+          bandit -r satsa scripts deploy --severity-level high --quiet
 
   saas-topology-smoke:
     name: SaaS topology smoke (PostgreSQL + SeaweedFS + API + worker)
