@@ -185,7 +185,9 @@ test("an analyst builds and validates a dataset; the worker reports it too small
   await expect(async () => {
     await page.reload();
     await expect(page.getByRole("region", { name: "Datasets" }).getByText("invalid", { exact: true })).toBeVisible({ timeout: 2_000 });
-  }).toPass({ timeout: 2 * 60_000 });
+    // Poll like a person would: every reload costs several API reads, and the
+    // production stack rate-limits reads per client address.
+  }).toPass({ intervals: [5_000], timeout: 2 * 60_000 });
   await expect(page.getByText(/Fail · minimum rows/)).toBeVisible();
   // Training needs a valid dataset: no train control is offered.
   await expect(page.getByRole("button", { name: "Train model" })).toHaveCount(0);
