@@ -1,0 +1,20 @@
+services:
+  # Public presentation environment: the SAT-SA workbench with sign-in, backed
+  # by the SAT-SA API and analysis worker in the same container
+  # (deploy/render/Dockerfile, scripts/render_stack.py). Demo data only;
+  # state is rebuilt when the free instance restarts.
+  - type: web
+    name: SAT-SA-with-PQC
+    runtime: docker
+    region: singapore
+    plan: free
+    branch: main
+    autoDeployTrigger: commit
+    dockerfilePath: ./deploy/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    numInstances: 1
+    envVars:
+      # Keeps the logged sign-in credentials the same across restarts.
+      - key: SATSA_LOGIN_SEED
+        generateValue: true
