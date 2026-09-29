@@ -18,13 +18,18 @@ export type Permission =
   | "calibration.approve"
   | "audit.read"
   | "identity.manage"
-  | "config.manage";
+  | "config.manage"
+  | "model.read"
+  | "model.train"
+  | "model.approve"
+  | "model.deploy"
+  | "model.rollback";
 
-const VIEWER: Permission[] = ["finding.view", "evidence.view", "review.read", "trust.verify"];
+const VIEWER: Permission[] = ["finding.view", "evidence.view", "review.read", "trust.verify", "model.read"];
 
 export const ROLE_PERMISSIONS: Record<SatsaRole, ReadonlySet<Permission> | "all"> = {
   satsa_viewer: new Set(VIEWER),
-  satsa_analyst: new Set([...VIEWER, "analysis.run", "validation.run", "report.export"]),
+  satsa_analyst: new Set([...VIEWER, "analysis.run", "validation.run", "report.export", "model.train"]),
   satsa_supervisor: new Set([
     ...VIEWER,
     "review.create",
@@ -33,6 +38,10 @@ export const ROLE_PERMISSIONS: Record<SatsaRole, ReadonlySet<Permission> | "all"
     "validation.run",
     "report.export",
     "calibration.approve",
+    "model.train",
+    "model.approve",
+    "model.deploy",
+    "model.rollback",
   ]),
   satsa_auditor: new Set([...VIEWER, "report.export", "audit.read"]),
   satsa_admin: "all",

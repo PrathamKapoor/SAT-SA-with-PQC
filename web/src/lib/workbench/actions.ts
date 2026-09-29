@@ -14,6 +14,11 @@ import {
   type EvidenceCategory,
   type Invitation,
   type MembershipRole,
+  type MLDataset,
+  type MLDeployment,
+  type MLJob,
+  type MLModel,
+  type MLRetrainingRequest,
   type Run,
   type Submission,
   type Validation,
@@ -105,4 +110,56 @@ export async function revokeMemberAction(userId: string): Promise<ActionResult<n
   });
   if (r.ok) revalidatePath("/workbench/admin");
   return r;
+}
+
+/* ---------- MLOps (docs/MLOPS.md). Authorization is enforced by the API. ---------- */
+
+const mlDone = <T>(r: ActionResult<T>) => {
+  if (r.ok) revalidatePath("/workbench/models", "layout");
+  return r;
+};
+
+export async function createDatasetAction(name: string): Promise<ActionResult<MLDataset>> {
+  // The workbench builds datasets from this organization's own recorded decisions.
+  return mlDone(await act(() => api.mlCreateDataset(name, "organizational")));
+}
+
+export async function validateDatasetAction(datasetId: string, key: string): Promise<ActionResult<MLJob>> {
+  return mlDone(await act(() => api.mlValidateDataset(datasetId, key)));
+}
+
+export async function startTrainingAction(datasetId: string, key: string): Promise<ActionResult<MLJob>> {
+  return mlDone(await act(() => api.mlStartTraining(datasetId, key)));
+}
+
+export async function approveModelAction(modelId: string, justification: string): Promise<ActionResult<MLModel>> {
+  return mlDone(await act(() => api.mlApprove(modelId, justification)));
+}
+
+export async function deployModelAction(modelId: string, reason: string): Promise<ActionResult<MLDeployment>> {
+  return mlDone(await act(() => api.mlDeploy(modelId, reason)));
+}
+
+export async function retireModelAction(modelId: string, reason: string): Promise<ActionResult<MLModel>> {
+  return mlDone(await act(() => api.mlRetire(modelId, reason)));
+}
+
+export async function rollbackModelAction(reason: string): Promise<ActionResult<MLDeployment>> {
+  return mlDone(await act(() => api.mlRollback(reason)));
+}
+
+export async function driftCheckAction(key: string): Promise<ActionResult<MLJob>> {
+  return mlDone(await act(() => api.mlStartDriftCheck(key)));
+}
+
+export async function requestRetrainingAction(reason: string): Promise<ActionResult<MLRetrainingRequest>> {
+  return mlDone(await act(() => api.mlRequestRetraining(reason)));
+}
+
+export async function acceptRetrainingAction(requestId: string, datasetId: string, key: string): Promise<ActionResult<MLJob>> {
+  return mlDone(await act(() => api.mlAcceptRetraining(requestId, datasetId, key)));
+}
+
+export async function dismissRetrainingAction(requestId: string, reason: string): Promise<ActionResult<MLRetrainingRequest>> {
+  return mlDone(await act(() => api.mlDismissRetraining(requestId, reason)));
 }
