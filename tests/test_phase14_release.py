@@ -6,7 +6,17 @@ import hashlib
 import json
 from pathlib import Path
 
+import pytest
+
 from evaluation.research.release import assemble, manifest, release_record, validate
+
+# The research paper and its evidence (paper/, research/) are kept locally and
+# are not published in the repository. These checks run where they exist.
+_REPO = Path(__file__).resolve().parents[1]
+needs_research_artifacts = pytest.mark.skipif(
+    not ((_REPO / "paper").is_dir() and (_REPO / "research" / "evidence").is_dir()),
+    reason="research paper and evidence are not in this checkout (kept locally, not published)",
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -91,6 +101,7 @@ def test_validation_reports_missing_assets_and_stray_files(tmp_path: Path) -> No
     assert "build or development file in package: stray.log" in problems
 
 
+@needs_research_artifacts
 def test_open_author_inputs_block_submission_ready(tmp_path: Path) -> None:
     sub = _package(tmp_path)
     compliance = tmp_path / "VENUE_COMPLIANCE.md"

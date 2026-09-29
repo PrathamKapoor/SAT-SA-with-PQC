@@ -9,6 +9,15 @@ from evaluation.research.audit import audit_bundle
 from evaluation.research.catalog import build_catalog
 from evaluation.research.tables import load_bundle
 
+# The research paper and its evidence (paper/, research/) are kept locally and
+# are not published in the repository. These checks run where they exist.
+_REPO = __import__("pathlib").Path(__file__).resolve().parents[1]
+needs_research_artifacts = pytest.mark.skipif(
+    not ((_REPO / "paper").is_dir() and (_REPO / "research" / "evidence").is_dir()),
+    reason="research paper and evidence are not in this checkout (kept locally, not published)",
+)
+
+
 ROOT = Path(__file__).resolve().parents[1]
 FREEZE_V1 = ROOT / "research" / "evidence" / "freeze-v1"
 
@@ -22,6 +31,7 @@ def _canonical(freeze: Path) -> list[Path]:
     ]
 
 
+@needs_research_artifacts
 def test_statistical_audit_separates_trials_from_independent_units():
     rows = []
     for bundle in _canonical(FREEZE_V1):
@@ -44,6 +54,7 @@ def _spec(tmp_path: Path, entries: list[dict]) -> Path:
     return path
 
 
+@needs_research_artifacts
 def test_catalog_reads_facts_from_freeze_and_requires_explicit_status(tmp_path):
     spec = _spec(
         tmp_path,
@@ -87,6 +98,7 @@ def test_catalog_reads_facts_from_freeze_and_requires_explicit_status(tmp_path):
         )
 
 
+@needs_research_artifacts
 def test_committed_freeze_v2_is_intact_and_catalog_is_current():
     from evaluation.research.freeze import verify_freeze
 
