@@ -265,7 +265,15 @@ jobs:
           done
           exit 1
       - name: HTTP security smoke (headers, CSP, cache, exposure, traversal, limits, leakage)
-        run: python3 deploy/http_security_check.py https://localhost --insecure
+        run: |
+          set -o pipefail
+          # Failing checks are also emitted as annotations, readable without the raw log.
+          python3 deploy/http_security_check.py https://localhost --insecure | tee http-security.log || {
+            grep '^FAIL ' http-security.log | head -20 | while read -r line; do
+              echo "::error title=http-security::${line:0:400}"
+            done
+            exit 1
+          }
       - name: Only the reverse proxy publishes ports
         run: |
           docker ps --filter label=com.docker.compose.project=satsa --format '{{.Label "com.docker.compose.service"}} {{.Ports}}' | tee ports.txt
