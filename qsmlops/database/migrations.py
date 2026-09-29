@@ -1039,6 +1039,191 @@ MIGRATIONS += (
 )
 
 
+# Phase 21: organization-scoped MLOps lifecycle for SAT-SA (satsa/mlops).
+# Every row carries organization_id; there are no global models. Datasets,
+# passports and model artifacts are immutable once written: a change is a
+# new version, never an UPDATE of content columns.
+MIGRATIONS += (
+    Migration(
+        version=17,
+        name="satsa_mlops_lifecycle",
+        statements=(
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_datasets (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                name TEXT NOT NULL,
+                version INTEGER NOT NULL,
+                data_origin TEXT NOT NULL CHECK(data_origin IN ('organizational','synthetic','controlled','external')),
+                source TEXT NOT NULL,
+                feature_version TEXT NOT NULL,
+                schema_version INTEGER NOT NULL,
+                record_count INTEGER NOT NULL,
+                label_counts_json TEXT NOT NULL,
+                content_digest TEXT NOT NULL,
+                storage_key TEXT NOT NULL,
+                lineage_json TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('created','validating','valid','invalid','archived')),
+                validation_json TEXT,
+                created_by TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                validated_at REAL,
+                UNIQUE(organization_id, name, version),
+                UNIQUE(organization_id, name, content_digest)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_jobs (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                kind TEXT NOT NULL CHECK(kind IN ('validate_dataset','train','drift')),
+                subject_id TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('queued','running','retry_wait','cancel_requested','completed','failed','cancelled')),
+                params_json TEXT NOT NULL DEFAULT '{}',
+                result_json TEXT,
+                error TEXT NOT NULL DEFAULT '',
+                attempt_count INTEGER NOT NULL DEFAULT 0,
+                max_attempts INTEGER NOT NULL DEFAULT 3,
+                lease_owner TEXT NOT NULL DEFAULT '',
+                lease_generation INTEGER NOT NULL DEFAULT 0,
+                lease_expires_at REAL,
+                available_at REAL NOT NULL,
+                idempotency_key TEXT NOT NULL,
+                requested_by TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                completed_at REAL,
+                UNIQUE(organization_id, kind, idempotency_key)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_ml_jobs_claim ON satsa_ml_jobs (status, available_at)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_training_runs (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                job_id TEXT NOT NULL UNIQUE REFERENCES satsa_ml_jobs(id),
+                dataset_id TEXT NOT NULL REFERENCES satsa_ml_datasets(id),
+                feature_version TEXT NOT NULL,
+                model_family TEXT NOT NULL,
+                hyperparameters_json TEXT NOT NULL,
+                seed INTEGER NOT NULL,
+                environment_json TEXT,
+                status TEXT NOT NULL CHECK(status IN ('running','completed','failed','cancelled')),
+                model_id TEXT,
+                error TEXT NOT NULL DEFAULT '',
+                requested_by TEXT NOT NULL,
+                started_at REAL NOT NULL,
+                finished_at REAL
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_models (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                name TEXT NOT NULL,
+                version INTEGER NOT NULL,
+                training_run_id TEXT NOT NULL UNIQUE REFERENCES satsa_ml_training_runs(id),
+                dataset_id TEXT NOT NULL REFERENCES satsa_ml_datasets(id),
+                feature_version TEXT NOT NULL,
+                artifact_key TEXT NOT NULL,
+                artifact_digest TEXT NOT NULL,
+                passport_json TEXT NOT NULL,
+                passport_digest TEXT NOT NULL,
+                state TEXT NOT NULL CHECK(state IN ('registered','verified','quarantined','approved','retired')),
+                created_at REAL NOT NULL,
+                UNIQUE(organization_id, name, version)
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_model_events (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                model_id TEXT NOT NULL REFERENCES satsa_ml_models(id),
+                from_state TEXT,
+                to_state TEXT NOT NULL,
+                actor_user_id TEXT NOT NULL,
+                reason TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_ml_model_events ON satsa_ml_model_events (organization_id, model_id, created_at)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_deployments (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                model_name TEXT NOT NULL,
+                model_id TEXT NOT NULL REFERENCES satsa_ml_models(id),
+                kind TEXT NOT NULL CHECK(kind IN ('deploy','rollback')),
+                active INTEGER NOT NULL CHECK(active IN (0,1)),
+                previous_deployment_id TEXT,
+                deployed_by TEXT NOT NULL,
+                reason TEXT NOT NULL DEFAULT '',
+                created_at REAL NOT NULL,
+                deactivated_at REAL
+            )
+            """,
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_ml_one_active ON satsa_ml_deployments (organization_id, model_name) WHERE active=1",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_inferences (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                run_id TEXT NOT NULL UNIQUE,
+                model_name TEXT NOT NULL,
+                model_id TEXT,
+                deployment_id TEXT,
+                artifact_digest TEXT,
+                feature_version TEXT NOT NULL,
+                features_json TEXT,
+                status TEXT NOT NULL CHECK(status IN ('scored','abstained')),
+                abstain_reason TEXT,
+                score REAL,
+                latency_ms REAL NOT NULL,
+                content_digest TEXT NOT NULL,
+                created_at REAL NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_ml_inferences_org ON satsa_ml_inferences (organization_id, model_id, created_at)",
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_drift_reports (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                model_id TEXT NOT NULL REFERENCES satsa_ml_models(id),
+                job_id TEXT NOT NULL UNIQUE REFERENCES satsa_ml_jobs(id),
+                metric TEXT NOT NULL,
+                threshold REAL NOT NULL,
+                baseline_count INTEGER NOT NULL,
+                current_count INTEGER NOT NULL,
+                window_start REAL,
+                window_end REAL,
+                result TEXT NOT NULL CHECK(result IN ('drift','no_drift','insufficient_data')),
+                details_json TEXT NOT NULL,
+                policy_version TEXT NOT NULL,
+                created_at REAL NOT NULL
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS satsa_ml_retraining_requests (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                model_name TEXT NOT NULL,
+                model_id TEXT,
+                trigger TEXT NOT NULL CHECK(trigger IN ('drift','performance','operator')),
+                status TEXT NOT NULL CHECK(status IN ('open','accepted','dismissed')),
+                evidence_json TEXT NOT NULL,
+                requested_by TEXT NOT NULL,
+                resolved_by TEXT,
+                resolution TEXT NOT NULL DEFAULT '',
+                training_job_id TEXT,
+                created_at REAL NOT NULL,
+                resolved_at REAL
+            )
+            """,
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_satsa_ml_one_open_request ON satsa_ml_retraining_requests (organization_id, model_name, trigger) WHERE status='open'",
+        ),
+    ),
+)
+
+
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
         self.engine = engine
