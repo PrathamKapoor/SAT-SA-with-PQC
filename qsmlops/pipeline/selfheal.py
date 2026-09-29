@@ -644,7 +644,9 @@ class SelfHealingMLOps:
             return [sum(w * x for w, x in zip(weights, row)) + bias for row in X.tolist()]
         from qsmlops.ml.adapters import get_serializer
 
-        model = get_serializer(framework).deserialize(artifact)
+        model = get_serializer(framework).deserialize(
+            artifact, expected_digest=rec["artifact_digest"]
+        )
         return [float(p) for p in model.predict(X)]
 
     def _load_bom(self, bom_digest: str):

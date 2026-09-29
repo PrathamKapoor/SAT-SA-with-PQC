@@ -19,13 +19,16 @@ class ModelDeploymentService:
         # Determine framework from passport training info if available
         return passport.training_info.get("framework", "reference")
 
-    def _deserialize(self, artifact_bytes, framework):
+    def _deserialize(self, artifact_bytes, framework, expected_digest):
         if framework == "reference":
             # Reference model stored as JSON with weights and bias
             return json.loads(artifact_bytes.decode("utf-8"))
-        else:
-            # Assume pickle-like binary for other frameworks
-            return pickle.loads(artifact_bytes)
+        # Executable formats: only bytes whose digest matches the registry record
+        # of a DEPLOYED version with a verified passport signature (checked by
+        # load() before this call).
+        from qsmlops.ml.adapters import verified_artifact_bytes
+
+        return pickle.loads(verified_artifact_bytes(artifact_bytes, expected_digest))
 
     def load(self, model_name, version_id=None):
         # Resolve version ID
@@ -87,7 +90,7 @@ class ModelDeploymentService:
             raise KeyError("not found")
         # Detect framework and deserialize model
         framework = self._detect_framework(artifact_bytes, passport)
-        model_obj = self._deserialize(artifact_bytes, framework)
+        model_obj = self._deserialize(artifact_bytes, framework, rec["artifact_digest"])
         self._models[model_name] = (model_obj, framework)
         return {"model_name": model_name, "version_id": version_id}
 
