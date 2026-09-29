@@ -71,7 +71,7 @@ API: the web tier holds the session token server-side and calls the API with
 | T18 | Internal services exposed | only Caddy publishes; API/PostgreSQL/object store on the backend network only | CI port assertion |
 | T19 | Secrets in logs | structured logs carry IDs, route templates and error types, never tokens or bodies | CI log scan for every issued credential, session cookie and deployment secret |
 | T20 | Container breakout / persistence | non-root processes, `cap_drop: ALL`, `no-new-privileges`, read-only backend root filesystem | compose file, production-stack CI |
-| T21 | Vulnerable dependencies and base images | npm audit, pip-audit, Trivy in CI; Bandit gates HIGH-severity findings in application and deployment code (Medium findings reviewed by hand: request-path SQL is parameterized, the rest are operator-only tools) | `dependency-audit`, `image-scan` jobs |
+| T21 | Vulnerable dependencies and base images | npm audit, pip-audit, Trivy in CI; Bandit gates HIGH-severity findings in application and deployment code (Medium findings reviewed by hand: request-path SQL is parameterized, the rest are operator-only tools) | `dependency-audit`, `image-scan` jobs; findings and decisions in `docs/security/IMAGE_SCAN.md` |
 | T22 | Loss of the host or its disk | executable backup/restore, restore verified in CI | `deploy/backup.sh`, `deploy/restore.sh`, production-stack job |
 
 ## Residual risks (accepted, documented)
