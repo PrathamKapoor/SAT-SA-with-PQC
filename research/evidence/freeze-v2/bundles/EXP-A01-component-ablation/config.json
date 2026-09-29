@@ -1,1 +1,0 @@
-{"base_seed":300,"bootstrap_seed":0,"comparison":"full default worker set vs one worker removed","experiment":"satsa-component-ablation-v1","k_percent":20,"n_entities":20,"n_pathological":5,"population_seeds":5}

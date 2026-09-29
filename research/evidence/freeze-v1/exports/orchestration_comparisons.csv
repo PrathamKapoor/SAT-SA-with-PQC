@@ -1,5 +1,0 @@
-comparison,n_pairs,median_difference,relative,ci_lower,ci_upper
-graph_vs_direct_db_operations,30,38,0.09048,38,38
-graph_vs_direct_outside_domain_stages_seconds,30,0.05901,1.069,0.05705,0.06098
-graph_vs_direct_processing_seconds,30,0.09552,0.07483,-0.01976,0.2112
-reviewed_finalized_vs_unreviewed_processing_seconds,30,0.3183,0.3261,0.1763,0.5686

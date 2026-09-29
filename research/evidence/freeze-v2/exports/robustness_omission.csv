@@ -1,7 +1,0 @@
-condition,replicates,rejected,analysed,family_set_changed,mean_families_removed,mean_families_added
-omit_records:0.10,25,3,22,0,0,0
-omit_records:0.25,25,11,14,4,0.1429,0.2143
-omit_records:0.50,25,14,11,4,0.0909,0.4545
-omit_records_cascade:0.10,25,0,25,1,0.04,0.08
-omit_records_cascade:0.25,25,0,25,11,0.32,0.76
-omit_records_cascade:0.50,25,0,25,15,0.32,1.56

@@ -1,1 +1,0 @@
-{"experiment":"satsa-orchestration-recovery-v1","interruption_points":["analysis_stage_transient","analysis_stage_crash","recommendations_transient","worker_restart_at_review","finalization_transient","finalization_crash"],"modes":["direct","graph"],"scenario":"mixed","trials_per_cell":3}

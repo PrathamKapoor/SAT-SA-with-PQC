@@ -87,3 +87,7 @@ deploy/*.env
 
 # LaTeX sources of the research paper are kept locally, not published (2026-09-30).
 *.tex
+
+# The research paper and its evidence are kept locally and never published.
+/paper/
+/research/

@@ -1,8 +1,0 @@
-<!-- generated from bundle EXP-X02-external-itsm; do not edit -->
-
-| score | spearman_rho | ci_lower | ci_upper | n_groups |
-| --- | --- | --- | --- | --- |
-| incident_volume | -0.1491 | -0.4234 | 0.1601 | 50 |
-| reassignment_rate | 0.3699 | 0.07856 | 0.6042 | 50 |
-| satsa_risk_score | -0.1107 | -0.4184 | 0.2139 | 50 |
-| slowest_median_resolution | 0.9385 | 0.8639 | 0.9732 | 50 |

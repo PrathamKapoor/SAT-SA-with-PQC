@@ -1,1 +1,0 @@
-{"deviation_threshold_mad_units":2.0,"experiment":"peer-cohort-sensitivity-v1","minimum_peers":3,"peer_closure_seconds":[300,600,900,1200],"peer_counts":[2,3,4],"subject_closure_seconds":[30,400,750]}
