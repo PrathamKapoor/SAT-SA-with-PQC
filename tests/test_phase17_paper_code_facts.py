@@ -19,6 +19,13 @@ from evaluation.research.paper import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+
+# The paper's LaTeX sources are kept locally and are not published in the
+# repository (since 2026-09-30). Manuscript checks run where they exist.
+needs_paper_sources = pytest.mark.skipif(
+    not (ROOT / "paper" / "manuscript.tex").exists(),
+    reason="paper LaTeX sources are not in this checkout (kept locally, not published)",
+)
 FREEZE = ROOT / "research" / "evidence" / "freeze-v2"
 PAPER = ROOT / "paper"
 
@@ -32,6 +39,7 @@ def _committed_claims(path: Path) -> dict:
     return {c["claim_id"]: c for c in data["claims"]}
 
 
+@needs_paper_sources
 def test_live_api_and_historical_paper_route_counts_differ():
     # Current product contract (docs/API_CONTRACT.md): 44 routes at the
     # freeze plus GET /api/v1/priorities and GET /api/v1/versions/{id}/records.
