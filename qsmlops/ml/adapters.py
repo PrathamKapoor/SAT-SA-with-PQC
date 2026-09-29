@@ -38,6 +38,31 @@ except ImportError:
     BaseEstimator = object
 
 
+class UntrustedArtifactError(ValueError):
+    """Raised instead of deserializing an executable artifact whose bytes are not
+    bound to a digest the caller already trusts (registry / signed passport)."""
+
+
+def verified_artifact_bytes(data: bytes, expected_digest: str | None) -> bytes:
+    """Trust boundary for pickle/torch artifacts.
+
+    Unpickling executes code, so executable artifact formats are loaded only
+    when the exact bytes match a SHA3-256 digest recorded by a trusted source
+    (the content-addressed registry or a verified passport). There is no way
+    to call these loaders on arbitrary bytes. SAT-SA's production models do
+    not use these formats at all (see satsa/mlops/artifact.py).
+    """
+    import hashlib
+
+    if not expected_digest:
+        raise UntrustedArtifactError(
+            "refusing to deserialize an executable model artifact without an expected SHA3-256 digest"
+        )
+    if hashlib.sha3_256(data).hexdigest() != expected_digest:
+        raise UntrustedArtifactError("model artifact digest does not match the trusted digest")
+    return data
+
+
 @dataclass
 class ModelMetadata:
     framework: str
@@ -148,8 +173,10 @@ class SKLearnTrainer(TrainerInterface):
         path.write_bytes(pickle.dumps(model))
         return str(path)
 
-    def deserialize(self, path: Path) -> Any:
-        return pickle.loads(path.read_bytes())
+    def deserialize(self, path: Path, *, expected_digest: str | None = None) -> Any:
+        data = verified_artifact_bytes(path.read_bytes(), expected_digest)
+        # Reached only for bytes bound to a trusted digest (checked above).
+        return pickle.loads(data)
 
     def get_metadata(self, model) -> ModelMetadata:
         return ModelMetadata(
@@ -173,7 +200,9 @@ class SKLearnSerializer(ArtifactSerializerInterface):
     def serialize(self, obj: Any) -> bytes:
         return pickle.dumps(obj)
 
-    def deserialize(self, data: bytes) -> Any:
+    def deserialize(self, data: bytes, *, expected_digest: str | None = None) -> Any:
+        data = verified_artifact_bytes(data, expected_digest)
+        # Reached only for bytes bound to a trusted digest (checked above).
         return pickle.loads(data)
 
     def get_digest(self, obj: Any) -> str:
@@ -260,9 +289,13 @@ if TORCH_AVAILABLE:
             torch.save(model.state_dict(), path)
             return str(path)
 
-        def deserialize(self, path: Path) -> Any:
+        def deserialize(self, path: Path, *, expected_digest: str | None = None) -> Any:
+            import io
+
+            data = verified_artifact_bytes(path.read_bytes(), expected_digest)
             model = self.model_class(**self.model_kwargs)
-            model.load_state_dict(torch.load(path))
+            # weights_only refuses arbitrary pickled objects in the state dict.
+            model.load_state_dict(torch.load(io.BytesIO(data), weights_only=True))
             model.eval()
             return model
 
@@ -283,10 +316,11 @@ if TORCH_AVAILABLE:
             torch.save(obj.state_dict(), buffer)
             return buffer.getvalue()
 
-        def deserialize(self, data: bytes) -> Any:
+        def deserialize(self, data: bytes, *, expected_digest: str | None = None) -> Any:
             import io
-            buffer = io.BytesIO(data)
-            return torch.load(buffer)
+
+            data = verified_artifact_bytes(data, expected_digest)
+            return torch.load(io.BytesIO(data), weights_only=True)
 
         def get_digest(self, obj: Any) -> str:
             import hashlib
