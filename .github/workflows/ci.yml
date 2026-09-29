@@ -267,6 +267,11 @@ jobs:
       - name: HTTP security smoke (headers, CSP, cache, exposure, traversal, limits, leakage)
         run: |
           set -o pipefail
+          # The browser E2E just before this step runs from the same client
+          # address, and the API limits reads per address in fixed one-minute
+          # windows. Start in a fresh window so these checks test security
+          # behaviour, not the limit (which Phase 20's own checks cover).
+          sleep $((62 - $(date +%s) % 60))
           # Failing checks are also emitted as annotations, readable without the raw log.
           python3 deploy/http_security_check.py https://localhost --insecure | tee http-security.log || {
             grep '^FAIL ' http-security.log | head -20 | while read -r line; do
