@@ -73,6 +73,11 @@ API: the web tier holds the session token server-side and calls the API with
 | T20 | Container breakout / persistence | non-root processes, `cap_drop: ALL`, `no-new-privileges`, read-only backend root filesystem | compose file, production-stack CI |
 | T21 | Vulnerable dependencies and base images | npm audit, pip-audit, Trivy in CI; Bandit gates HIGH-severity findings in application and deployment code (Medium findings reviewed by hand: request-path SQL is parameterized, the rest are operator-only tools) | `dependency-audit`, `image-scan` jobs; findings and decisions in `docs/security/IMAGE_SCAN.md` |
 | T22 | Loss of the host or its disk | executable backup/restore, restore verified in CI | `deploy/backup.sh`, `deploy/restore.sh`, production-stack job |
+| T23 | Code execution through a model artifact | production artifacts are data-only JSON loaded with `json.loads` + schema validation; no upload route; retained QSMLOps pickle/torch loaders refuse bytes not matching a trusted SHA3-256 digest, `torch.load(weights_only=True)` | `tests/test_phase21_artifact_trust_boundary.py`, `test_artifact_loader_rejects_tampering_and_malformed_content` |
+| T24 | Tampered or swapped model artifact / passport | artifact and passport digests verified before deployment and before inference; failure blocks deployment, inference abstains (`model_unavailable`) | `test_damaged_artifact_or_passport_blocks_deployment`, `test_inference_abstains_when_deployed_artifact_disappears` |
+| T25 | Unauthorized model promotion | approve/deploy/rollback need supervisor or admin; the training requester cannot approve; only verified models are approvable and only approved models deployable | `test_approval_needs_role_justification_and_separation_of_duties`, role matrix in `test_phase20_authorization.py` |
+| T26 | Altered advisory score after review | the inference record is committed in the TRUST-SAT supervisory document with a recomputed digest | lifecycle E2E: tampered score verifies `inconsistent` |
+| T27 | Cross-tenant model or dataset access | organization_id on every MLOps table and query | `test_other_organization_cannot_see_or_act_on_models` |
 
 ## Residual risks (accepted, documented)
 

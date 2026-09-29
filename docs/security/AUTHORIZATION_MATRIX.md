@@ -54,3 +54,15 @@ Roles: **V** viewer, **An** analyst, **S** supervisor, **Au** auditor, **Ad** ad
   with the administrator role can create organizations. It cannot reach
   existing organizations (it grants membership only in the new one); this is
   recorded as a provisioning choice in the threat model.
+
+## MLOps routes (Phase 21)
+
+All MLOps routes are organization-scoped. Reads (`model.read`) are open to
+every role. Building and validating datasets, starting training and drift
+checks, cancelling jobs and requesting retraining (`model.train`) are
+analyst, supervisor and admin. Approving, deploying, retiring, rolling back
+and accepting or dismissing retraining (`model.approve`, `model.deploy`,
+`model.rollback`) are supervisor and admin only. In addition, the user who
+requested a training run cannot approve the resulting model, whatever their
+role. The full route list and the test that enforces it are in
+`tests/test_phase20_authorization.py` (`MATRIX`); see `docs/MLOPS.md`.
