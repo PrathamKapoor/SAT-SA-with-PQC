@@ -7,10 +7,12 @@ against the live application by `tests/test_phase17_api_contract.py`; the two
 must not drift. The earlier frontend proposal in `web/docs/API_CONTRACT.md` is
 not this contract (section 11).
 
-The live API has **46 routes**. 44 existed at the research freeze's code commit
+The live API has **70 routes**. 44 existed at the research freeze's code commit
 (`837d1ef`, the figure the paper keeps through its pinned code facts); two were
 added in Phase 16: `GET /api/v1/priorities` and
-`GET /api/v1/versions/{version_id}/records`.
+`GET /api/v1/versions/{version_id}/records`; 24 MLOps routes (`/api/v1/ml/...`
+and `GET /api/v1/runs/{run_id}/model-inference`) were added in Phase 21 and are
+described in `docs/MLOPS.md`.
 
 ## 1. Transport, authentication and organization context
 
@@ -146,6 +148,30 @@ GET    /api/v1/runs/{run_id}/decision
 GET    /api/v1/runs/{run_id}/receipt
 POST   /api/v1/runs/{run_id}/verify
 GET    /api/v1/audit/events
+GET    /api/v1/runs/{run_id}/model-inference
+GET    /api/v1/ml/datasets
+POST   /api/v1/ml/datasets
+GET    /api/v1/ml/datasets/{dataset_id}
+POST   /api/v1/ml/datasets/{dataset_id}/validate
+POST   /api/v1/ml/training-runs
+GET    /api/v1/ml/training-runs
+GET    /api/v1/ml/training-runs/{training_run_id}
+GET    /api/v1/ml/jobs/{job_id}
+POST   /api/v1/ml/jobs/{job_id}/cancel
+GET    /api/v1/ml/models
+GET    /api/v1/ml/models/{model_id}
+POST   /api/v1/ml/models/{model_id}/approve
+POST   /api/v1/ml/models/{model_id}/deploy
+POST   /api/v1/ml/models/{model_id}/retire
+POST   /api/v1/ml/rollback
+GET    /api/v1/ml/deployments
+GET    /api/v1/ml/monitoring
+POST   /api/v1/ml/drift-checks
+GET    /api/v1/ml/drift-reports
+GET    /api/v1/ml/retraining-requests
+POST   /api/v1/ml/retraining-requests
+POST   /api/v1/ml/retraining-requests/{request_id}/accept
+POST   /api/v1/ml/retraining-requests/{request_id}/dismiss
 ```
 
 ## 5. Routes
@@ -223,6 +249,8 @@ Categories: `alerts`, `cases`, `investigation_steps`, `escalations`,
 | `GET /api/v1/runs/{run_id}/receipt` | org, `evidence.view` | – | `200 Receipt` · `404` before finalization |
 | `POST /api/v1/runs/{run_id}/verify` | org, `evidence.view` | – | `200 Verification` for an owned run; the outcome is in `status` |
 | `GET /api/v1/audit/events` | org, `audit.read` | `limit, offset, run_id?` | `200 Page[AuditEvent]`: the organization's events plus its members' login and logout events |
+| `GET /api/v1/runs/{run_id}/model-inference` | org, `model.read` | – | `200 MLInference` (scored or abstained with a reason) · `404` when the run has none |
+| `/api/v1/ml/...` (23 routes) | org, `model.read` / `model.train` / `model.approve` / `model.deploy` / `model.rollback` | see `docs/MLOPS.md` | datasets, validation/training/drift jobs (`202 MLJob`, `Idempotency-Key`), models, approval, deployment, rollback, retirement, monitoring, drift reports, retraining requests |
 
 ## 6. Schemas
 

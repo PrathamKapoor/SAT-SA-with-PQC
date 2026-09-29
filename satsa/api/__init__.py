@@ -1018,4 +1018,11 @@ def create_app(
     ):
         return ApiRepository(t).audit_events(limit, offset, run_id=run_id)
 
+    from .ml_routes import register as register_ml_routes
+
+    register_ml_routes(
+        app, engine=engine, storage=storage, audit=audit,
+        Tenant=Tenant, Key=Key, Limit=Limit, Offset=Offset,
+    )
+
     return app

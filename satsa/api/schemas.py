@@ -310,6 +310,181 @@ class EntityPriority(Schema):
     high_signal_count: int
 
 
+class MLDatasetInput(Input):
+    name: str = Field(pattern=r"^[a-z0-9][a-z0-9-]{0,62}$")
+    data_origin: Literal["organizational", "synthetic", "controlled", "external"]
+
+
+class MLDataset(Schema):
+    id: str
+    name: str
+    version: int
+    data_origin: str
+    source: str
+    feature_version: str
+    schema_version: int
+    record_count: int
+    label_counts: dict[str, int]
+    content_digest: str
+    status: str
+    validation: dict[str, Any] | None = None
+    lineage: dict[str, Any]
+    created_by: str
+    created_at: float
+    validated_at: float | None = None
+
+
+class MLJob(Schema):
+    id: str
+    kind: str
+    subject_id: str
+    status: str
+    params: dict[str, Any]
+    result: dict[str, Any] | None = None
+    error: str
+    attempt_count: int
+    max_attempts: int
+    requested_by: str
+    created_at: float
+    updated_at: float
+    completed_at: float | None = None
+
+
+class MLTrainingInput(Input):
+    dataset_id: str = Field(min_length=1, max_length=128)
+    hyperparameters: dict[str, Any] | None = None
+    seed: int | None = Field(default=None, ge=0, le=2**31 - 1)
+
+
+class MLTrainingRun(Schema):
+    id: str
+    job_id: str
+    dataset_id: str
+    feature_version: str
+    model_family: str
+    hyperparameters: dict[str, Any]
+    seed: int
+    environment: dict[str, Any] | None = None
+    status: str
+    model_id: str | None = None
+    error: str
+    requested_by: str
+    started_at: float
+    finished_at: float | None = None
+
+
+class MLModel(Schema):
+    id: str
+    name: str
+    version: int
+    state: str
+    deployed: bool
+    artifact_digest: str
+    passport_digest: str
+    feature_version: str
+    dataset_id: str
+    training_run_id: str
+    created_at: float
+    approval: dict[str, Any] | None = None
+    passport: dict[str, Any]
+    events: list[dict[str, Any]]
+    deployments: list[dict[str, Any]]
+
+
+class MLApprovalInput(Input):
+    justification: str = Field(min_length=1, max_length=2000)
+
+
+class MLDeployInput(Input):
+    reason: str = Field(default="", max_length=2000)
+
+
+class MLRollbackInput(Input):
+    target_model_id: str | None = Field(default=None, max_length=128)
+    reason: str = Field(min_length=1, max_length=2000)
+
+
+class MLReasonInput(Input):
+    reason: str = Field(min_length=1, max_length=2000)
+
+
+class MLDeployment(Schema):
+    id: str
+    model_name: str
+    model_id: str
+    kind: str
+    active: bool
+    previous_deployment_id: str | None = None
+    deployed_by: str
+    reason: str
+    created_at: float
+    deactivated_at: float | None = None
+
+
+class MLMonitoring(Schema):
+    model_name: str
+    status: Literal["no_deployed_model", "no_observations", "observed"]
+    active_deployment: MLDeployment | None = None
+    all_models: dict[str, Any]
+    active_model: dict[str, Any] | None = None
+
+
+class MLDriftInput(Input):
+    window: int = Field(default=500, ge=30, le=5000)
+
+
+class MLDriftReport(Schema):
+    id: str
+    model_id: str
+    job_id: str
+    metric: str
+    threshold: float
+    baseline_count: int
+    current_count: int
+    window_start: float | None = None
+    window_end: float | None = None
+    result: Literal["drift", "no_drift", "insufficient_data"]
+    details: dict[str, Any]
+    policy_version: str
+    created_at: float
+
+
+class MLRetrainingRequest(Schema):
+    id: str
+    model_name: str
+    model_id: str | None = None
+    trigger: str
+    status: str
+    evidence: dict[str, Any]
+    requested_by: str
+    resolved_by: str | None = None
+    resolution: str
+    training_job_id: str | None = None
+    created_at: float
+    resolved_at: float | None = None
+
+
+class MLAcceptRetrainingInput(Input):
+    dataset_id: str = Field(min_length=1, max_length=128)
+
+
+class MLInference(Schema):
+    id: str
+    run_id: str
+    model_name: str
+    model_id: str | None = None
+    deployment_id: str | None = None
+    artifact_digest: str | None = None
+    feature_version: str
+    features: list[float] | None = None
+    status: Literal["scored", "abstained"]
+    abstain_reason: str | None = None
+    score: float | None = None
+    latency_ms: float
+    content_digest: str
+    created_at: float
+
+
 class CanonicalRecord(Schema):
     record_id: str
     category: str
