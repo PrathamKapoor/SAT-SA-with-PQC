@@ -50,7 +50,16 @@ jobs:
         run: python -m compileall -q satsa qsmlops scripts tests
 
       - name: Full test suite
-        run: python -m pytest tests/ -q
+        run: |
+          set -o pipefail
+          # Failing test ids are also emitted as annotations so they are visible
+          # without opening the raw job log.
+          python -m pytest tests/ -q -rfE 2>&1 | tee pytest.log || {
+            grep -E '^(FAILED|ERROR)' pytest.log | head -20 | while read -r line; do
+              echo "::error title=pytest::${line:0:400}"
+            done
+            exit 1
+          }
 
       - name: Offline-hardening guarantee (explicit, not just bundled in the suite above)
         run: python -m pytest tests/test_phase18_satsa_offline_hardening.py -q -v
