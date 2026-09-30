@@ -77,6 +77,19 @@ initializes the TRUST-SAT key only on a new volume, starts the services, and
 waits until API, worker and web are healthy and the public HTTPS URL answers.
 Any failed step stops the deployment.
 
+## Custom domain
+
+1. At the domain's DNS provider, create `A <hostname> -> <ElasticIp>` (stack
+   output) and wait until it resolves publicly.
+2. `aws cloudformation update-stack --stack-name satsa-prod --use-previous-template
+   --capabilities CAPABILITY_NAMED_IAM --parameters ParameterKey=SiteAddress,ParameterValue=<hostname>`
+   (with `UsePreviousValue=true` for every other parameter). This only updates
+   the SSM parameter `/satsa/<environment>/site-address`; the instance is not
+   touched.
+3. `deploy.sh deploy <current commit>`: Caddy serves the hostname as the
+   primary address and obtains its Let's Encrypt certificate; the sslip.io
+   name keeps working as an alias.
+
 ## Which version is running
 
 The release is the Git commit. `publish.sh` builds both images with

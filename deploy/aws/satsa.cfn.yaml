@@ -310,6 +310,10 @@ Resources:
                 Effect: Allow
                 Action: ["secretsmanager:GetSecretValue", "secretsmanager:PutSecretValue"]
                 Resource: !Ref AdminCredentialSecret
+              - Sid: SiteAddress
+                Effect: Allow
+                Action: "ssm:GetParameter"
+                Resource: !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/satsa/${EnvironmentName}/site-address"
               - Sid: ModelProviderKeys
                 Effect: Allow
                 Action: "secretsmanager:GetSecretValue"
@@ -417,7 +421,17 @@ Resources:
             EOF
             /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 \
               -c file:/opt/aws/amazon-cloudwatch-agent/etc/satsa.json -s
-          - Site: !If [HasSiteAddress, !Ref SiteAddress, !Join ["", [!Join ["-", !Split [".", !Ref ElasticIp]], ".sslip.io"]]]
+          - Site: !Join ["", [!Join ["-", !Split [".", !Ref ElasticIp]], ".sslip.io"]]
+  # The public hostname, read by deploy.sh at every deployment. Kept out of the
+  # instance user data so that setting a custom domain never replaces or
+  # restarts the instance; the sslip.io name keeps working as an alias.
+  SiteAddressParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/satsa/${EnvironmentName}/site-address"
+      Type: String
+      Description: SAT-SA public hostname (deploy/aws/deploy.sh)
+      Value: !If [HasSiteAddress, !Ref SiteAddress, !Join ["", [!Join ["-", !Split [".", !Ref ElasticIp]], ".sslip.io"]]]
   EipAssociation:
     Type: AWS::EC2::EIPAssociation
     Properties: {AllocationId: !GetAtt ElasticIp.AllocationId, InstanceId: !Ref Instance}

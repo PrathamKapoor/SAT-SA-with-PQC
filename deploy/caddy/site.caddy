@@ -1,6 +1,6 @@
 # Public site: the only published entry point. TLS is automatic: a public DNS
 # name gets a certificate from Let's Encrypt; "localhost" uses Caddy's local CA.
-{$SATSA_SITE_ADDRESS} {
+{$SATSA_SITE_ADDRESS} {$SATSA_SITE_ALIASES} {
 	encode zstd gzip
 
 	header {
