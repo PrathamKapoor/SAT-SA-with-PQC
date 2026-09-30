@@ -20,7 +20,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-COMPOSE=${COMPOSE:-"docker compose -f deploy/compose.production.yml --env-file deploy/production.env"}
+COMPOSE=${COMPOSE:-"docker compose -f deploy/compose.production.yml -f deploy/compose.database.yml --env-file deploy/production.env"}
 if [[ -z "${SATSA_PUBLIC_URL:-}" ]]; then
   SITE=$(grep -E '^SATSA_SITE_ADDRESS=' deploy/production.env 2>/dev/null | cut -d= -f2- || true)
   SATSA_PUBLIC_URL="https://${SITE:?set SATSA_PUBLIC_URL or SATSA_SITE_ADDRESS}"
