@@ -7,7 +7,7 @@ const fontSans = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
-  title: { template: "%s · SAT-SA", default: "SAT-SA · Supervisory Analytics for SOC Assessment" },
+  title: { template: "%s · TRUST-SAT", default: "TRUST-SAT · Supervisory Analytics for SOC Assessment" },
   description:
     "A periodic, offline, evidence-driven supervisory analytics system that supports human examiners, with post-quantum verifiable evidence (TRUST-SAT).",
 };
