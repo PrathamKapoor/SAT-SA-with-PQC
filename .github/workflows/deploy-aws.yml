@@ -1,0 +1,38 @@
+name: Deploy to AWS
+
+# Manual only: a person chooses to deploy the selected commit of main.
+# Authentication is GitHub OIDC -> the stack's deploy role
+# (satsa-<env>-github-deploy); no AWS key is stored in GitHub. The role trusts
+# only this repository's `aws-prod` environment, which should require a
+# reviewer in the repository settings.
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-aws-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: aws-prod
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ap-south-1
+      - name: Publish images and bundle for ${{ github.sha }} and deploy through SSM
+        run: bash deploy/aws/publish.sh --stack satsa-prod
+      - name: Public smoke
+        run: |
+          site=$(aws cloudformation describe-stacks --stack-name satsa-prod \
+            --query "Stacks[0].Outputs[?OutputKey=='SiteAddress'].OutputValue" --output text)
+          curl -fsS -o /dev/null "https://$site/login"
+          python3 deploy/http_security_check.py "https://$site"

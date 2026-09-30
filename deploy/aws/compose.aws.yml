@@ -1,0 +1,60 @@
+# SAT-SA on one EC2 instance (docs: deploy/aws/README.md).
+#
+#   docker compose -f deploy/compose.production.yml -f deploy/aws/compose.aws.yml \
+#     --env-file /etc/satsa/production.env up -d --no-build
+#
+# Differences from a single-host install:
+#   * database: Amazon RDS PostgreSQL 17 over TLS with server-certificate
+#     verification (no database container);
+#   * object storage: Amazon S3 through the EC2 instance role (no endpoint, no
+#     static keys; IMDSv2 hop limit 2 lets containers reach the role);
+#   * /data: the separate EBS volume mounted on the host at /data;
+#   * images: ECR, tagged with the Git commit being deployed;
+#   * logs: CloudWatch Logs via the awslogs driver and the instance role.
+# The env file is rendered by deploy/aws/deploy.sh from Secrets Manager and the
+# stack outputs; it is never committed.
+
+x-aws-backend: &aws_backend
+  image: ${SATSA_BACKEND_IMAGE:?set SATSA_BACKEND_IMAGE}:${SATSA_IMAGE_TAG:?set SATSA_IMAGE_TAG}
+  pull_policy: always
+  environment: &aws_env
+    SATSA_DATABASE_URL: ${SATSA_DATABASE_URL:?set SATSA_DATABASE_URL}
+    SATSA_DB_REQUIRE_VERIFIED_TLS: "true"
+    SATSA_S3_ENDPOINT_URL: ""
+    SATSA_S3_ACCESS_KEY: ""
+    SATSA_S3_SECRET_KEY: ""
+    SATSA_S3_REGION: ${SATSA_S3_REGION:?set SATSA_S3_REGION}
+    SATSA_S3_ADDRESSING_STYLE: virtual
+    AWS_REGION: ${SATSA_S3_REGION}
+  volumes: !override
+    - /data/satsa:/data
+    - /etc/satsa/rds-ca.pem:/etc/satsa/rds-ca.pem:ro
+  logging: &aws_logging
+    driver: awslogs
+    options:
+      awslogs-region: ${SATSA_S3_REGION}
+      awslogs-group: ${SATSA_LOG_GROUP:?set SATSA_LOG_GROUP}
+      awslogs-create-group: "false"
+      tag: "{{.Name}}"
+
+services:
+  migrate: *aws_backend
+  key-init: *aws_backend
+  api:
+    <<: *aws_backend
+    environment:
+      <<: *aws_env
+      SATSA_API_HOST: 0.0.0.0
+      SATSA_API_PORT: "8000"
+      SATSA_COOKIE_SECURE: "true"
+      SATSA_ALLOWED_HOSTS: api
+      SATSA_ALLOWED_ORIGINS: ""
+      SATSA_TRUST_PROXY_HEADERS: "true"
+      SATSA_TRUSTED_PROXIES: 172.30.0.10
+  worker: *aws_backend
+  web:
+    image: ${SATSA_WEB_IMAGE:?set SATSA_WEB_IMAGE}:${SATSA_IMAGE_TAG}
+    pull_policy: always
+    logging: *aws_logging
+  caddy:
+    logging: *aws_logging
