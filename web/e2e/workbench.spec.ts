@@ -180,7 +180,13 @@ test("an analyst builds and validates a dataset; the worker reports it too small
   await page.getByRole("button", { name: "Build dataset from recorded decisions" }).click();
   const datasets = page.getByRole("region", { name: "Datasets" });
   await expect(datasets.getByText("review-outcome v1")).toBeVisible();
-  await datasets.getByRole("button", { name: "Validate" }).click();
+  // A click that lands before the control has hydrated does nothing; retry
+  // until the job is acknowledged. The control reuses one idempotency key, so
+  // a repeated click cannot queue a second job.
+  await expect(async () => {
+    await datasets.getByRole("button", { name: "Validate" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Queued for the worker" })).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 30_000 });
   // Validation runs in the worker; one decided run is below the policy minimum.
   await expect(async () => {
     await page.reload();
