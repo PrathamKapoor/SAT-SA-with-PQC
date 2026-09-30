@@ -28,6 +28,7 @@ import type {
   MLMonitoring,
   MLRetrainingRequest,
   MLTrainingRun,
+  ReviewerBriefing,
   DataOrigin,
   Organization,
   Page,
@@ -266,6 +267,7 @@ export const api = {
   auditEvents: (q?: PageQuery & { run_id?: string }) => tget<Page<AuditEvent>>("/api/v1/audit/events", { ...pq(q), run_id: q?.run_id }),
 
   /* MLOps (docs/MLOPS.md). Jobs return 202 and run in the worker. */
+  briefing: (runId: string) => tget<ReviewerBriefing>(`/api/v1/runs/${id(runId)}/briefing`),
   runInference: (runId: string) => tget<MLInference>(`/api/v1/runs/${id(runId)}/model-inference`),
   mlDatasets: (q?: PageQuery) => tget<Page<MLDataset>>("/api/v1/ml/datasets", pq(q)),
   mlCreateDataset: (name: string, dataOrigin: DataOrigin) => tpost<MLDataset>("/api/v1/ml/datasets", { json: { name, data_origin: dataOrigin } }),

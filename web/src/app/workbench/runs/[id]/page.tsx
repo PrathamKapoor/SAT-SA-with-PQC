@@ -42,7 +42,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
   const ctx = await requireContext();
   const loaded = await load(async () => {
     const run = await api.run(id);
-    const [entity, findings, risk, recommendations, decision, receipt, inference] = await Promise.all([
+    const [entity, findings, risk, recommendations, decision, receipt, inference, briefing] = await Promise.all([
       api.entity(run.entity_id),
       loadRunFindings(id),
       orNull(api.risk(id)),
@@ -50,8 +50,9 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
       orNull(api.decision(id)),
       orNull(api.receipt(id)),
       can(ctx.role, "model.read") ? orNull(api.runInference(id)) : Promise.resolve(null),
+      orNull(api.briefing(id)),
     ]);
-    return { run, entity, findings, risk, recommendations, decision, receipt, inference };
+    return { run, entity, findings, risk, recommendations, decision, receipt, inference, briefing };
   });
 
   if (!loaded.ok) {
@@ -61,7 +62,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
       </div>
     );
   }
-  const { run, entity, findings, risk, recommendations, decision, receipt, inference } = loaded.data;
+  const { run, entity, findings, risk, recommendations, decision, receipt, inference, briefing } = loaded.data;
   const status = RUN_STATUS[run.status];
   const finalizing = run.status === "awaiting_review" && decision !== null;
   const refreshing = RUN_IN_PROGRESS.includes(run.status) || finalizing;
@@ -171,6 +172,33 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
             <EmptyState title="No recommendations">Recommendations are produced for signal findings once analysis completes.</EmptyState>
           )}
         </Section>
+
+        {briefing && (
+          <Section id="briefing" title="Reviewer briefing" aside="Orientation only; the decision is yours">
+            <div className="rounded-md border border-line bg-paper px-4 py-3" data-briefing={briefing.status}>
+              {briefing.output ? (
+                <>
+                  <p className="text-[14px] text-ink">{briefing.output.summary}</p>
+                  <ul className="mt-2 list-disc space-y-0.5 pl-5 text-[13px] text-ink-2">
+                    {briefing.output.key_points.map((p) => (
+                      <li key={p}>{p}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="text-[14px] text-ink">No briefing: {briefing.abstain_reason?.replaceAll("_", " ").toLowerCase()}</p>
+              )}
+              <p className="mt-2 text-[12px] text-muted">
+                {briefing.status === "generated"
+                  ? `Written by ${briefing.provider} (${briefing.model})${briefing.fallback_level && briefing.fallback_level > 1 ? `, fallback level ${briefing.fallback_level}` : ""}`
+                  : briefing.status === "deterministic"
+                    ? "Assembled from structured results without a language model"
+                    : "No model output"}{" "}
+                · record <span className="mono-id">{shortDigest(briefing.content_digest, 12)}</span>, bound into the TRUST-SAT finalization
+              </p>
+            </div>
+          </Section>
+        )}
 
         {inference && (
           <Section id="model" title="Advisory model score" aside="Orders the review queue; never a decision">
