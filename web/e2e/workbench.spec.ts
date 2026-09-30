@@ -48,7 +48,13 @@ async function pageAs(browser: Browser, role: Role): Promise<Page> {
   }
   // One membership: the organization is selected automatically.
   await expect(page).toHaveURL(/\/workbench$/);
-  await expect(page.getByRole("heading", { name: "Workbench", level: 1 })).toBeVisible();
+  // Every role signs in from the same address and shares its read limit; if the
+  // first render hit that limit, reload once the window has moved on.
+  await expect(async () => {
+    const heading = page.getByRole("heading", { name: "Workbench", level: 1 });
+    if (!(await heading.isVisible())) await page.reload();
+    await expect(heading).toBeVisible({ timeout: 5_000 });
+  }).toPass({ intervals: [5_000, 15_000], timeout: 90_000 });
   sessions.set(role, await context.storageState());
   return page;
 }
