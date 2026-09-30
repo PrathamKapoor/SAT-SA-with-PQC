@@ -46,7 +46,7 @@ export default async function ReviewQueuePage() {
         <ApiErrorPanel error={loaded.error} context="Review queue" />
       ) : (
         <>
-          <AutoRefresh active={loaded.data.working} label="Runs are still processing and may join the queue." seconds={5} />
+          <AutoRefresh active={loaded.data.working} label="Runs are still processing and may join the queue." />
           {loaded.data.rows.length === 0 ? (
             <EmptyState title="Nothing awaiting review">Runs appear here when their analytical stages finish.</EmptyState>
           ) : (

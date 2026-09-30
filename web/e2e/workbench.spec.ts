@@ -1,4 +1,4 @@
-import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
+import { expect, test, type Browser, type BrowserContext, type Locator, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
@@ -57,6 +57,20 @@ async function pageAs(browser: Browser, role: Role): Promise<Page> {
   }).toPass({ intervals: [5_000, 15_000], timeout: 90_000 });
   sessions.set(role, await context.storageState());
   return page;
+}
+
+/**
+ * Opens a page and waits until it shows `ready`. Every role in this suite
+ * signs in from one address and shares the API's per-address read limit; a
+ * render that met it shows an error panel, so reload after a pause, as a
+ * person would.
+ */
+async function open(page: Page, url: string, ready: Locator): Promise<void> {
+  await page.goto(url);
+  await expect(async () => {
+    if (!(await ready.isVisible())) await page.reload();
+    await expect(ready).toBeVisible({ timeout: 5_000 });
+  }).toPass({ intervals: [5_000, 15_000], timeout: 90_000 });
 }
 
 test.describe.configure({ mode: "serial" });
@@ -180,8 +194,7 @@ test("the run records the advisory model's explicit abstention", async ({ browse
   // No model has been trained or deployed on this stack: the worker still
   // records an inference, as an abstention, and the page says why.
   const page = await pageAs(browser, "supervisor");
-  await page.goto(runUrl);
-  await expect(page.getByRole("heading", { name: "Advisory model score" })).toBeVisible();
+  await open(page, runUrl, page.getByRole("heading", { name: "Advisory model score" }));
   await expect(page.locator("[data-inference]")).toHaveAttribute("data-inference", "abstained");
   await expect(page.getByText("No model is deployed")).toBeVisible();
 });
@@ -230,16 +243,14 @@ test("an analyst builds and validates a dataset; the worker reports it too small
 
 test("the administrator reads the audit trail of the run", async ({ browser }) => {
   const page = await pageAs(browser, "admin");
-  await page.goto(`/workbench/audit?run=${runUrl.split("/").pop()}`);
-  await expect(page.getByRole("table", { name: "Audit events" })).toBeVisible();
+  await open(page, `/workbench/audit?run=${runUrl.split("/").pop()}`, page.getByRole("table", { name: "Audit events" }));
   await expect(page.getByText("trust.supervisory_finalized")).toBeVisible();
 });
 
 test("the backend refuses the audit log to a role without audit permission", async ({ browser }) => {
   // The analyst has no audit permission: the backend refuses, and the page says so.
   const page = await pageAs(browser, "analyst");
-  await page.goto("/workbench/audit");
-  await expect(page.getByText("Audit events: Not permitted")).toBeVisible();
+  await open(page, "/workbench/audit", page.getByText("Audit events: Not permitted"));
 });
 
 test("sign-out revokes the backend session", async ({ browser }) => {
