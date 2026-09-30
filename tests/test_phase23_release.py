@@ -25,3 +25,17 @@ def test_published_images_carry_the_commit():
         text = (ROOT / dockerfile).read_text(encoding="utf-8")
         assert "ARG SATSA_RELEASE=unreleased" in text
         assert "SATSA_RELEASE=${SATSA_RELEASE}" in text
+
+
+def test_custom_domain_is_read_at_deploy_time_not_baked_into_the_instance():
+    template = (ROOT / "deploy/aws/satsa.cfn.yaml").read_text(encoding="utf-8")
+    user_data = template.split("UserData:", 1)[1].split("EipAssociation:", 1)[0]
+    site = [line for line in user_data.splitlines() if line.strip().startswith("- Site:")]
+    # Only the Elastic IP name: changing SiteAddress must not touch the instance.
+    assert len(site) == 1 and "SiteAddress" not in site[0]
+    assert 'Name: !Sub "/satsa/${EnvironmentName}/site-address"' in template
+    deploy = (ROOT / "deploy/aws/deploy.sh").read_text(encoding="utf-8")
+    assert '/satsa/$SATSA_ENV_NAME/site-address' in deploy
+    assert "SATSA_SITE_ALIASES=$SATSA_SITE_ADDRESS" in deploy
+    caddy = (ROOT / "deploy/caddy/site.caddy").read_text(encoding="utf-8")
+    assert "{$SATSA_SITE_ADDRESS} {$SATSA_SITE_ALIASES} {" in caddy

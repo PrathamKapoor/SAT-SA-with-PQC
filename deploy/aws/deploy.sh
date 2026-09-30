@@ -27,6 +27,15 @@ log() { echo "deploy: $*"; }
 set -a; . "$STACK_ENV"; set +a
 export AWS_REGION AWS_DEFAULT_REGION="$AWS_REGION"
 
+# The public hostname comes from the stack's SSM parameter (a custom domain
+# once DNS points at the Elastic IP); the instance's sslip.io name from first
+# boot stays served as an alias.
+SATSA_SITE_ALIASES=""
+if site=$(aws ssm get-parameter --name "/satsa/$SATSA_ENV_NAME/site-address"     --query Parameter.Value --output text 2>/dev/null) && [ -n "$site" ] && [ "$site" != None ]     && [ "$site" != "$SATSA_SITE_ADDRESS" ]; then
+  SATSA_SITE_ALIASES=$SATSA_SITE_ADDRESS
+  SATSA_SITE_ADDRESS=$site
+fi
+
 compose() {
   docker compose -p satsa -f "$CURRENT/deploy/compose.production.yml" \
     -f "$CURRENT/deploy/aws/compose.aws.yml" --env-file "$RUNTIME_ENV" "$@"
@@ -69,6 +78,7 @@ render_env() {
   [ -r /etc/satsa/rds-ca.pem ] || die "RDS CA bundle /etc/satsa/rds-ca.pem missing"
   cat > "$RUNTIME_ENV.new" <<EOF
 SATSA_SITE_ADDRESS=$SATSA_SITE_ADDRESS
+SATSA_SITE_ALIASES=$SATSA_SITE_ALIASES
 SATSA_DATABASE_URL=postgresql://$user:$encoded@$SATSA_DB_HOST:$SATSA_DB_PORT/$SATSA_DB_NAME?sslmode=verify-full&sslrootcert=/etc/satsa/rds-ca.pem
 SATSA_S3_BUCKET=$SATSA_S3_BUCKET
 SATSA_S3_REGION=$SATSA_S3_REGION

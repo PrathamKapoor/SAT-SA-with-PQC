@@ -145,6 +145,8 @@ services:
     image: caddy:2
     environment:
       SATSA_SITE_ADDRESS: ${SATSA_SITE_ADDRESS:?set the public hostname, e.g. satsa.example.org}
+      # Optional further hostnames for the same site (space separated).
+      SATSA_SITE_ALIASES: ${SATSA_SITE_ALIASES:-}
     ports:
       - "80:80"
       - "443:443"
