@@ -194,7 +194,11 @@ test("an analyst builds and validates a dataset; the worker reports it too small
   // a repeated click cannot queue a second job.
   await expect(async () => {
     await newest.getByRole("button", { name: "Validate" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Queued for the worker" })).toBeVisible({ timeout: 3_000 });
+    const queued = page.getByRole("status").filter({ hasText: "Queued for the worker" });
+    await queued.waitFor({ timeout: 3_000 }).catch(() => undefined);
+    // If the action was refused, say why instead of timing out silently.
+    const alerts = (await page.getByRole("alert").allTextContents()).filter((t) => !t.includes("SAT-SA"));
+    expect(await queued.isVisible(), `validation not queued; page alerts: ${JSON.stringify(alerts)}`).toBe(true);
   }).toPass({ timeout: 30_000 });
   // Validation runs in the worker; one decided run is below the policy minimum.
   await expect(async () => {
