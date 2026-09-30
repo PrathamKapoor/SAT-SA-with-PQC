@@ -51,7 +51,13 @@ services:
       SATSA_ALLOWED_ORIGINS: ""
       SATSA_TRUST_PROXY_HEADERS: "true"
       SATSA_TRUSTED_PROXIES: 172.30.0.10
-  worker: *aws_backend
+  worker:
+    <<: *aws_backend
+    # Only the worker runs model-assisted capabilities; only it gets provider
+    # keys (rendered by deploy.sh from Secrets Manager, mode 0600).
+    env_file:
+      - path: /etc/satsa/llm.env
+        required: true
   web:
     image: ${SATSA_WEB_IMAGE:?set SATSA_WEB_IMAGE}:${SATSA_IMAGE_TAG}
     pull_policy: always

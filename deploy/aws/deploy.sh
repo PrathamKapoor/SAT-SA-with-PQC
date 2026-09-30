@@ -81,6 +81,23 @@ EOF
   mv "$RUNTIME_ENV.new" "$RUNTIME_ENV"
 }
 
+# Model-provider configuration for the worker: the secret is a JSON object of
+# environment variables (SATSA_LLM_CHAIN plus the key variables it names). No
+# secret configured = model assistance off (deterministic briefings).
+render_llm_env() {
+  local out=/etc/satsa/llm.env.new value
+  : > "$out"; chmod 600 "$out"
+  if value=$(aws secretsmanager get-secret-value --secret-id "${SATSA_LLM_SECRET_ID:-satsa/$SATSA_ENV_NAME/llm-providers}"       --query SecretString --output text 2>/dev/null); then
+    jq -e 'type == "object" and all(.[]; type == "string")' <<<"$value" >/dev/null       || die "model provider secret must be a JSON object of string values"
+    jq -r 'to_entries[] | "\(.key)=\(.value)"' <<<"$value" > "$out"
+    grep -q '^SATSA_LLM_CHAIN=' "$out" || die "model provider secret has no SATSA_LLM_CHAIN"
+    log "model providers configured ($(jq -r '.SATSA_LLM_CHAIN | fromjson | map(.name) | join(" -> ")' <<<"$value"))"
+  else
+    log "no model provider secret: briefings will be deterministic"
+  fi
+  mv "$out" /etc/satsa/llm.env
+}
+
 wait_healthy() {
   local service
   for service in api worker web; do
@@ -122,6 +139,7 @@ cmd_deploy() {
   fi
   ln -sfn "$dir" "$CURRENT"
   render_env "$tag"
+  render_llm_env
 
   # A lost signing key must not be replaced silently: records already signed
   # with it would stop verifying. Only a never-initialized volume gets a key.
