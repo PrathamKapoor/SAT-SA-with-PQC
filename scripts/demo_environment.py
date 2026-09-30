@@ -23,6 +23,7 @@ and the old demo organization stays inspectable by the administrator.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import sys
 import time
@@ -104,9 +105,11 @@ def main(argv: list[str] | None = None) -> int:
     state = create_demo(admin, stamp=time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime()))
     org = state["organization_id"]
     analyst = Api(args.api, state["members"]["analyst"]["credential"], org)
-    runs = seed(analyst, mode="graph")
-    # The graph pauses at human review; wait() treats awaiting_review as released.
-    wait(analyst, runs, args.timeout)
+    # Progress goes to stderr: stdout carries only the final state JSON.
+    with contextlib.redirect_stdout(sys.stderr):
+        runs = seed(analyst, mode="graph")
+        # The graph pauses at human review; wait() treats awaiting_review as released.
+        wait(analyst, runs, args.timeout)
     supervisor = Api(args.api, state["members"]["supervisor"]["credential"], org)
     state["runs"] = runs
     state["decision"] = decide_and_verify(supervisor, runs)
