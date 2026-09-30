@@ -191,19 +191,19 @@ test("an analyst builds and validates a dataset; the worker reports it too small
   await page.getByRole("link", { name: "Models" }).first().click();
   await expect(page.getByText("No model is deployed")).toBeVisible();
   // The newest version is listed first; earlier runs against the same
-  // deployment may have left older versions below it. A click that lands
-  // before hydration does nothing, so build again until a version is listed
-  // (an extra version is harmless: the checks below use the newest).
+  // deployment may have left older versions below it. Build, then reload until
+  // the version is listed: the refresh after a build can meet the per-address
+  // read limit (every role here shares one address), and a click that lands
+  // before hydration does nothing. Building again is safe: identical content
+  // returns the existing version.
   const newest = page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first();
   await expect(async () => {
-    await page.getByRole("button", { name: "Build dataset from recorded decisions" }).click();
-    await expect(
-      newest.getByText(/^review-outcome v\d+$/),
-      `datasets: ${await page.getByRole("region", { name: "Datasets" }).innerText().catch(() => "(no region)")}
-` +
-        `alerts: ${(await page.getByRole("alert").allInnerTexts()).join(" | ")}`,
-    ).toBeVisible({ timeout: 10_000 });
-  }).toPass({ intervals: [5_000], timeout: 90_000 });
+    const build = page.getByRole("button", { name: "Build dataset from recorded decisions" });
+    if (await build.isVisible()) await build.click();
+    await page.waitForTimeout(2_000);
+    await page.reload();
+    await expect(newest.getByText(/^review-outcome v\d+$/)).toBeVisible({ timeout: 5_000 });
+  }).toPass({ intervals: [10_000], timeout: 3 * 60_000 });
   // Validate, then wait for the worker's verdict on the newest version. The
   // acknowledgement is transient: once the worker claims the job the dataset
   // leaves "created" and the Validate control (with its notice) disappears.
