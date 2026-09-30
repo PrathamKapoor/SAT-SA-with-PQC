@@ -190,11 +190,15 @@ test("an analyst builds and validates a dataset; the worker reports it too small
   const page = await pageAs(browser, "analyst");
   await page.getByRole("link", { name: "Models" }).first().click();
   await expect(page.getByText("No model is deployed")).toBeVisible();
-  await page.getByRole("button", { name: "Build dataset from recorded decisions" }).click();
   // The newest version is listed first; earlier runs against the same
-  // deployment may have left older versions below it.
+  // deployment may have left older versions below it. A click that lands
+  // before hydration does nothing, so build again until a version is listed
+  // (an extra version is harmless: the checks below use the newest).
   const newest = page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first();
-  await expect(newest.getByText(/^review-outcome v\d+$/)).toBeVisible();
+  await expect(async () => {
+    await page.getByRole("button", { name: "Build dataset from recorded decisions" }).click();
+    await expect(newest.getByText(/^review-outcome v\d+$/)).toBeVisible({ timeout: 10_000 });
+  }).toPass({ intervals: [5_000], timeout: 90_000 });
   // Validate, then wait for the worker's verdict on the newest version. The
   // acknowledgement is transient: once the worker claims the job the dataset
   // leaves "created" and the Validate control (with its notice) disappears.
