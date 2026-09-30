@@ -197,7 +197,12 @@ test("an analyst builds and validates a dataset; the worker reports it too small
   const newest = page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first();
   await expect(async () => {
     await page.getByRole("button", { name: "Build dataset from recorded decisions" }).click();
-    await expect(newest.getByText(/^review-outcome v\d+$/)).toBeVisible({ timeout: 10_000 });
+    await expect(
+      newest.getByText(/^review-outcome v\d+$/),
+      `datasets: ${await page.getByRole("region", { name: "Datasets" }).innerText().catch(() => "(no region)")}
+` +
+        `alerts: ${(await page.getByRole("alert").allInnerTexts()).join(" | ")}`,
+    ).toBeVisible({ timeout: 10_000 });
   }).toPass({ intervals: [5_000], timeout: 90_000 });
   // Validate, then wait for the worker's verdict on the newest version. The
   // acknowledgement is transient: once the worker claims the job the dataset
