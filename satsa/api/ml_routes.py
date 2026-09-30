@@ -187,6 +187,23 @@ def register(app, *, engine, storage, audit, Tenant, Key, Limit, Offset) -> None
         row = ml(t).dismiss_retraining(request_id, body.reason)
         return {**row, "evidence": _json(row["evidence_json"], {})}
 
+    # -- reviewer briefing (model-assisted, advisory) -----------------------
+    @app.get("/api/v1/runs/{run_id}/briefing", response_model=s.ReviewerBriefing,
+             tags=["review"], operation_id="get_run_briefing")
+    def run_briefing(run_id: str, t: Tenant):
+        from qsmlops.core.errors import NotFoundError
+        from qsmlops.security.permissions.model import FINDING_VIEW
+        from satsa.llm.briefing import get_briefing
+
+        t._require(FINDING_VIEW)
+        if engine.query_one("SELECT id FROM satsa_runs WHERE organization_id=? AND id=?",
+                            (t.organization_id, run_id)) is None:
+            raise NotFoundError("run not found")
+        row = get_briefing(engine, t.organization_id, run_id)
+        if row is None:
+            raise NotFoundError("no briefing recorded for this run")
+        return {**row, "attempts": _json(row["attempts_json"], []), "output": _json(row["output_json"])}
+
     # -- run inference ------------------------------------------------------
     @app.get("/api/v1/runs/{run_id}/model-inference", response_model=s.MLInference,
              tags=["mlops"], operation_id="get_run_model_inference")

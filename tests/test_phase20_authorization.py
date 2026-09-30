@@ -91,6 +91,7 @@ MATRIX = {
     ("POST", "/api/v1/ml/retraining-requests/{request_id}/accept"): REVIEWERS,
     ("POST", "/api/v1/ml/retraining-requests/{request_id}/dismiss"): REVIEWERS,
     ("GET", "/api/v1/runs/{run_id}/model-inference"): ALL,
+    ("GET", "/api/v1/runs/{run_id}/briefing"): ALL,
 }
 # Allowed callers of these routes reach a domain precondition when nothing is
 # deployed (409 no active deployment / 422 nothing to check), which is still

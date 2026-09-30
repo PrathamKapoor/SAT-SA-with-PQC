@@ -57,8 +57,8 @@ def test_route_index_matches_live_application(openapi):
     documented = _documented_routes()
     assert len(documented) == len(set(documented)), "duplicate route in the index"
     assert set(documented) == _live_routes(openapi)
-    assert len(documented) == 70
-    assert "**70 routes**" in CONTRACT.read_text(encoding="utf-8")
+    assert len(documented) == 71
+    assert "**71 routes**" in CONTRACT.read_text(encoding="utf-8")
 
 
 def test_every_collection_route_is_paginated(openapi):

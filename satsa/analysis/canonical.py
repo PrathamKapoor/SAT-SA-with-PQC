@@ -504,6 +504,16 @@ def supervisory_document(engine, organization_id: str, run_id: str) -> dict:
             **{key: inference[key] for key in fields},
             "content_digest": inference["content_digest"],
         }
+    # Phase 22: the model-assisted reviewer briefing (provider, model,
+    # fallback level, digest of its content), when the run has one.
+    briefing = engine.query_one(
+        "SELECT * FROM satsa_llm_outputs WHERE organization_id=? AND run_id=? AND capability=?",
+        (organization_id, run_id, "reviewer_briefing"),
+    )
+    if briefing is not None:
+        from satsa.llm.briefing import canonical_block
+
+        document["reviewer_briefing"] = canonical_block(briefing)
     review_context = decision.get("review_context_digest")
     if review_context is not None and review_context != digest_document(document):
         raise ValueError("reviewed context changed before finalization")

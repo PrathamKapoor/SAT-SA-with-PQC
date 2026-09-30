@@ -485,6 +485,22 @@ class MLInference(Schema):
     created_at: float
 
 
+class ReviewerBriefing(Schema):
+    id: str
+    run_id: str
+    capability: str
+    status: Literal["generated", "deterministic", "abstained"]
+    provider: str | None = None
+    model: str | None = None
+    fallback_level: int | None = None
+    abstain_reason: str | None = None
+    attempts: list[dict[str, Any]]
+    output: dict[str, Any] | None = None
+    content_digest: str
+    latency_ms: float
+    created_at: float
+
+
 class CanonicalRecord(Schema):
     record_id: str
     category: str
