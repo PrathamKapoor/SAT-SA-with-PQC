@@ -36,9 +36,16 @@ async function pageAs(browser: Browser, role: Role): Promise<Page> {
     await page.goto("/workbench");
     return page;
   }
-  await page.goto("/login");
-  await page.getByLabel("Issued credential").fill(state().credentials[role]);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  for (let attempt = 0; ; attempt++) {
+    await page.goto("/login");
+    await page.getByLabel("Issued credential").fill(state().credentials[role]);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    const limited = page.locator("#credential-error").filter({ hasText: "Too many requests" });
+    await Promise.race([page.waitForURL(/\/workbench$/), limited.waitFor()]);
+    if (!(await limited.isVisible()) || attempt > 0) break;
+    // The per-address sign-in limit uses one-minute windows: wait for the next.
+    await page.waitForTimeout(60_000 - (Date.now() % 60_000) + 1_000);
+  }
   // One membership: the organization is selected automatically.
   await expect(page).toHaveURL(/\/workbench$/);
   await expect(page.getByRole("heading", { name: "Workbench", level: 1 })).toBeVisible();
