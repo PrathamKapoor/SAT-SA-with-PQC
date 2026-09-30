@@ -31,6 +31,11 @@ for volume in postgres_data satsa_durable object_data; do
   fi
 done
 
+# Fetch the archive helper image first, with retries, so a registry hiccup
+# cannot stop a restore after volumes have been created.
+for attempt in 1 2 3 4 5; do docker pull -q alpine:3 >/dev/null && break; sleep $((attempt * 5)); done
+docker image inspect alpine:3 >/dev/null
+
 volume_untar() {  # volume name, archive path
   docker volume create --label "com.docker.compose.project=${project}" \
     --label "com.docker.compose.volume=${1#"${project}"_}" "$1" >/dev/null

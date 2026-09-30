@@ -189,23 +189,20 @@ test("an analyst builds and validates a dataset; the worker reports it too small
   // deployment may have left older versions below it.
   const newest = page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first();
   await expect(newest.getByText(/^review-outcome v\d+$/)).toBeVisible();
-  // A click that lands before the control has hydrated does nothing; retry
-  // until the job is acknowledged. The control reuses one idempotency key, so
-  // a repeated click cannot queue a second job.
+  // Validate, then wait for the worker's verdict on the newest version. The
+  // acknowledgement is transient: once the worker claims the job the dataset
+  // leaves "created" and the Validate control (with its notice) disappears.
+  // Clicking again while it is still shown is safe (validation of a dataset is
+  // idempotent), and covers a click that landed before hydration.
+  const newestVerdict = () =>
+    page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first().getByText("invalid", { exact: true });
   await expect(async () => {
-    await newest.getByRole("button", { name: "Validate" }).click();
-    const queued = page.getByRole("status").filter({ hasText: "Queued for the worker" });
-    await queued.waitFor({ timeout: 3_000 }).catch(() => undefined);
-    // If the action was refused, say why instead of timing out silently.
-    const alerts = (await page.getByRole("alert").allTextContents()).filter((t) => !t.includes("SAT-SA"));
-    expect(await queued.isVisible(), `validation not queued; page alerts: ${JSON.stringify(alerts)}`).toBe(true);
-  }).toPass({ timeout: 30_000 });
-  // Validation runs in the worker; one decided run is below the policy minimum.
-  await expect(async () => {
+    const validate = page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first()
+      .getByRole("button", { name: "Validate" });
+    if (await validate.isVisible()) await validate.click();
+    await page.waitForTimeout(2_000);
     await page.reload();
-    await expect(
-      page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first().getByText("invalid", { exact: true }),
-    ).toBeVisible({ timeout: 2_000 });
+    await expect(newestVerdict()).toBeVisible({ timeout: 2_000 });
     // Poll like a person would: every reload costs several API reads, and the
     // production stack rate-limits reads per client address.
   }).toPass({ intervals: [10_000], timeout: 3 * 60_000 });

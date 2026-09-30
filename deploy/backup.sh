@@ -33,6 +33,11 @@ restart() { $COMPOSE start api worker >/dev/null 2>&1 || true; }
 trap restart EXIT
 
 echo "stopping api and worker for a consistent snapshot"
+# Fetch the archive helper image before anything is stopped, with retries: a
+# registry hiccup must not fail the operation halfway through.
+for attempt in 1 2 3 4 5; do docker pull -q alpine:3 >/dev/null && break; sleep $((attempt * 5)); done
+docker image inspect alpine:3 >/dev/null
+
 $COMPOSE stop api worker
 
 echo "dumping PostgreSQL"
