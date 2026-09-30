@@ -271,6 +271,10 @@ jobs:
           EOF
           $COMPOSE logs --no-color --tail 300 worker 2>&1 | grep -iE 'error|exception|traceback|ml job' | tail -8 \
             | while read -r line; do echo "::error title=worker-log::${line:0:400}"; done
+          echo "--- api log (ml routes and errors)"
+          $COMPOSE logs --no-color --tail 2000 api 2>&1 | grep -iE 'ml/|error|exception|traceback' | tail -60 || true
+          echo "--- web log"
+          $COMPOSE logs --no-color --tail 200 web 2>&1 | tail -80 || true
       - name: API restart keeps sessions and serves the site
         run: |
           $COMPOSE restart api
