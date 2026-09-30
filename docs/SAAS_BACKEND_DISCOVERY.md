@@ -2,6 +2,10 @@
 
 Date: 2026-09-25. Scope: backend, data, security, orchestration, trust, and deployment. This document describes the checked-out `release-fresh` code and the separately inspected public QSMLOps repository and deployed SAT-SA site. It is a design baseline, not a claim that the SaaS capabilities below already exist.
 
+**Historical document.** Its references to Render and `render.yaml` describe
+the prototype hosting at the time; Render is no longer used and the hosted
+deployment is AWS (`deploy/aws/README.md`).
+
 **Phase 1 update:** The database and tenant foundation described in [DATABASE.md](DATABASE.md) has been implemented after this discovery snapshot. PostgreSQL migration and tenant/session tests now exist. The hosted API, ingestion lifecycle, queue, LangGraph, and MLOps work remain later phases.
 
 ## 1. Current state and repository safety
