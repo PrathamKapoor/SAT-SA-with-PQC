@@ -31,8 +31,8 @@ Parameters:
     Default: db.t4g.micro
   DbEngineVersion:
     Type: String
-    Default: "17"
-    Description: PostgreSQL 17 (major version; RDS selects the current minor).
+    Default: "17.11"
+    Description: PostgreSQL 17 minor version available in the region (checked 2026-09-30).
   DbAllocatedStorageGiB:
     Type: Number
     Default: 20
