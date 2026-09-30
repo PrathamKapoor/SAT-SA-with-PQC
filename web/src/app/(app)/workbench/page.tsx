@@ -58,7 +58,7 @@ export default async function WorkbenchPage() {
           const recent = [...runs].sort((a, b) => b.requested_at - a.requested_at).slice(0, 6);
           return (
             <>
-              <AutoRefresh active={working.length > 0} label={`${working.length} run${working.length === 1 ? " is" : "s are"} processing.`} seconds={5} />
+              <AutoRefresh active={working.length > 0} label={`${working.length} run${working.length === 1 ? " is" : "s are"} processing.`} />
               <dl className="mt-2 mb-8 grid grid-cols-2 gap-6 border-y border-line py-5 md:grid-cols-4">
                 <Metric label="Awaiting review" value={awaiting.length} tone={awaiting.length ? "attention" : "ink"} detail="Runs released to a supervisor" />
                 <Metric label="In progress" value={working.length} tone={working.length ? "info" : "ink"} detail="Queued or running" />
