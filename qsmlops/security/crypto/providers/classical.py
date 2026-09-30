@@ -22,9 +22,8 @@ from qsmlops.security.crypto.providers.base import CryptoProvider
 
 class ClassicalProvider(CryptoProvider):
     def generate_keypair(self) -> KeyPair:
-        # For simplicity, generate a generic RSA‑like placeholder.
-        # The actual algorithm is selected by the caller via the
-        # ``algorithm_id`` argument when invoking the higher‑level manager.
+        # No key is generated here: the caller selects a concrete algorithm
+        # through the higher-level manager (``algorithm_id``).
         raise ProviderError("ClassicalProvider.generate_keypair requires explicit algorithm")
 
     def encrypt(self, plaintext: bytes, key_reference: str) -> bytes:
