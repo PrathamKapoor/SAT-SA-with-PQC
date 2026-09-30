@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@source not "../../components/landing";
 
 /*
  * SAT-SA design tokens.
