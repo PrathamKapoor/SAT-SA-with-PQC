@@ -4,10 +4,10 @@
 
 | Item | Status |
 |---|---|
-| Hosting model | A single Linux host running `deploy/compose.production.yml` (Caddy HTTPS, web, API, worker, PostgreSQL, object storage). Decision and runbook: [`deploy/README.md`](../deploy/README.md). No provider-specific files; the earlier Render Blueprint was removed. |
+| Hosting model | A single Linux host running `deploy/compose.production.yml` (Caddy HTTPS, web, API, worker) with a database and object-storage overlay. AWS (the chosen target): [`deploy/aws/README.md`](../deploy/aws/README.md) (EC2 + RDS PostgreSQL 17 + S3, one CloudFormation stack, ap-south-1). Any other single host: [`deploy/README.md`](../deploy/README.md) with `deploy/compose.database.yml`. Render is not used. |
 | Production topology | CI-tested end to end with production settings in the `production-stack` job (run 36444188066 at `5fe192b`): HTTPS entry point, deployment smoke, worker restart recovery, browser workflow through HTTPS, API restart. |
 | Local execution | Supported without Docker: `scripts/local_stack.py` (SQLite, separate API and worker). |
-| Hosted deployment | **Not deployed.** No host and no public hostname have been provided yet; nothing in this repository is claimed to be running publicly. |
+| Hosted deployment | **Deployed on AWS (Phase 22, 2026-09-30):** stack `satsa-prod`, ap-south-1, public URL `https://16-4-5-15.sslip.io` (interim hostname until a domain is chosen). Verified from inside AWS: valid Let's Encrypt HTTPS, security headers, RDS over TLS `verify-full`, S3 via the instance role, the public browser end-to-end (11/11), and persistence across a service restart and an instance reboot. |
 
 A replacement host must provide the following. Nothing here names or assumes a
 provider.
