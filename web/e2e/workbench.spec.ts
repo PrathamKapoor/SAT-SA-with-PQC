@@ -185,23 +185,29 @@ test("an analyst builds and validates a dataset; the worker reports it too small
   await page.getByRole("link", { name: "Models" }).first().click();
   await expect(page.getByText("No model is deployed")).toBeVisible();
   await page.getByRole("button", { name: "Build dataset from recorded decisions" }).click();
-  const datasets = page.getByRole("region", { name: "Datasets" });
-  await expect(datasets.getByText("review-outcome v1")).toBeVisible();
+  // The newest version is listed first; earlier runs against the same
+  // deployment may have left older versions below it.
+  const newest = page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first();
+  await expect(newest.getByText(/^review-outcome v\d+$/)).toBeVisible();
   // A click that lands before the control has hydrated does nothing; retry
   // until the job is acknowledged. The control reuses one idempotency key, so
   // a repeated click cannot queue a second job.
   await expect(async () => {
-    await datasets.getByRole("button", { name: "Validate" }).click();
+    await newest.getByRole("button", { name: "Validate" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Queued for the worker" })).toBeVisible({ timeout: 3_000 });
   }).toPass({ timeout: 30_000 });
   // Validation runs in the worker; one decided run is below the policy minimum.
   await expect(async () => {
     await page.reload();
-    await expect(page.getByRole("region", { name: "Datasets" }).getByText("invalid", { exact: true })).toBeVisible({ timeout: 2_000 });
+    await expect(
+      page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first().getByText("invalid", { exact: true }),
+    ).toBeVisible({ timeout: 2_000 });
     // Poll like a person would: every reload costs several API reads, and the
     // production stack rate-limits reads per client address.
   }).toPass({ intervals: [10_000], timeout: 3 * 60_000 });
-  await expect(page.getByText(/Fail · minimum rows/)).toBeVisible();
+  await expect(
+    page.getByRole("region", { name: "Datasets" }).getByRole("listitem").first().getByText(/Fail · minimum rows/),
+  ).toBeVisible();
   // Training needs a valid dataset: no train control is offered.
   await expect(page.getByRole("button", { name: "Train model" })).toHaveCount(0);
 });
