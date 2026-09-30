@@ -1,0 +1,557 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  SAT-SA single-EC2 production deployment (docs: deploy/aws/README.md).
+  EC2 (Caddy, web, API, worker) with a separate EBS volume at /data, private
+  RDS PostgreSQL 17, private S3 bucket via a gateway endpoint, ECR, SSM
+  Session Manager (no SSH), CloudWatch Logs and alarms. No secret appears in
+  this template: the database password is generated and held by RDS in
+  Secrets Manager.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: prod
+    AllowedPattern: "^[a-z][a-z0-9-]{1,15}$"
+  SiteAddress:
+    Type: String
+    Default: ""
+    Description: >-
+      Public hostname for HTTPS. Empty = <elastic-ip-with-dashes>.sslip.io,
+      a public DNS name that resolves to the Elastic IP (replace with your own
+      domain later; see the README).
+  InstanceType:
+    Type: String
+    Default: t3.medium
+  DataVolumeSizeGiB:
+    Type: Number
+    Default: 20
+    MinValue: 10
+  DbInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+  DbEngineVersion:
+    Type: String
+    Default: "17"
+    Description: PostgreSQL 17 (major version; RDS selects the current minor).
+  DbAllocatedStorageGiB:
+    Type: Number
+    Default: 20
+    MinValue: 20
+  DbBackupRetentionDays:
+    Type: Number
+    Default: 7
+    MinValue: 1
+    MaxValue: 35
+    Description: >-
+      Automated backup retention. 7 days covers a week of point-in-time
+      recovery for a single-instance deployment at low cost.
+  AlarmEmail:
+    Type: String
+    Default: ""
+    Description: Optional address subscribed to the alarm topic.
+  GitHubRepository:
+    Type: String
+    Default: ""
+    Description: Optional owner/repo allowed to deploy through GitHub Actions OIDC.
+  CreateGitHubOidcProvider:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: Create the account-wide GitHub OIDC provider (only if it does not exist yet).
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Conditions:
+  HasSiteAddress: !Not [!Equals [!Ref SiteAddress, ""]]
+  HasAlarmEmail: !Not [!Equals [!Ref AlarmEmail, ""]]
+  HasGitHub: !Not [!Equals [!Ref GitHubRepository, ""]]
+  CreateOidc: !And [!Condition HasGitHub, !Equals [!Ref CreateGitHubOidcProvider, "true"]]
+
+Resources:
+  # ---------------------------------------------------------------- network
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.60.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags: [{Key: Name, Value: !Sub "satsa-${EnvironmentName}"}]
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: {VpcId: !Ref Vpc, InternetGatewayId: !Ref InternetGateway}
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.60.0.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: false
+      Tags: [{Key: Name, Value: !Sub "satsa-${EnvironmentName}-public"}]
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.60.10.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags: [{Key: Name, Value: !Sub "satsa-${EnvironmentName}-private-a"}]
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      CidrBlock: 10.60.11.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags: [{Key: Name, Value: !Sub "satsa-${EnvironmentName}-private-b"}]
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref Vpc}
+  PublicDefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+  PublicSubnetRoutes:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PublicSubnet, RouteTableId: !Ref PublicRouteTable}
+  # Private subnets have no route to the internet at all.
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: {VpcId: !Ref Vpc}
+  PrivateSubnetARoutes:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PrivateSubnetA, RouteTableId: !Ref PrivateRouteTable}
+  PrivateSubnetBRoutes:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties: {SubnetId: !Ref PrivateSubnetB, RouteTableId: !Ref PrivateRouteTable}
+  # S3 traffic stays on the AWS network; no NAT is needed for it.
+  S3GatewayEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref Vpc
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.s3"
+      VpcEndpointType: Gateway
+      RouteTableIds: [!Ref PublicRouteTable, !Ref PrivateRouteTable]
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SAT-SA EC2 - HTTP/HTTPS only (no SSH; administration via SSM)
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - {IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0, Description: "HTTP (redirects to HTTPS; ACME)"}
+        - {IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0, Description: HTTPS}
+        - {IpProtocol: udp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0, Description: HTTP/3}
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: SAT-SA RDS - PostgreSQL from the SAT-SA instance only
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref InstanceSecurityGroup
+          Description: SAT-SA EC2 instance
+
+  # --------------------------------------------------------------- database
+  DbSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: SAT-SA private subnets
+      SubnetIds: [!Ref PrivateSubnetA, !Ref PrivateSubnetB]
+  DbParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: SAT-SA PostgreSQL 17 - TLS required
+      Family: postgres17
+      Parameters:
+        rds.force_ssl: "1"
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: !Sub "satsa-${EnvironmentName}"
+      Engine: postgres
+      EngineVersion: !Ref DbEngineVersion
+      DBInstanceClass: !Ref DbInstanceClass
+      AllocatedStorage: !Ref DbAllocatedStorageGiB
+      StorageType: gp3
+      StorageEncrypted: true
+      DBName: satsa
+      MasterUsername: satsa
+      # RDS generates the password and keeps it in Secrets Manager.
+      ManageMasterUserPassword: true
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      VPCSecurityGroups: [!Ref DatabaseSecurityGroup]
+      DBParameterGroupName: !Ref DbParameterGroup
+      PubliclyAccessible: false
+      MultiAZ: false
+      BackupRetentionPeriod: !Ref DbBackupRetentionDays
+      PreferredBackupWindow: "20:30-21:00"
+      PreferredMaintenanceWindow: "sun:21:30-sun:22:00"
+      AutoMinorVersionUpgrade: true
+      CopyTagsToSnapshot: true
+      DeletionProtection: true
+      EnableCloudwatchLogsExports: [postgresql]
+
+  # ---------------------------------------------------------------- storage
+  EvidenceBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "satsa-${EnvironmentName}-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules: [{ObjectOwnership: BucketOwnerEnforced}]
+      VersioningConfiguration: {Status: Enabled}
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: "aws:kms"}
+            BucketKeyEnabled: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-old-versions
+            Status: Enabled
+            NoncurrentVersionExpiration: {NoncurrentDays: 90}
+  EvidenceBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref EvidenceBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource: [!GetAtt EvidenceBucket.Arn, !Sub "${EvidenceBucket.Arn}/*"]
+            Condition: {Bool: {"aws:SecureTransport": "false"}}
+
+  BackendRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "satsa-${EnvironmentName}/backend"
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration: {ScanOnPush: true}
+      EncryptionConfiguration: {EncryptionType: AES256}
+  WebRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Sub "satsa-${EnvironmentName}/web"
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration: {ScanOnPush: true}
+      EncryptionConfiguration: {EncryptionType: AES256}
+
+  AdminCredentialSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "satsa/${EnvironmentName}/admin-credential"
+      Description: >-
+        SAT-SA bootstrap administrator credential, written once by
+        deploy/aws/deploy.sh bootstrap (placeholder until then).
+      GenerateSecretString:
+        PasswordLength: 32
+        ExcludePunctuation: true
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/satsa/${EnvironmentName}"
+      RetentionInDays: 30
+
+  # -------------------------------------------------------------- identity
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "satsa-${EnvironmentName}-instance"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - {Effect: Allow, Principal: {Service: ec2.amazonaws.com}, Action: "sts:AssumeRole"}
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: satsa-runtime
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: EvidenceObjects
+                Effect: Allow
+                Action: ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:GetObjectVersion"]
+                Resource: !Sub "${EvidenceBucket.Arn}/*"
+              - Sid: EvidenceBucket
+                Effect: Allow
+                Action: ["s3:ListBucket", "s3:GetBucketLocation", "s3:ListBucketVersions"]
+                Resource: !GetAtt EvidenceBucket.Arn
+              - Sid: PullImages
+                Effect: Allow
+                Action: ["ecr:BatchGetImage", "ecr:GetDownloadUrlForLayer", "ecr:BatchCheckLayerAvailability"]
+                Resource: [!GetAtt BackendRepository.Arn, !GetAtt WebRepository.Arn]
+              - Sid: RegistryLogin
+                Effect: Allow
+                Action: "ecr:GetAuthorizationToken"
+                Resource: "*"
+              - Sid: DatabaseSecret
+                Effect: Allow
+                Action: "secretsmanager:GetSecretValue"
+                Resource: !GetAtt Database.MasterUserSecret.SecretArn
+              - Sid: AdminCredential
+                Effect: Allow
+                Action: ["secretsmanager:GetSecretValue", "secretsmanager:PutSecretValue"]
+                Resource: !Ref AdminCredentialSecret
+              - Sid: ContainerLogs
+                Effect: Allow
+                Action: ["logs:CreateLogStream", "logs:PutLogEvents", "logs:DescribeLogStreams"]
+                Resource: !Sub "${LogGroup.Arn}:*"
+              - Sid: HostMetrics
+                Effect: Allow
+                Action: "cloudwatch:PutMetricData"
+                Resource: "*"
+                Condition: {StringEquals: {"cloudwatch:namespace": "SATSA/Host"}}
+              - Sid: CoordinatedSnapshot
+                Effect: Allow
+                Action: ["rds:CreateDBSnapshot", "rds:DescribeDBSnapshots", "rds:AddTagsToResource",
+                         "ec2:CreateSnapshot", "ec2:DescribeSnapshots", "ec2:CreateTags"]
+                Resource: "*"
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: {Roles: [!Ref InstanceRole]}
+
+  # --------------------------------------------------------------- compute
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    Properties: {Domain: vpc}
+  DataVolume:
+    Type: AWS::EC2::Volume
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      AvailabilityZone: !GetAtt PublicSubnet.AvailabilityZone
+      Size: !Ref DataVolumeSizeGiB
+      VolumeType: gp3
+      Encrypted: true
+      Tags: [{Key: Name, Value: !Sub "satsa-${EnvironmentName}-data"}]
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds: [!Ref InstanceSecurityGroup]
+      # IMDSv2 only; hop limit 2 lets the containers use the instance role.
+      MetadataOptions: {HttpTokens: required, HttpPutResponseHopLimit: 2, HttpEndpoint: enabled}
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: {VolumeSize: 30, VolumeType: gp3, Encrypted: true, DeleteOnTermination: true}
+      Tags: [{Key: Name, Value: !Sub "satsa-${EnvironmentName}"}]
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+            # Prerequisites only; the application starts with deploy/aws/deploy.sh.
+            set -euo pipefail
+            mkdir -p /etc/satsa
+            cat > /etc/satsa/stack.env <<'EOF'
+            SATSA_ENV_NAME=${EnvironmentName}
+            AWS_REGION=${AWS::Region}
+            SATSA_SITE_ADDRESS=${Site}
+            SATSA_S3_BUCKET=${EvidenceBucket}
+            SATSA_S3_REGION=${AWS::Region}
+            SATSA_S3_PREFIX=evidence
+            SATSA_BACKEND_IMAGE=${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${BackendRepository}
+            SATSA_WEB_IMAGE=${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${WebRepository}
+            SATSA_LOG_GROUP=${LogGroup}
+            SATSA_DB_HOST=${Database.Endpoint.Address}
+            SATSA_DB_PORT=${Database.Endpoint.Port}
+            SATSA_DB_NAME=satsa
+            SATSA_DB_SECRET_ARN=${Database.MasterUserSecret.SecretArn}
+            SATSA_DB_INSTANCE_ID=satsa-${EnvironmentName}
+            SATSA_ADMIN_SECRET_ARN=${AdminCredentialSecret}
+            SATSA_DATA_VOLUME_ID=${DataVolume}
+            EOF
+            chmod 644 /etc/satsa/stack.env
+            dnf install -y -q docker jq amazon-cloudwatch-agent python3
+            systemctl enable --now docker
+            mkdir -p /usr/local/lib/docker/cli-plugins
+            curl -fsSL -o /usr/local/lib/docker/cli-plugins/docker-compose \
+              https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64
+            chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+            curl -fsSL -o /etc/satsa/rds-ca.pem \
+              https://truststore.pki.rds.amazonaws.com/${AWS::Region}/${AWS::Region}-bundle.pem
+            chmod 644 /etc/satsa/rds-ca.pem
+            cat > /opt/aws/amazon-cloudwatch-agent/etc/satsa.json <<'EOF'
+            {"metrics": {"namespace": "SATSA/Host",
+              "append_dimensions": {"InstanceId": "${!aws:InstanceId}"},
+              "metrics_collected": {
+                "disk": {"measurement": ["used_percent"], "resources": ["/", "/data"], "drop_device": true},
+                "mem": {"measurement": ["used_percent"]}}}}
+            EOF
+            /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 \
+              -c file:/opt/aws/amazon-cloudwatch-agent/etc/satsa.json -s
+          - Site: !If [HasSiteAddress, !Ref SiteAddress, !Join ["", [!Join ["-", !Split [".", !Ref ElasticIp]], ".sslip.io"]]]
+  EipAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties: {AllocationId: !GetAtt ElasticIp.AllocationId, InstanceId: !Ref Instance}
+  DataVolumeAttachment:
+    Type: AWS::EC2::VolumeAttachment
+    Properties: {InstanceId: !Ref Instance, VolumeId: !Ref DataVolume, Device: /dev/sdf}
+
+  # ------------------------------------------------------------- monitoring
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+  AlarmSubscription:
+    Type: AWS::SNS::Subscription
+    Condition: HasAlarmEmail
+    Properties: {TopicArn: !Ref AlarmTopic, Protocol: email, Endpoint: !Ref AlarmEmail}
+  InstanceStatusAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: EC2 instance or system status check failing
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed
+      Dimensions: [{Name: InstanceId, Value: !Ref Instance}]
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 3
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions: [!Ref AlarmTopic]
+  DataDiskAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: /data (ledger, signing key) above 80% full
+      Namespace: SATSA/Host
+      MetricName: disk_used_percent
+      Dimensions: [{Name: InstanceId, Value: !Ref Instance}, {Name: path, Value: /data}, {Name: fstype, Value: xfs}]
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: breaching
+      AlarmActions: [!Ref AlarmTopic]
+  DatabaseCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: RDS CPU above 80% for 15 minutes
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions: [{Name: DBInstanceIdentifier, Value: !Ref Database}]
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: 80
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions: [!Ref AlarmTopic]
+  DatabaseStorageAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: RDS free storage below 2 GiB
+      Namespace: AWS/RDS
+      MetricName: FreeStorageSpace
+      Dimensions: [{Name: DBInstanceIdentifier, Value: !Ref Database}]
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 2147483648
+      ComparisonOperator: LessThanThreshold
+      AlarmActions: [!Ref AlarmTopic]
+  WorkerFailureMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: !Ref LogGroup
+      FilterPattern: '"analysis execution failed"'
+      MetricTransformations: [{MetricNamespace: SATSA/App, MetricName: WorkerFailures, MetricValue: "1", DefaultValue: 0}]
+  WorkerFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmDescription: Analysis worker reported failures
+      Namespace: SATSA/App
+      MetricName: WorkerFailures
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+      AlarmActions: [!Ref AlarmTopic]
+
+  # --------------------------------------------- CI deployment (GitHub OIDC)
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Condition: CreateOidc
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+  DeployRole:
+    Type: AWS::IAM::Role
+    Condition: HasGitHub
+    Properties:
+      RoleName: !Sub "satsa-${EnvironmentName}-github-deploy"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
+            Action: "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                "token.actions.githubusercontent.com:aud": sts.amazonaws.com
+                # Only the protected deployment environment of this repository.
+                "token.actions.githubusercontent.com:sub": !Sub "repo:${GitHubRepository}:environment:aws-${EnvironmentName}"
+      Policies:
+        - PolicyName: satsa-deploy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: ["ecr:BatchCheckLayerAvailability", "ecr:InitiateLayerUpload", "ecr:UploadLayerPart",
+                         "ecr:CompleteLayerUpload", "ecr:PutImage", "ecr:BatchGetImage", "ecr:DescribeImages"]
+                Resource: [!GetAtt BackendRepository.Arn, !GetAtt WebRepository.Arn]
+              - Effect: Allow
+                Action: "ecr:GetAuthorizationToken"
+                Resource: "*"
+              - Effect: Allow
+                Action: ["s3:PutObject", "s3:GetObject"]
+                Resource: !Sub "${EvidenceBucket.Arn}/releases/*"
+              - Effect: Allow
+                Action: "ssm:SendCommand"
+                Resource:
+                  - !Sub "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/${Instance}"
+                  - !Sub "arn:aws:ssm:${AWS::Region}::document/AWS-RunShellScript"
+              - Effect: Allow
+                Action: ["ssm:GetCommandInvocation", "ssm:ListCommandInvocations"]
+                Resource: "*"
+
+Outputs:
+  SiteAddress:
+    Value: !If [HasSiteAddress, !Ref SiteAddress, !Join ["", [!Join ["-", !Split [".", !Ref ElasticIp]], ".sslip.io"]]]
+  PublicIp:
+    Value: !Ref ElasticIp
+  InstanceId:
+    Value: !Ref Instance
+  BucketName:
+    Value: !Ref EvidenceBucket
+  DatabaseEndpoint:
+    Value: !GetAtt Database.Endpoint.Address
+  BackendRepositoryUri:
+    Value: !GetAtt BackendRepository.RepositoryUri
+  WebRepositoryUri:
+    Value: !GetAtt WebRepository.RepositoryUri
+  LogGroup:
+    Value: !Ref LogGroup
+  DeployRoleArn:
+    Condition: HasGitHub
+    Value: !GetAtt DeployRole.Arn
