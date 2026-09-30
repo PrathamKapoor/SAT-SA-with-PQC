@@ -169,7 +169,9 @@ export const listOrganizations = (token: string, offset = 0) =>
   call<Page<Organization>>("/api/v1/organizations", { token, query: { limit: 200, offset } });
 export const health = async () => {
   const [live, ready] = await Promise.all([raw("/health/live", {}), raw("/health/ready", {})]);
-  return { live: live.ok, ready: ready.ok, readyStatus: ready.status };
+  const body = live.ok ? ((await live.json().catch(() => null)) as { release?: unknown } | null) : null;
+  const release = typeof body?.release === "string" ? body.release : null;
+  return { live: live.ok, ready: ready.ok, readyStatus: ready.status, release };
 };
 
 /* ---------- tenant calls ---------- */

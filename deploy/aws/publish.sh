@@ -52,6 +52,7 @@ push_image() {  # repo context dockerfile-dir
     return
   fi
   docker build --pull --platform linux/amd64 \
+    --build-arg "SATSA_RELEASE=$COMMIT" \
     --label "org.opencontainers.image.revision=$COMMIT" -t "$repo:$TAG" "$context"
   docker push --quiet "$repo:$TAG"
 }

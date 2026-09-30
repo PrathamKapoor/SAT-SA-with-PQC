@@ -244,9 +244,48 @@ cmd_public_e2e() {
   log "public browser end-to-end passed against https://$SATSA_SITE_ADDRESS"
 }
 
+# A fresh synthetic demo organization (scripts/demo_environment.py): members,
+# the five synthetic CSE submissions analysed by the worker, one supervisory
+# decision and a verified TRUST-SAT receipt. Running it again is the reset:
+# the previous demo's members are revoked; no record is deleted.
+cmd_demo() {
+  [ -L "$CURRENT" ] || die "deploy a release first"
+  local dir=/root/satsa-demo state=/root/satsa-demo/state.json admin credential previous=()
+  install -d -m 700 "$dir"
+  admin=$(aws secretsmanager get-secret-value --secret-id "$SATSA_ADMIN_SECRET_ARN"     --query SecretString --output text) || die "admin credential unavailable"
+  credential=$(jq -r .credential <<<"$admin")
+  [ "$credential" != null ] || die "run bootstrap-admin first"
+  if [ -s "$state" ]; then
+    compose exec -T api sh -c 'cat > /tmp/previous-demo.json' < "$state"
+    previous=(--previous-state /tmp/previous-demo.json)
+  fi
+  local out
+  out=$(compose exec -T api python scripts/demo_environment.py --api http://api:8000     --credential "$credential" "${previous[@]}") || die "demo initialization failed"
+  compose exec -T api rm -f /tmp/previous-demo.json || true
+  (umask 077 && printf '%s
+' "$out" > "$state")
+  jq '{organization_id, organization_name, runs, decision}' "$state"
+  log "demo ready; member credentials are in $state (root only)"
+}
+
 cmd_status() {
   [ -r "$DEPLOYED" ] && cat "$DEPLOYED" || echo "nothing deployed"
-  [ -L "$CURRENT" ] && compose ps
+  [ -L "$CURRENT" ] || return 0
+  compose ps
+  # What the running containers report, to compare with deployed.json.
+  echo "api release: $(compose exec -T api python -c 'import json,urllib.request; print(json.load(urllib.request.urlopen("http://127.0.0.1:8000/health/live"))["release"])' 2>/dev/null || echo unreachable)"
+  echo "web release: $(compose exec -T web printenv SATSA_RELEASE 2>/dev/null || echo unreachable)"
+}
+
+cmd_logs() {  # [service] [lines]
+  [ -L "$CURRENT" ] || die "nothing deployed"
+  compose logs --no-color --timestamps --tail "${2:-200}" ${1:+"$1"}
+}
+
+cmd_restart() {  # [service...]; data and configuration are unchanged
+  [ -L "$CURRENT" ] || die "nothing deployed"
+  if [ $# -gt 0 ]; then compose restart "$@"; else compose restart api worker web caddy; fi
+  wait_healthy
 }
 
 case "${1:-}" in
@@ -255,5 +294,8 @@ case "${1:-}" in
   snapshot) cmd_snapshot ;;
   status) cmd_status ;;
   public-e2e) cmd_public_e2e ;;
-  *) echo "usage: deploy.sh deploy <commit> | bootstrap-admin | snapshot | status | public-e2e" >&2; exit 2 ;;
+  demo) cmd_demo ;;
+  logs) shift; cmd_logs "$@" ;;
+  restart) shift; cmd_restart "$@" ;;
+  *) echo "usage: deploy.sh deploy <commit> | bootstrap-admin | snapshot | status | logs [service] [lines] | restart [service...] | public-e2e | demo" >&2; exit 2 ;;
 esac

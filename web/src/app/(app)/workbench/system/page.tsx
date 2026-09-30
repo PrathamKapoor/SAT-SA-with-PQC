@@ -22,6 +22,8 @@ export default async function SystemPage() {
             columns={1}
             items={[
               ...(can(ctx.role, "config.manage") ? [["API (internal address)", <span key="a" className="mono-id">{apiBase()}</span>] as [string, React.ReactNode]] : []),
+              ["Release (API)", <span key="rel-api" className="mono-id">{status?.release ?? "unknown"}</span>],
+              ["Release (this interface)", <span key="rel-web" className="mono-id">{process.env.SATSA_RELEASE || "unreleased"}</span>],
               [
                 "Liveness (GET /health/live)",
                 status ? <Tag key="l" tone={status.live ? "brand" : "critical"}>{status.live ? "alive" : "not responding"}</Tag> : <Tag key="l" tone="critical">unreachable</Tag>,
@@ -37,7 +39,7 @@ export default async function SystemPage() {
             ]}
           />
           <p className="mt-4 text-[12.5px] text-muted">
-            Readiness covers the database, the schema version, the TRUST-SAT signing key and artifact storage. The worker has its own check on its host.
+            The release is the Git commit each image was built from; after a deploy both match the commit in /etc/satsa/deployed.json on the host. Readiness covers the database, the schema version, the TRUST-SAT signing key and artifact storage. The worker has its own check on its host.
           </p>
         </Panel>
         <Panel className="px-5 py-5">
