@@ -395,7 +395,7 @@ Resources:
             # 2 GiB swap: the Free-plan t3.small has 2 GiB of memory.
             if [ ! -f /swapfile ]; then
               dd if=/dev/zero of=/swapfile bs=1M count=2048 status=none
-              chmod 600 /swapfile && mkswap -q /swapfile
+              chmod 600 /swapfile && mkswap /swapfile >/dev/null
               echo "/swapfile none swap sw 0 0" >> /etc/fstab
             fi
             swapon -a
