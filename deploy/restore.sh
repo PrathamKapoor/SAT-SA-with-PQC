@@ -2,7 +2,7 @@
 # Restore a backup made by deploy/backup.sh onto a host with NO running stack
 # and NO existing SAT-SA volumes (a rebuilt host, or after `down -v`).
 #
-#   COMPOSE="docker compose -f deploy/compose.production.yml [-f deploy/compose.objectstore.yml] \
+#   COMPOSE="docker compose -f deploy/compose.production.yml -f deploy/compose.database.yml [-f deploy/compose.objectstore.yml] \
 #            --env-file deploy/production.env" deploy/restore.sh /secure/backups/satsa-<stamp>
 #
 # Then start the stack as usual (`$COMPOSE up -d`) and run deploy/smoke.sh.

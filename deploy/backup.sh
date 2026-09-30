@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Consistent backup of a SAT-SA single-host deployment.
 #
-#   COMPOSE="docker compose -f deploy/compose.production.yml [-f deploy/compose.objectstore.yml] \
+#   COMPOSE="docker compose -f deploy/compose.production.yml -f deploy/compose.database.yml [-f deploy/compose.objectstore.yml] \
 #            --env-file deploy/production.env" deploy/backup.sh /secure/backups
 #
 # Writes <dir>/satsa-<UTC timestamp>/ containing:

@@ -97,9 +97,9 @@ chmod 600 deploy/production.env
 # edit deploy/production.env: SATSA_SITE_ADDRESS, SATSA_POSTGRES_PASSWORD
 # (openssl rand -hex 32), S3 endpoint, bucket and credentials
 
-COMPOSE="docker compose -f deploy/compose.production.yml --env-file deploy/production.env"
+COMPOSE="docker compose -f deploy/compose.production.yml -f deploy/compose.database.yml --env-file deploy/production.env"
 # bundled storage instead of external S3:
-# COMPOSE="docker compose -f deploy/compose.production.yml -f deploy/compose.objectstore.yml --env-file deploy/production.env"
+# COMPOSE="docker compose -f deploy/compose.production.yml -f deploy/compose.database.yml -f deploy/compose.objectstore.yml --env-file deploy/production.env"
 
 $COMPOSE config --quiet          # validates the configuration
 $COMPOSE up -d --build           # migrate, key-init, then api, worker, web, caddy
@@ -174,7 +174,7 @@ TRUST-SAT status, back up, `down -v`, restore, start, and require every run
 that verified before to verify again.
 
 ```bash
-COMPOSE="docker compose -f deploy/compose.production.yml --env-file deploy/production.env"
+COMPOSE="docker compose -f deploy/compose.production.yml -f deploy/compose.database.yml --env-file deploy/production.env"
 deploy/backup.sh /secure/backups          # stops api+worker for the snapshot (about a minute)
 # restore, on an empty host or after `$COMPOSE down -v`:
 deploy/restore.sh /secure/backups/satsa-<UTC stamp>
