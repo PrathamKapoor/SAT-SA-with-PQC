@@ -1774,9 +1774,13 @@ def worker_main() -> int:
     try:
         idle = 0
         while not stopping.is_set():
-            outcome = worker.run_once()
-            if outcome is None:
-                outcome = ml_worker.run_once()
+            # Both queues get a turn every iteration, so a steady stream of
+            # analysis runs cannot starve MLOps jobs (validation, training, drift).
+            analysis_outcome = worker.run_once()
+            if stopping.is_set():
+                break
+            ml_outcome = ml_worker.run_once()
+            outcome = analysis_outcome if analysis_outcome is not None else ml_outcome
             if outcome is None:
                 idle += 1
                 stopping.wait(min(2.0, 0.1 * idle))
