@@ -93,6 +93,9 @@ RUN apt-get update \
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+# The commit this image was built from; deploy/aws/publish.sh passes it.
+ARG SATSA_RELEASE=unreleased
+ENV SATSA_RELEASE=${SATSA_RELEASE}
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry

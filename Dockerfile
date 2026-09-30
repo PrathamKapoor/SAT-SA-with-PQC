@@ -47,8 +47,11 @@ RUN pip install --no-cache-dir -e ".[postgres,s3]" \
 
 VOLUME ["/data"]
 
+# The commit this image was built from; deploy/aws/publish.sh passes it.
+ARG SATSA_RELEASE=unreleased
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    SATSA_RELEASE=${SATSA_RELEASE}
 
 USER 10001:10001
 

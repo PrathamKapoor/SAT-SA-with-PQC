@@ -1,6 +1,7 @@
 """Dedicated tenant-aware SaaS API. Legacy demo routes are not mounted."""
 
 import json
+import os
 import re
 import time
 from typing import Annotated
@@ -317,7 +318,8 @@ def create_app(
 
     @app.get("/health/live", tags=["health"], operation_id="liveness")
     def live():
-        return {"status": "alive"}
+        # The release is the commit the image was built from (publish.sh sets it).
+        return {"status": "alive", "release": os.environ.get("SATSA_RELEASE") or "unreleased"}
 
     @app.get("/health/ready", tags=["health"], operation_id="readiness")
     def ready():

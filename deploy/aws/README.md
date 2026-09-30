@@ -77,16 +77,68 @@ initializes the TRUST-SAT key only on a new volume, starts the services, and
 waits until API, worker and web are healthy and the public HTTPS URL answers.
 Any failed step stops the deployment.
 
+## Which version is running
+
+The release is the Git commit. `publish.sh` builds both images with
+`SATSA_RELEASE=<commit>` and tags them with its first 12 characters;
+`deploy.sh deploy` records the commit in `/etc/satsa/deployed.json`. The API
+reports it at `GET /health/live` (`"release"`), and the workbench shows the API
+and interface releases on **Admin > System**. `deploy.sh status` prints all
+three; after a deployment they are the same commit. There is no separate
+semantic version.
+
 ## Administration (Session Manager, no SSH)
 
 Port 22 is closed. The instance role has `AmazonSSMManagedInstanceCore`, and
 Amazon Linux 2023 ships the SSM agent.
 
 ```bash
-aws ssm start-session --target <InstanceId>            # interactive shell
-sudo bash /opt/satsa/current/deploy/aws/deploy.sh status
-sudo docker compose -p satsa ... logs api               # or CloudWatch Logs
+aws ssm start-session --target <InstanceId>             # interactive shell
+D="sudo bash /opt/satsa/current/deploy/aws/deploy.sh"
+$D status                  # deployed commit, container health, running releases
+$D logs worker 300         # last 300 lines of one service
+$D restart                 # restart api, worker, web and caddy; waits for health
+$D restart worker          # one service
 ```
+
+Container logs also go to CloudWatch Logs, log group `/satsa/<environment>`,
+one stream per container. API lines carry `request_id`, `organization_id`,
+`route` and `status_code`; worker lines carry `run_id` (and the job or model
+job identifiers), so a failed request can be followed to the run it created.
+
+### Recovering a failed worker
+
+Docker restarts a worker that exits (`restart: unless-stopped`). Work it had
+claimed is leased: when the lease lapses the next poll claims it again, and a
+LangGraph run resumes from its last checkpoint in PostgreSQL. Check with
+`$D logs worker` and `$D status`; if it stays unhealthy, `$D restart worker`.
+A run that failed stays failed (its record is kept); start a new run on the
+same submission version from the workbench.
+
+### Rotating secrets
+
+* Administrator credential: sign in as the administrator, add a new
+  administrator member from **Members**, store its credential with
+  `aws secretsmanager put-secret-value --secret-id satsa/prod/admin-credential`
+  (same JSON shape: `organization_id`, `credential`), sign in with it, then
+  revoke the old administrator member.
+* RDS master password: managed by RDS in Secrets Manager
+  (`ManageMasterUserPassword`); after a rotation run `$D deploy <current
+  commit>`, which renders the new password into the env file.
+* Model providers: update `satsa/prod/llm-providers` (docs/LLM.md), then
+  `$D deploy <current commit>` so the worker's `/etc/satsa/llm.env` is
+  rendered again. Keys reach only the worker, never the browser or the API.
+
+### Demo organization
+
+`$D demo` creates a new organization named "SAT-SA demo (synthetic data)
+<time>", adds an analyst, supervisor, auditor and viewer, loads the five
+synthetic CSE submissions in `docs/demo/submissions` through the API, lets the
+worker analyse them, records one supervisory decision and verifies its
+TRUST-SAT receipt. The members' credentials are written to
+`/root/satsa-demo/state.json` (root only). Running it again is the reset: the
+previous demo members are revoked and a new demo organization is created. No
+record is deleted, and demo data never enters another organization.
 
 Emergency: if the agent is unreachable, use the EC2 serial console (enable it
 for the account first) or stop the instance and attach its volumes to a rescue
@@ -94,7 +146,8 @@ instance. Never open port 22 on the security group.
 
 ## Backup and restore
 
-* RDS automated backups: 7 days of point-in-time recovery (stack parameter).
+* RDS automated backups: point-in-time recovery for `DbBackupRetentionDays`
+  (1 day on the AWS Free plan, which caps it; raise it on a paid plan).
 * S3: versioning; noncurrent versions expire after 90 days.
 * `/data`: EBS snapshots.
 
@@ -113,7 +166,16 @@ verify a finalized run with TRUST-SAT. Restoring only one of the pair breaks
 the ledger/database correspondence; restore both from the same snapshot pair.
 
 This is not tested disaster recovery in another region: the stack is single
-region and single instance.
+region and single instance. The drill actually exercised is recorded in
+docs/backup-restore.md.
+
+### Instance failure
+
+Data is not on the instance's root disk: it is in RDS, S3 and the `/data`
+EBS volume. If the instance is lost, let the stack create a new instance
+(update or recreate the instance resource), attach the same `/data` volume or
+one made from the latest EBS snapshot, and run `$D deploy <commit>` with the
+commit of the last deployment (the newest `releases/` prefix in the bucket).
 
 ## Rollback
 
