@@ -231,8 +231,10 @@ cmd_public_e2e() {
     jq -n --arg o "$org" --arg a "$credential" --argjson m "$members"       '{organization_id:$o, admin:$a} + $m' > "$creds"
     chmod 600 "$creds"
   fi
-  rm -rf "$dir/work" && mkdir -p "$dir/work"
-  cp -r "$CURRENT/web/e2e" "$CURRENT/web/playwright.config.ts" "$dir/work/"
+  # Same layout as the repository: the tests upload docs/demo/submissions.
+  rm -rf "$dir/work" && mkdir -p "$dir/work/web" "$dir/work/docs/demo"
+  cp -r "$CURRENT/web/e2e" "$CURRENT/web/playwright.config.ts" "$dir/work/web/"
+  cp -r "$CURRENT/docs/demo/submissions" "$dir/work/docs/demo/"
   docker run --rm --network host --ipc host -e CI=1     -e SATSA_E2E_BASE_URL="https://$SATSA_SITE_ADDRESS" -e SATSA_E2E_CREDENTIALS=/creds.json     -v "$creds:/creds.json:ro" -v "$dir/work:/work" -w /work     mcr.microsoft.com/playwright:v1.63.0-noble     bash -c 'npm init -y >/dev/null && npm install --no-save --no-audit --no-fund @playwright/test@1.63.0 >/dev/null && npx playwright test --reporter=list'     || die "public browser end-to-end failed"
   log "public browser end-to-end passed against https://$SATSA_SITE_ADDRESS"
 }
