@@ -1224,6 +1224,39 @@ MIGRATIONS += (
 )
 
 
+# Phase 22: records of model-assisted capabilities (satsa/llm). Metadata about
+# which provider produced an output; never prompts' secrets or credentials.
+MIGRATIONS += (
+    Migration(
+        version=18,
+        name="satsa_llm_outputs",
+        statements=(
+            """
+            CREATE TABLE IF NOT EXISTS satsa_llm_outputs (
+                id TEXT PRIMARY KEY,
+                organization_id TEXT NOT NULL REFERENCES satsa_organizations(id),
+                run_id TEXT NOT NULL,
+                capability TEXT NOT NULL,
+                status TEXT NOT NULL CHECK(status IN ('generated','deterministic','abstained')),
+                provider TEXT,
+                model TEXT,
+                fallback_level INTEGER,
+                abstain_reason TEXT,
+                attempts_json TEXT NOT NULL,
+                output_json TEXT,
+                input_digest TEXT NOT NULL,
+                content_digest TEXT NOT NULL,
+                latency_ms REAL NOT NULL,
+                created_at REAL NOT NULL,
+                UNIQUE(run_id, capability)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_satsa_llm_outputs_org ON satsa_llm_outputs (organization_id, created_at)",
+        ),
+    ),
+)
+
+
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
         self.engine = engine
