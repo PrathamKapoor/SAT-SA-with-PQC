@@ -273,7 +273,7 @@ cmd_status() {
   [ -L "$CURRENT" ] || return 0
   compose ps
   # What the running containers report, to compare with deployed.json.
-  echo "api release: $(compose exec -T api python -c 'import json,urllib.request; print(json.load(urllib.request.urlopen("http://127.0.0.1:8000/health/live"))["release"])' 2>/dev/null || echo unreachable)"
+  echo "api release: $(compose exec -T api python -c 'import json,urllib.request; print(json.load(urllib.request.urlopen("http://api:8000/health/live"))["release"])' 2>/dev/null || echo unreachable)"
   echo "web release: $(compose exec -T web printenv SATSA_RELEASE 2>/dev/null || echo unreachable)"
 }
 
