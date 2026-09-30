@@ -256,6 +256,21 @@ jobs:
           npm ci --no-audit --no-fund
           npx playwright install --with-deps chromium
           npm run test:e2e
+      - name: Worker and MLOps job state when the browser test fails
+        if: failure()
+        working-directory: .
+        run: |
+          $COMPOSE exec -T api python - <<'EOF' | while read -r line; do echo "::error title=ml-jobs::${line:0:400}"; done
+          import os
+          from qsmlops.database.engine import create_engine
+          e = create_engine(os.environ["SATSA_DATABASE_URL"])
+          for r in e.query_all("SELECT kind,status,attempt_count,error,created_at,updated_at FROM satsa_ml_jobs ORDER BY created_at"):
+              print(dict(r))
+          for r in e.query_all("SELECT status,COUNT(*) AS n FROM satsa_execution_jobs GROUP BY status"):
+              print("analysis", dict(r))
+          EOF
+          $COMPOSE logs --no-color --tail 300 worker 2>&1 | grep -iE 'error|exception|traceback|ml job' | tail -8 \
+            | while read -r line; do echo "::error title=worker-log::${line:0:400}"; done
       - name: API restart keeps sessions and serves the site
         run: |
           $COMPOSE restart api
