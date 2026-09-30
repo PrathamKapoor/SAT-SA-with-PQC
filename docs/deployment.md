@@ -193,6 +193,19 @@ Docker/Compose availability and target provider credentials vary by environment.
 Record local container and hosted deployment results separately. A successful
 build or unit suite alone is not deployment verification.
 
+### Current status (Phase 23, 2026-09-30)
+
+This supersedes the Phase 9 and 10 records below, which are kept as history.
+Docker, live PostgreSQL and S3 are all exercised now: CI builds the images and
+runs the production Compose stack (HTTPS, web, API, worker, PostgreSQL,
+SeaweedFS S3) with the browser end-to-end suite on every push, and the hosted
+deployment is AWS (`deploy/aws/README.md`): EC2 with Caddy HTTPS, RDS
+PostgreSQL 17 over verified TLS, S3 through the instance role, and an EBS
+`/data` volume. The public browser suite runs against it from the instance
+(`deploy.sh public-e2e`), and the running release is the Git commit shown by
+`deploy.sh status`, `GET /health/live` and **Admin > System**. Render is not
+used.
+
 ### Verification record (Phase 9, 2026-09-27)
 
 Each layer is classified separately; nothing here is inferred from another.
