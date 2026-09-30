@@ -1043,6 +1043,7 @@ class AnalysisExecutionWorker:
                 if context["review_required"] and self._finish(lease) != "failed":
                     self._persist_recommendations(lease)
                     self._model_inference(lease)
+                    self._reviewer_briefing(lease)
                     decision = self.db.query_one(
                         "SELECT id FROM satsa_run_review_decisions WHERE organization_id=? AND run_id=?",
                         (lease.organization_id, lease.run_id),
@@ -1573,6 +1574,17 @@ class AnalysisExecutionWorker:
 
         self._assert_lease(lease)
         return infer_run(self.db, self.storage, lease.organization_id, lease.run_id)
+
+    def _reviewer_briefing(self, lease: Lease) -> dict:
+        """Advisory briefing through the provider fallback chain (never fails the run)."""
+        from satsa.llm.briefing import brief_run
+
+        self._assert_lease(lease)
+        try:
+            return brief_run(self.db, lease.organization_id, lease.run_id)
+        except Exception:
+            log.exception("reviewer briefing failed", extra={"run_id": lease.run_id})
+            return {}
 
     def _finalize_supervisory(self, lease: Lease) -> dict:
         self._assert_lease(lease)

@@ -71,13 +71,15 @@ class AnalysisGraphRuntime:
         builder.add_node("analysis", self.analysis)
         builder.add_node("recommendations", self.recommendations)
         builder.add_node("model_inference", self.model_inference)
+        builder.add_node("reviewer_briefing", self.reviewer_briefing)
         builder.add_node("human_review", self.human_review)
         builder.add_node("trust_boundary", self.trust_boundary)
         builder.add_edge(START, "readiness")
         builder.add_edge("readiness", "analysis")
         builder.add_edge("analysis", "recommendations")
         builder.add_edge("recommendations", "model_inference")
-        builder.add_edge("model_inference", "human_review")
+        builder.add_edge("model_inference", "reviewer_briefing")
+        builder.add_edge("reviewer_briefing", "human_review")
         builder.add_edge("human_review", "trust_boundary")
         builder.add_edge("trust_boundary", END)
         self.graph = builder.compile(checkpointer=checkpointer)
@@ -126,6 +128,13 @@ class AnalysisGraphRuntime:
         # and review proceeds the same whether or not a model scored.
         self._check(state)
         self.worker._model_inference(self.lease)
+        return {"current_stage": "reviewer_briefing"}
+
+    def reviewer_briefing(self, state: AnalysisGraphState) -> dict:
+        # Model-assisted (provider fallback chain) but display-only: the graph
+        # state carries only the stage, never model output or credentials.
+        self._check(state)
+        self.worker._reviewer_briefing(self.lease)
         return {"current_stage": "human_review"}
 
     def human_review(self, state: AnalysisGraphState) -> dict:
