@@ -564,3 +564,19 @@ export interface MLInference {
   content_digest: string;
   created_at: Timestamp;
 }
+
+export interface ReviewerBriefing {
+  id: string;
+  run_id: string;
+  capability: string;
+  status: "generated" | "deterministic" | "abstained";
+  provider: string | null;
+  model: string | null;
+  fallback_level: number | null;
+  abstain_reason: string | null;
+  attempts: Array<{ provider: string; model: string; attempt: number; outcome: string; code: string | null; latency_ms: number }>;
+  output: { summary: string; key_points: string[] } | null;
+  content_digest: string;
+  latency_ms: number;
+  created_at: Timestamp;
+}

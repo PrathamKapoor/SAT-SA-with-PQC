@@ -59,7 +59,7 @@ push_image "$BACKEND" "$SRC"
 push_image "$WEB" "$SRC/web"
 
 bundle=$(mktemp -d)
-git -c core.autocrlf=false archive --format=tar.gz -o "$bundle/deploy.tgz" "$COMMIT" deploy
+git -c core.autocrlf=false archive --format=tar.gz -o "$bundle/deploy.tgz" "$COMMIT"   deploy web/e2e web/playwright.config.ts
 (cd "$bundle" && sha256sum deploy.tgz > deploy.tgz.sha256)
 aws s3 cp --only-show-errors "$bundle/deploy.tgz" "s3://$BUCKET/releases/$COMMIT/deploy.tgz"
 aws s3 cp --only-show-errors "$bundle/deploy.tgz.sha256" "s3://$BUCKET/releases/$COMMIT/deploy.tgz.sha256"

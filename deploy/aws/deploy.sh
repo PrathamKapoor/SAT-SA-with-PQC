@@ -8,6 +8,7 @@
 #                                   (once; the credential goes to Secrets Manager)
 #   deploy.sh snapshot              coordinated RDS + EBS snapshot with writes stopped
 #   deploy.sh status                deployed version and service health
+#   deploy.sh public-e2e            browser end-to-end against the public URL
 set -euo pipefail
 umask 077
 
@@ -214,6 +215,28 @@ cmd_snapshot() {
     '{taken_at:$t, rds_snapshot:$r, ebs_snapshot:$e}' | tee -a /etc/satsa/snapshots.jsonl
 }
 
+# Browser end-to-end against the public HTTPS URL, run from this instance so the
+# test credentials never leave AWS. First use provisions an analyst and a
+# supervisor through the API; their credentials stay in a root-only file.
+cmd_public_e2e() {
+  [ -L "$CURRENT" ] || die "deploy a release first"
+  local dir=/root/satsa-e2e creds=/root/satsa-e2e/credentials.json
+  install -d -m 700 "$dir"
+  if [ ! -s "$creds" ]; then
+    local admin org credential members
+    admin=$(aws secretsmanager get-secret-value --secret-id "$SATSA_ADMIN_SECRET_ARN"       --query SecretString --output text) || die "admin credential unavailable"
+    org=$(jq -r .organization_id <<<"$admin"); credential=$(jq -r .credential <<<"$admin")
+    [ "$credential" != null ] || die "run bootstrap-admin first"
+    members=$(compose exec -T api python scripts/provision_members.py --api http://api:8000       --credential "$credential" --organization "$org"       --member analyst "E2E analyst" e2e-analyst@satsa.invalid       --member supervisor "E2E supervisor" e2e-supervisor@satsa.invalid) || die "member provisioning failed"
+    jq -n --arg o "$org" --arg a "$credential" --argjson m "$members"       '{organization_id:$o, admin:$a} + $m' > "$creds"
+    chmod 600 "$creds"
+  fi
+  rm -rf "$dir/work" && mkdir -p "$dir/work"
+  cp -r "$CURRENT/web/e2e" "$CURRENT/web/playwright.config.ts" "$dir/work/"
+  docker run --rm --network host --ipc host -e CI=1     -e SATSA_E2E_BASE_URL="https://$SATSA_SITE_ADDRESS" -e SATSA_E2E_CREDENTIALS=/creds.json     -v "$creds:/creds.json:ro" -v "$dir/work:/work" -w /work     mcr.microsoft.com/playwright:v1.63.0-noble     bash -c 'npm init -y >/dev/null && npm install --no-save --no-audit --no-fund @playwright/test@1.63.0 >/dev/null && npx playwright test --reporter=list'     || die "public browser end-to-end failed"
+  log "public browser end-to-end passed against https://$SATSA_SITE_ADDRESS"
+}
+
 cmd_status() {
   [ -r "$DEPLOYED" ] && cat "$DEPLOYED" || echo "nothing deployed"
   [ -L "$CURRENT" ] && compose ps
@@ -224,5 +247,6 @@ case "${1:-}" in
   bootstrap-admin) cmd_bootstrap_admin ;;
   snapshot) cmd_snapshot ;;
   status) cmd_status ;;
-  *) echo "usage: deploy.sh deploy <commit> | bootstrap-admin | snapshot | status" >&2; exit 2 ;;
+  public-e2e) cmd_public_e2e ;;
+  *) echo "usage: deploy.sh deploy <commit> | bootstrap-admin | snapshot | status | public-e2e" >&2; exit 2 ;;
 esac
