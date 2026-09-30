@@ -356,6 +356,9 @@ jobs:
       - name: Backup, destroy every volume, restore; recorded TRUST-SAT state still verifies
         run: |
           set -euo pipefail
+          exec > >(tee backup-restore.log) 2>&1
+          # On failure, the step's last lines become readable annotations.
+          trap 'sleep 1; tail -n 12 backup-restore.log | while read -r l; do echo "::error title=backup-restore::${l:0:400}"; done' ERR
           ORG=$(python3 -c "import json;print(json.load(open('credentials.json'))['organization_id'])")
           AUDITOR=$(python3 -c "import json;print(json.load(open('credentials.json'))['auditor'])")
           check() {
