@@ -5,13 +5,7 @@ It holds no credentials; each entry names the environment variable its key is
 read from, and on AWS those variables are filled from Secrets Manager for the
 worker only.
 
-    [{"name": "nim", "kind": "openai_compatible",
-      "base_url": "https://integrate.api.nvidia.com/v1",
-      "model": "meta/llama-3.3-70b-instruct", "api_key_env": "NVIDIA_API_KEY"},
-     {"name": "openrouter", "kind": "openai_compatible",
-      "base_url": "https://openrouter.ai/api/v1",
-      "model": "...", "api_key_env": "OPENROUTER_API_KEY"},
-     {"name": "bedrock", "kind": "bedrock", "model": "...", "region": "ap-south-1"}]
+    (example with NVIDIA NIM, OpenRouter and Bedrock: docs/LLM.md)
 
 Kinds: ``openai_compatible`` (NVIDIA NIM, OpenRouter, or any endpoint that
 speaks the OpenAI chat-completions API, such as a provider the operator names
