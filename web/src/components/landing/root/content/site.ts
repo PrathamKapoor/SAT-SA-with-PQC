@@ -10,7 +10,7 @@ export const GITHUB_URL = "https://github.com/PrathamKapoor/SAT-SA-with-PQC";
 
 export const navContent = {
   homeHref: "#",
-  logoLabel: "SAT-SA home",
+  logoLabel: "TRUST-SAT home",
   links: [
     { label: "Supervisory Workbench", href: "/login" },
     { label: "Mission", href: "#mission" },

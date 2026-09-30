@@ -925,7 +925,7 @@ export class EvidenceEngine {
   private drawCore(ctx: CanvasRenderingContext2D, a: number) {
     const L = this.layout;
     const c = L.core;
-    const w = L.mobile ? 74 : 88;
+    const w = L.mobile ? 96 : 112;
     const h = L.mobile ? 34 : 40;
     const active = smooth(0.12, 0.3, a) * (1 - smooth(0.88, 0.97, a));
     const ready = smooth(0.88, 0.97, a);
@@ -950,7 +950,7 @@ export class EvidenceEngine {
     ctx.font = `700 ${L.font + 2}px ${this.monoFont}`;
     this.setSpacing(ctx, 2);
     const textY = active > 0.02 || ready > 0.02 ? c.y - 5 : c.y;
-    this.label(ctx, "SAT·SA", c.x, textY, `rgba(${INK}, 0.92)`, "center");
+    this.label(ctx, "TRUST-SAT", c.x, textY, `rgba(${INK}, 0.92)`, "center");
     this.setSpacing(ctx, 0);
 
     if (active > 0.02) {

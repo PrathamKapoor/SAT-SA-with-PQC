@@ -1,3 +1,4 @@
+import { BrandMark } from "@/components/brand";
 import { CaButton } from "@/components/landing/ca/CaButton";
 import type { navContent } from "./content/site";
 
@@ -7,8 +8,8 @@ export function SiteNav({ content }: { content: typeof navContent }) {
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/85 shadow-[0_1px_0_rgba(15,23,42,0.04)] backdrop-blur-md">
       <nav aria-label="Primary" className="flex min-h-64 items-center justify-between gap-16 px-16 py-10 lg:px-80">
         <a href={content.homeHref} aria-label={content.logoLabel} className="flex items-center gap-8 font-mono text-caption-20 uppercase text-white transition-colors hover:text-violet-200">
-          <span aria-hidden="true" className="inline-block size-8 rounded-full bg-[#7c3aed]" />
-          SAT&middot;SA
+          <BrandMark className="size-28" />
+          TRUST-SAT
         </a>
         <ul className="hidden items-center gap-24 font-mono text-caption-10 uppercase text-white/60 lg:flex">
           {content.links.map((link) => (
