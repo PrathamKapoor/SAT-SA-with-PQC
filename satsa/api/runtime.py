@@ -152,6 +152,21 @@ class RuntimeSettings:
                 raise RuntimeConfigurationError(
                     "production requires S3 object storage; local artifact storage is offline-only"
                 )
+            # A database on another host (RDS) is reached over the network:
+            # the deployment asks for server-certificate verification, and a
+            # URL that would silently skip it is refused.
+            if _boolean(env, "SATSA_DB_REQUIRE_VERIFIED_TLS", False):
+                from psycopg.conninfo import conninfo_to_dict
+
+                params = conninfo_to_dict(database_url)
+                if params.get("sslmode") != "verify-full" or not params.get("sslrootcert"):
+                    raise RuntimeConfigurationError(
+                        "SATSA_DB_REQUIRE_VERIFIED_TLS needs sslmode=verify-full and sslrootcert in SATSA_DATABASE_URL"
+                    )
+                if not Path(params["sslrootcert"]).is_file():
+                    raise RuntimeConfigurationError(
+                        "the database CA bundle named by sslrootcert is missing"
+                    )
             if (
                 require_trust_key
                 and not key_dir.joinpath("satsa_trust_key.json").is_file()
