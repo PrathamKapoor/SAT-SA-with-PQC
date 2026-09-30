@@ -1256,6 +1256,26 @@ MIGRATIONS += (
     ),
 )
 
+# Tenant-scoped reads that had no index: the audit trail is filtered by the
+# organization recorded in each event's metadata (every tenant's events share
+# one table), and the MLOps lists are filtered by organization.
+MIGRATIONS += (
+    Migration(
+        version=19,
+        name="tenant_read_indexes",
+        statements=(
+            "CREATE INDEX IF NOT EXISTS idx_audit_org_time ON audit_events"
+            " (json_extract(metadata,'$.organization_id'), timestamp)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_ml_training_runs_org"
+            " ON satsa_ml_training_runs (organization_id, started_at)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_ml_drift_reports_org"
+            " ON satsa_ml_drift_reports (organization_id, model_id, created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_satsa_ml_deployments_model"
+            " ON satsa_ml_deployments (organization_id, model_id, created_at)",
+        ),
+    ),
+)
+
 
 class MigrationRunner:
     def __init__(self, engine: DatabaseEngine) -> None:
