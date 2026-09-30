@@ -39,6 +39,12 @@ REGION=${AWS_REGION:-${REGION:-ap-south-1}}
 
 aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "${BACKEND%%/*}" >/dev/null
 
+# Build from an exact export of the commit (LF endings, nothing uncommitted),
+# never from the working tree.
+SRC=$(mktemp -d)
+trap 'rm -rf "$SRC"' EXIT
+git -c core.autocrlf=false archive --format=tar "$COMMIT" | tar -xf - -C "$SRC"
+
 push_image() {  # repo context dockerfile-dir
   local repo=$1 context=$2
   if aws ecr describe-images --repository-name "${repo#*/}" --image-ids imageTag="$TAG" --region "$REGION" >/dev/null 2>&1; then
@@ -49,11 +55,11 @@ push_image() {  # repo context dockerfile-dir
     --label "org.opencontainers.image.revision=$COMMIT" -t "$repo:$TAG" "$context"
   docker push --quiet "$repo:$TAG"
 }
-push_image "$BACKEND" .
-push_image "$WEB" web
+push_image "$BACKEND" "$SRC"
+push_image "$WEB" "$SRC/web"
 
 bundle=$(mktemp -d)
-git archive --format=tar.gz -o "$bundle/deploy.tgz" "$COMMIT" deploy
+git -c core.autocrlf=false archive --format=tar.gz -o "$bundle/deploy.tgz" "$COMMIT" deploy
 (cd "$bundle" && sha256sum deploy.tgz > deploy.tgz.sha256)
 aws s3 cp --only-show-errors "$bundle/deploy.tgz" "s3://$BUCKET/releases/$COMMIT/deploy.tgz"
 aws s3 cp --only-show-errors "$bundle/deploy.tgz.sha256" "s3://$BUCKET/releases/$COMMIT/deploy.tgz.sha256"
