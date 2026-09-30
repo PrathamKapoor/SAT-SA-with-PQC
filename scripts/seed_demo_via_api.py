@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import os
 import sys
 import time
 import urllib.error
@@ -24,7 +25,10 @@ import urllib.request
 import uuid
 from pathlib import Path
 
-DEMO_ROOT = Path(__file__).resolve().parents[1] / "docs" / "demo" / "submissions"
+DEMO_ROOT = Path(
+    os.environ.get("SATSA_DEMO_SUBMISSIONS")
+    or Path(__file__).resolve().parents[1] / "docs" / "demo" / "submissions"
+)
 CATEGORIES = (
     "alerts",
     "cases",
@@ -65,18 +69,24 @@ class Api:
             headers["Content-Type"] = "application/json"
         elif content_type:
             headers["Content-Type"] = content_type
-        request = urllib.request.Request(
-            self.base + path, data=data, method=method, headers=headers
-        )
-        try:
-            with urllib.request.urlopen(request, timeout=120) as response:
-                raw = response.read()
-                return json.loads(raw) if raw else None
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode(errors="replace")
-            raise SystemExit(
-                f"{method} {path} failed: HTTP {exc.code} {detail}"
-            ) from None
+        # The API limits requests per client address; a limited request was
+        # refused before it did anything, so waiting and resending it is safe.
+        for attempt in range(6):
+            request = urllib.request.Request(
+                self.base + path, data=data, method=method, headers=headers
+            )
+            try:
+                with urllib.request.urlopen(request, timeout=120) as response:
+                    raw = response.read()
+                    return json.loads(raw) if raw else None
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode(errors="replace")
+                if exc.code == 429 and attempt < 5:
+                    time.sleep(min(float(exc.headers.get("Retry-After") or 60), 65))
+                    continue
+                raise SystemExit(
+                    f"{method} {path} failed: HTTP {exc.code} {detail}"
+                ) from None
 
     def all(self, path: str) -> list[dict]:
         items, offset = [], 0
