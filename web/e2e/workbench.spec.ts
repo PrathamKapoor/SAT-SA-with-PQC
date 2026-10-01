@@ -41,12 +41,18 @@ async function pageAs(browser: Browser, role: Role): Promise<Page> {
     await page.getByLabel("Issued credential").fill(state().credentials[role]);
     await page.getByRole("button", { name: "Sign in" }).click();
     const limited = page.locator("#credential-error").filter({ hasText: "Too many requests" });
-    await Promise.race([page.waitForURL(/\/workbench$/), limited.waitFor()]);
+    await Promise.race([page.waitForURL(/\/(workbench|organization)$/), limited.waitFor()]);
+    // A member of several organizations (on a live deployment the administrator
+    // also owns demo organizations) chooses; this suite works in its own.
+    if (/\/organization$/.test(page.url())) {
+      await page.locator(`button[name="organization"][value="${state().credentials.organization_id}"]`).click();
+      await page.waitForURL(/\/workbench$/);
+    }
     if (!(await limited.isVisible()) || attempt > 0) break;
     // The per-address sign-in limit uses one-minute windows: wait for the next.
     await page.waitForTimeout(60_000 - (Date.now() % 60_000) + 1_000);
   }
-  // One membership: the organization is selected automatically.
+  // The suite's organization is selected (automatically when it is the only one).
   await expect(page).toHaveURL(/\/workbench$/);
   // Every role signs in from the same address and shares its read limit; if the
   // first render hit that limit, reload once the window has moved on.
