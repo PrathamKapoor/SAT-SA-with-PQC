@@ -283,8 +283,10 @@ of the convergence: [`docs/FRONTEND_BACKEND_CONVERGENCE.md`](docs/FRONTEND_BACKE
 **Hosting.** `deploy/` runs the whole product on one Linux host: Caddy with
 automatic HTTPS, the web tier, the API, a separate worker, PostgreSQL and
 S3-compatible object storage, with production settings that fail closed. CI
-starts that stack and runs the browser workflow through HTTPS against it. It
-is not deployed publicly yet. Runbook: [`deploy/README.md`](deploy/README.md).
+starts that stack and runs the browser workflow through HTTPS against it. The
+public deployment is AWS (EC2, RDS PostgreSQL 17, S3, EBS) at
+https://trustsat.mpst.me. Runbooks: [`deploy/README.md`](deploy/README.md)
+(any single host) and [`deploy/aws/README.md`](deploy/aws/README.md) (AWS).
 
 The backend UI is FastAPI + Jinja2 + vanilla JS, all local: Overview (command center) ·
 Entities · Entity detail · Findings · Finding detail (WHAT/WHY/EVIDENCE/

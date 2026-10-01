@@ -53,8 +53,8 @@ job (PostgreSQL 16).
 | API + separate worker processes over HTTP, PostgreSQL 18, local storage | PostgreSQL verified locally | same test with `SATSA_TEST_POSTGRES_DSN`; Phase 16 manual run 20/20 smoke checks |
 | Compose topology: PostgreSQL + SeaweedFS + migrate + key-init + API + worker | CI-tested (run 36444188066 at `5fe192b`) | `saas-topology-smoke` job |
 | Production topology: Caddy (HTTPS) + web + API + worker + PostgreSQL 17 + S3 over TLS, `SATSA_ENVIRONMENT=production` | CI-tested (run 36444188066 at `5fe192b`) | `production-stack` job: `deploy/smoke.sh`, worker restart recovery, browser E2E through HTTPS (9 tests), API restart |
-| Container build locally | not executed | Docker is not installed on the development machine |
-| Hosted deployment | not deployed | no host or public hostname provided yet |
+| Container build locally | executed since Phase 22 | Docker Desktop builds the release images (`deploy/aws/publish.sh`) |
+| Hosted deployment | deployed (Phase 22/23) | AWS stack `satsa-prod`, https://trustsat.mpst.me; public browser suite via `deploy.sh public-e2e` |
 
 ## Phase 7 production deployment
 
