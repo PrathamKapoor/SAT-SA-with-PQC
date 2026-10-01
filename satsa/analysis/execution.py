@@ -455,6 +455,12 @@ class AnalysisExecutionService:
         if checkpoint is None:
             return {"run_id": run_id, "checkpointed": False, "current_stage": "queued"}
         state = checkpoint.checkpoint.get("channel_values", {})
+        scope = ("run_id", "organization_id", "submission_version_id")
+        if not any(key in state for key in scope):
+            # LangGraph's first checkpoint is written before the run's input is
+            # applied: it carries no scope yet, so nothing to compare or show.
+            return {"run_id": run_id, "checkpointed": True, "current_stage": "starting",
+                    "awaiting_review": False}
         if (
             state.get("run_id") != run_id
             or state.get("organization_id") != self.org
