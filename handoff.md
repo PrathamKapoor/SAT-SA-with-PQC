@@ -15,9 +15,7 @@
   (SIH 26157, NCIIPC), with signed, hash-chained post-quantum evidence
   (TRUST-SAT, ML-DSA-65), a LangGraph-orchestrated worker, an MLOps
   lifecycle for an advisory review-outcome model, and a Next.js workbench.
-- **Rotation status**: **COMPLETE** (D-023). The runbook fix in
-  `deploy/aws/README.md` and these doc files are **uncommitted**, so the
-  user must ask for a commit.
+- **Rotation status**: **COMPLETE** (D-023), committed in `04fc7e7` (docs only, no code change). Push and CI on the pushed commit are pending.
 - **Phase 23 status**: **COMPLETE.** `main` = `b60a051`, deployed to AWS, public
   browser suite 11/11 (twice), CI 10/10 on `main`, `phase23/convergence`
   deleted. Phase 24 has **not** been started and has no defined scope.

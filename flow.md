@@ -338,4 +338,4 @@ Rationale for each change is in `decisions.md` (D-013 to D-022).
 |---|---|---|---|---|
 | Operations | Rotated the exposed production administrator credential and revoked the old credential, its sessions and its membership | none (live system) | none | D-023 |
 | Demo | Revoked the exposed demo members and created a fresh demo organization with `deploy.sh demo` | none (live system) | none | D-023 |
-| Docs | Runbook rotation steps now revoke the credential itself and update the E2E credentials file | `deploy/aws/README.md` | uncommitted | D-023 |
+| Docs | Runbook rotation steps now revoke the credential itself and update the E2E credentials file | `deploy/aws/README.md` | `04fc7e7` | D-023 |
