@@ -111,6 +111,16 @@ def decide_all(supervisor: Api, timeout: float) -> dict:
     return counts
 
 
+def settled(call) -> None:
+    """Run a lifecycle transition; one that already happened (HTTP 409) is done."""
+    try:
+        call()
+    except SystemExit as exc:
+        if "HTTP 409" not in str(exc):
+            raise
+        log("already done:", str(exc)[:120])
+
+
 def job(api: Api, job_id: str, timeout: float = 600) -> dict:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
@@ -153,6 +163,7 @@ def main(argv: list[str] | None = None) -> int:
 
     dataset = analyst.call("POST", "/api/v1/ml/datasets",
                            body={"name": "review-outcome", "data_origin": "synthetic"})
+    # Identical content returns the existing (possibly already validated) version.
     validation = job(analyst, analyst.call("POST", f"/api/v1/ml/datasets/{dataset['id']}/validate",
                                            key=f"demo-validate-{dataset['id']}")["id"])
     dataset = analyst.call("GET", f"/api/v1/ml/datasets/{dataset['id']}")
@@ -171,9 +182,10 @@ def main(argv: list[str] | None = None) -> int:
     if first["state"] != "verified":
         print(json.dumps(summary))
         return 1
-    supervisor.call("POST", f"/api/v1/ml/models/{first['id']}/approve",
-                    body={"justification": "Demo: passport and holdout metrics reviewed on synthetic data."})
-    supervisor.call("POST", f"/api/v1/ml/models/{first['id']}/deploy", body={"reason": "Demo deployment"})
+    settled(lambda: supervisor.call("POST", f"/api/v1/ml/models/{first['id']}/approve",
+                    body={"justification": "Demo: passport and holdout metrics reviewed on synthetic data."}))
+    settled(lambda: supervisor.call("POST", f"/api/v1/ml/models/{first['id']}/deploy",
+                                    body={"reason": "Demo deployment"}))
 
     # A new run is scored by the deployed model (or abstains, with a reason).
     with contextlib.redirect_stdout(sys.stderr):
@@ -195,9 +207,10 @@ def main(argv: list[str] | None = None) -> int:
     second = train(analyst, dataset["id"], seed=11)
     summary["model_v2"] = {"id": second["id"], "version": second["version"], "state": second["state"]}
     if second["state"] == "verified":
-        supervisor.call("POST", f"/api/v1/ml/models/{second['id']}/approve",
-                        body={"justification": "Demo: second version reviewed on synthetic data."})
-        supervisor.call("POST", f"/api/v1/ml/models/{second['id']}/deploy", body={"reason": "Demo upgrade"})
+        settled(lambda: supervisor.call("POST", f"/api/v1/ml/models/{second['id']}/approve",
+                        body={"justification": "Demo: second version reviewed on synthetic data."}))
+        settled(lambda: supervisor.call("POST", f"/api/v1/ml/models/{second['id']}/deploy",
+                                        body={"reason": "Demo upgrade"}))
         rollback = supervisor.call("POST", "/api/v1/ml/rollback",
                                    body={"target_model_id": first["id"], "reason": "Demo rollback to version 1"})
         active = [d for d in supervisor.all("/api/v1/ml/deployments") if d.get("active")]

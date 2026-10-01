@@ -363,3 +363,45 @@ def test_graph_does_not_request_review_when_all_stages_fail(hosted_scope):
     assert worker.run_once() == "failed"
     assert service.get_run(run["id"])["status"] == "failed"
     assert service.get_review_decision(run["id"]) is None
+
+
+def _put_checkpoint(engine, run_id, channel_values):
+    from langgraph.checkpoint.base import empty_checkpoint
+
+    from satsa.analysis.graph import durable_checkpointer
+
+    checkpoint = empty_checkpoint()
+    checkpoint["channel_values"] = channel_values
+    with durable_checkpointer(engine) as saver:
+        saver.put(
+            {"configurable": {"thread_id": f"satsa:{run_id}", "checkpoint_ns": ""}},
+            checkpoint, {"source": "input", "step": -1}, {},
+        )
+
+
+def test_progress_while_the_graph_is_starting_is_not_a_scope_violation(hosted_scope):
+    # The worker can claim a run within milliseconds of its creation; LangGraph's
+    # first checkpoint has no scope fields yet. Reading progress then must not
+    # be refused (the create-run response itself reads it).
+    scope = hosted_scope
+    service = AnalysisExecutionService(
+        scope["engine"], scope["org"], scope["user"], audit=scope["audit"]
+    )
+    run = service.create_run(scope["version"], idempotency_key="graph-starting", graph_enabled=True)
+    _put_checkpoint(scope["engine"], run["id"], {})
+    progress = service.get_graph_progress(run["id"])
+    assert progress["checkpointed"] is True and progress["current_stage"] == "starting"
+
+
+def test_a_checkpoint_scoped_to_another_organization_is_still_refused(hosted_scope):
+    scope = hosted_scope
+    service = AnalysisExecutionService(
+        scope["engine"], scope["org"], scope["user"], audit=scope["audit"]
+    )
+    run = service.create_run(scope["version"], idempotency_key="graph-foreign", graph_enabled=True)
+    _put_checkpoint(scope["engine"], run["id"], {
+        "run_id": run["id"], "organization_id": "org_someone_else",
+        "submission_version_id": scope["version"],
+    })
+    with pytest.raises(PermissionDeniedError):
+        service.get_graph_progress(run["id"])
