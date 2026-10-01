@@ -134,7 +134,18 @@ same submission version from the workbench.
   administrator member from **Members**, store its credential with
   `aws secretsmanager put-secret-value --secret-id satsa/prod/admin-credential`
   (same JSON shape: `organization_id`, `credential`), sign in with it, then
-  revoke the old administrator member.
+  revoke the old administrator member. Revoking the membership only removes
+  the old identity from that one organization; it stays an administrator of
+  every organization it created (demo organizations), so also revoke the old
+  credential itself with `DELETE /api/v1/session` sent with the raw old
+  credential as Bearer (this also ends its sessions), and confirm it now gets
+  401. Replace the `admin` field of `/root/satsa-e2e/credentials.json`, which
+  keeps its own copy. The new administrator is not a member of the earlier
+  demo organizations; their records stay, unreachable through the UI.
+  Credentials live only in Secrets Manager (and the root-only files on the
+  instance named in this runbook); never commit, paste or log one. If a
+  credential is ever shown anywhere, rotate it this way, and rerun `$D demo`
+  (which revokes the previous demo members) before any public demo.
 * RDS master password: managed by RDS in Secrets Manager
   (`ManageMasterUserPassword`); after a rotation run `$D deploy <current
   commit>`, which renders the new password into the env file.
