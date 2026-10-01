@@ -46,13 +46,15 @@ def create_demo(admin: Api, *, stamp: str) -> dict:
     org = admin.call("POST", "/api/v1/organizations", body={"name": f"{NAME} {stamp}"})
     admin.headers["X-Organization-ID"] = org["id"]
     members = {}
+    # Identities are unique across the platform: each demo gets its own.
+    tag = "".join(ch for ch in stamp if ch.isdigit())
     for role in ROLES:
         issued = admin.call(
             "POST",
             "/api/v1/members",
             body={
-                "name": f"Demo {role}",
-                "email": f"demo-{role}@satsa.invalid",
+                "name": f"Demo {role} {stamp}",
+                "email": f"demo-{role}-{tag}@satsa.invalid",
                 "role": f"satsa_{role}",
             },
         )
