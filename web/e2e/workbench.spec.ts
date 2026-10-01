@@ -41,11 +41,14 @@ async function pageAs(browser: Browser, role: Role): Promise<Page> {
     await page.getByLabel("Issued credential").fill(state().credentials[role]);
     await page.getByRole("button", { name: "Sign in" }).click();
     const limited = page.locator("#credential-error").filter({ hasText: "Too many requests" });
-    await Promise.race([page.waitForURL(/\/(workbench|organization)$/), limited.waitFor()]);
     // A member of several organizations (on a live deployment the administrator
-    // also owns demo organizations) chooses; this suite works in its own.
-    if (/\/organization$/.test(page.url())) {
-      await page.locator(`button[name="organization"][value="${state().credentials.organization_id}"]`).click();
+    // also owns demo organizations) is sent on from /workbench to the picker;
+    // wait for what the page shows, not the first URL, and choose this suite's.
+    const workbench = page.getByRole("heading", { name: "Workbench", level: 1 });
+    const picker = page.getByRole("list", { name: "Your organizations" });
+    await Promise.race([workbench.waitFor(), picker.waitFor(), limited.waitFor()]);
+    if (await picker.isVisible()) {
+      await picker.locator(`button[name="organization"][value="${state().credentials.organization_id}"]`).click();
       await page.waitForURL(/\/workbench$/);
     }
     if (!(await limited.isVisible()) || attempt > 0) break;
