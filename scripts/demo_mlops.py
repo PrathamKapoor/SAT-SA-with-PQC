@@ -212,7 +212,8 @@ def main(argv: list[str] | None = None) -> int:
         settled(lambda: supervisor.call("POST", f"/api/v1/ml/models/{second['id']}/deploy",
                                         body={"reason": "Demo upgrade"}))
         rollback = supervisor.call("POST", "/api/v1/ml/rollback",
-                                   body={"target_model_id": first["id"], "reason": "Demo rollback to version 1"})
+                                   body={"target_model_id": first["id"],
+                                         "reason": f"Demo rollback to version {first['version']}"})
         active = [d for d in supervisor.all("/api/v1/ml/deployments") if d.get("active")]
         summary["rollback"] = {"deployment": rollback.get("id"),
                                "active_model": [d.get("model_id") for d in active]}

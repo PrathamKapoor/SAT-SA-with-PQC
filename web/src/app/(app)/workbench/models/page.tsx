@@ -125,7 +125,7 @@ function ModelsBody({
                 <p className="mt-3 text-[12.5px] text-muted">
                   Abstentions (all models):{" "}
                   {Object.entries(monitoring.all_models.abstentions_by_reason)
-                    .map(([reason, n]) => `${reason.replaceAll("_", " ")} ${n}`)
+                    .map(([reason, n]) => `${n} × ${reason.replaceAll("_", " ")}`)
                     .join(" · ")}
                 </p>
               )}
