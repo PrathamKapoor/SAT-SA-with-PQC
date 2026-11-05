@@ -1,9 +1,6 @@
 # SAT-SA — Supervisory Analytics Tool for SOC Assessment
 
-**Smart India Hackathon (SIH) 26157 · NCIIPC.** A periodic, offline,
-evidence-driven supervisory analytics system supporting human examiners in
-identifying entities, controls, processes, investigations, and alert samples
-requiring supervisory attention.
+**Smart India Hackathon (SIH) 26157 – NCIIPC: A periodic, offline, and evidence-driven supervisory analytics framework designed to support human examiners in the systematic identification, assessment, and prioritisation of entities, control mechanisms, operational processes, ongoing investigations, and alert samples warranting supervisory scrutiny.
 
 SAT-SA turns structured CSE (Constituent Security Entity) submissions
 into evidence-backed supervisory intelligence: who needs attention, why,
